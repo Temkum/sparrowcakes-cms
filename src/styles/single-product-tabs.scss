@@ -1,0 +1,97 @@
+/* Wrapper for the tabs */
+.gi-single-pro-tab-wrapper {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+/* Tab Navigation Styles */
+.gi-single-pro-tab-nav .nav-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    justify-content: flex-start;
+}
+
+.gi-single-pro-tab-nav .MuiTab-root {
+    text-transform: none;
+    /* Keep case as is */
+    color: #333;
+    /* Default text color */
+    font-size: 16px;
+    font-weight: 600;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    /* Removes bottom border */
+    border-radius: 4px 4px 0 0;
+    margin-right: 5px;
+    background-color: #f8f8f8;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+
+/* Active Tab */
+.gi-single-pro-tab-nav .Mui-selected {
+    background-color: #5caf90 !important;
+    color: white !important;
+    border-bottom: 2px solid white;
+    /* Merge active tab with content */
+    font-weight: bold;
+}
+
+/* Hover Effect for Tabs */
+.gi-single-pro-tab-nav .MuiTab-root:hover {
+    background-color: #5caf90;
+    color: white;
+}
+
+/* Tab Content Area */
+.gi-single-pro-tab-wrapper .MuiBox-root {
+    border: 1px solid #ddd;
+    border-radius: 0 0 4px 4px;
+    padding: 20px;
+    background-color: white;
+    color: #333;
+}
+
+/* Typography within the content */
+.gi-single-pro-tab-wrapper p {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.gi-single-pro-tab-wrapper ul {
+    padding-left: 20px;
+    list-style: disc;
+    margin: 10px 0;
+}
+
+.gi-single-pro-tab-wrapper ul li {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Sub-heading styling for Vendor and Reviews */
+.gi-single-pro-tab-wrapper h5 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #333;
+    font-weight: bold;
+}
+
+.gi-single-pro-tab-wrapper span {
+    font-weight: bold;
+    color: #444;
+}
+
+
+@media (max-width: 768px) {
+    .gi-single-pro-tab-nav .MuiTab-root {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+
+    .gi-single-pro-tab-wrapper .MuiBox-root {
+        padding: 15px;
+    }
+}
