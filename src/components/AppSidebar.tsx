@@ -1,14 +1,67 @@
-import { Sidebar, SidebarContent } from '@/components/ui/sidebar';
+import { Calendar, Home, Inbox, Search, Settings } from 'lucide-react';
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar';
+
+// Menu items.
+const items = [
+  {
+    title: 'Home',
+    url: '#',
+    icon: Home,
+  },
+  {
+    title: 'Dashboard',
+    url: '/admin/dashboard',
+    icon: Inbox,
+  },
+  {
+    title: 'Orders',
+    url: '/orders',
+    icon: Calendar,
+  },
+  {
+    title: 'Search',
+    url: '#',
+    icon: Search,
+  },
+  {
+    title: 'Settings',
+    url: '#',
+    icon: Settings,
+  },
+];
 
 export function AppSidebar() {
   return (
-    <Sidebar>
-      <SidebarHeader />
+    <Sidebar collapsible="icon">
       <SidebarContent>
-        <SidebarGroup />
-        <SidebarGroup />
+        <SidebarGroup>
+          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <a href={item.url}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter />
     </Sidebar>
   );
 }
