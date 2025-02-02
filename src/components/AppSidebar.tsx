@@ -29,13 +29,13 @@ import {
 // This is sample data.
 const data = {
   user: {
-    name: 'shadcn',
-    email: 'm@example.com',
+    name: 'Poupe',
+    email: 'sparrow@example.com',
     avatar: '/avatars/shadcn.jpg',
   },
   teams: [
     {
-      name: 'Acme Inc',
+      name: 'Cakes By Sparrow',
       logo: GalleryVerticalEnd,
       plan: 'Enterprise',
     },
@@ -52,36 +52,36 @@ const data = {
   ],
   navMain: [
     {
-      title: 'Playground',
-      url: '#',
+      title: 'Shop',
+      url: '/shop',
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: 'History',
+          title: 'Products',
           url: '#',
         },
         {
-          title: 'Starred',
+          title: 'Orders',
           url: '#',
         },
         {
-          title: 'Settings',
+          title: 'Customers',
           url: '#',
         },
       ],
     },
     {
-      title: 'Models',
+      title: 'Site Content',
       url: '#',
       icon: Bot,
       items: [
         {
-          title: 'Genesis',
+          title: 'Generator',
           url: '#',
         },
         {
-          title: 'Explorer',
+          title: 'Promotion',
           url: '#',
         },
         {
@@ -137,9 +137,9 @@ const data = {
       ],
     },
   ],
-  projects: [
+  content: [
     {
-      name: 'Design Engineering',
+      name: 'Design',
       url: '#',
       icon: Frame,
     },
@@ -164,7 +164,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavShop projects={data.projects} />
+        <NavShop projects={data.content} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

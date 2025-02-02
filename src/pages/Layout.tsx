@@ -2,7 +2,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import Header from '@/components/Header';
 import TopMenu from '@/components/TopMenu';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import Dashboard from './Dashboard';
+import { Outlet } from 'react-router-dom';
 
 export default function Layout() {
   return (
@@ -11,7 +11,7 @@ export default function Layout() {
       <SidebarInset>
         <TopMenu />
         <Header />
-        <Dashboard />
+        <Outlet />
       </SidebarInset>
     </SidebarProvider>
   );
