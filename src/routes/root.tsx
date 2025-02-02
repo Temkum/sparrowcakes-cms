@@ -4,6 +4,8 @@ import Dashboard from '@/pages/Dashboard';
 import BaseLayout from '@/pages/BaseLayout';
 import Register from '@/pages/Register';
 import Login from '@/pages/Login';
+import ResetPassword from '@/pages/ResetPassword';
+import ResetPasswordLink from '@/pages/ResetPasswordLink';
 
 const Root = createBrowserRouter([
   {
@@ -23,6 +25,14 @@ const Root = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPasswordLink />,
+  },
+  {
+    path: '/reset-password/:token',
+    element: <ResetPassword />,
   },
   {
     path: '/admin',
