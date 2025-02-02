@@ -1,15 +1,18 @@
 import { AppSidebar } from '@/components/AppSidebar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { Outlet } from 'react-router-dom';
+import Header from '@/components/Header';
+import TopMenu from '@/components/TopMenu';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import Dashboard from './Dashboard';
 
 export default function Layout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main>
-        <SidebarTrigger />
-        <Outlet />
-      </main>
+      <SidebarInset>
+        <TopMenu />
+        <Header />
+        <Dashboard />
+      </SidebarInset>
     </SidebarProvider>
   );
 }
