@@ -24,12 +24,12 @@ const TopNav = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (
-    <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-md">
+    <nav className="flex items-center justify-between px-6 py-6 bg-white shadow-md">
       {/* Logo on the Left */}
       <div className="flex items-center space-x-4">
-        <a href="/" className="text-xl font-bold text-primary">
-          MyLogo
-        </a>
+        <Link to="/" className="text-xl font-bold text-primary">
+          Cakes by Sparrow
+        </Link>
       </div>
 
       {/* Search Input in the Middle */}
