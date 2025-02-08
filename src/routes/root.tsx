@@ -6,6 +6,7 @@ import Register from '@/pages/Register';
 import Login from '@/pages/Login';
 import ResetPassword from '@/pages/ResetPassword';
 import ResetPasswordLink from '@/pages/ResetPasswordLink';
+import Home from '@/pages/Home';
 
 const Root = createBrowserRouter([
   {
@@ -13,8 +14,8 @@ const Root = createBrowserRouter([
     element: <BaseLayout />,
     children: [
       {
-        path: '/orders',
-        element: <Dashboard />,
+        path: '/',
+        element: <Home />,
       },
     ],
   },
