@@ -33,7 +33,7 @@ export default function BlogCard({
             alt={title}
             className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
           />
-          <div className="absolute bottom-4 right-4 bg-zinc-800 text-white px-3 py-2 text-center leading-tight">
+          <div className="absolute bottom-4 right-4 bg-zinc-800 text-white px-3 py-2 text-center leading-tight rounded-[8px]">
             <div className="text-xl font-bold">{date.day}</div>
             <div className="text-sm uppercase">{date.month}</div>
           </div>

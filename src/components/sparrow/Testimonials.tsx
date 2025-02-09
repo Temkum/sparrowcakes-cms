@@ -3,7 +3,7 @@ import { testimonials } from '@/utilities/data';
 
 const Testimonials = () => {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-100 py-20 px-4">
+    <div className="bg-white dark:bg-gray-100 py-20 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
