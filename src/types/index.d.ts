@@ -65,3 +65,11 @@ interface Service {
   title: string;
   description: string;
 }
+
+interface BannerProps {
+  title: string;
+  discount: number;
+  image: string;
+  backgroundColor: string;
+  onClick?: () => void;
+}

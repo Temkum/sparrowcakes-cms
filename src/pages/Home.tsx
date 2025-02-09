@@ -1,4 +1,5 @@
 import LatestGist from '@/components/sparrow/BlogSection';
+import ProductBanners from '@/components/sparrow/ProductBanners';
 import ProductGrid from '@/components/sparrow/ProductGrid';
 import Services from '@/components/sparrow/Services';
 import Testimonials from '@/components/sparrow/Testimonials';
@@ -29,6 +30,7 @@ const Home = () => {
           className="mb-8"
         />
       </div>
+      <ProductBanners />
       <Services />
       <Testimonials />
       <LatestGist />

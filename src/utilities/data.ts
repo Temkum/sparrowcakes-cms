@@ -8,8 +8,7 @@ export const testimonials = [
     quote:
       'elusmpsu dolor sit amet, conse cte tur ng elit, sed do eiusmod tem lacus vel facilisis.',
     rating: 5,
-    image:
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=400&q=80',
+    image: '/assets/profiles/tk.jpg',
   },
   {
     name: 'Lorem Robinson',
@@ -17,8 +16,7 @@ export const testimonials = [
     quote:
       'elusmpsu dolor sit amet, conse cte tur ng elit, sed do eiusmod tem lacus vel facilisis.',
     rating: 3,
-    image:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=400&q=80',
+    image: '/assets/profiles/ceci.jpg',
   },
   {
     name: 'Saddika Alard',
@@ -26,8 +24,7 @@ export const testimonials = [
     quote:
       'elusmpsu dolor sit amet, conse cte tur ng elit, sed do eiusmod tem lacus vel facilisis.',
     rating: 5,
-    image:
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=400&q=80',
+    image: '/assets/profiles/annyia.jpg',
   },
 ];
 
@@ -203,5 +200,26 @@ export const services: Service[] = [
     }),
     title: 'Payment Secure',
     description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
+  },
+];
+
+export const banners: BannerProps[] = [
+  {
+    title: 'Fresh & Healthy\nOrganic Fruits',
+    discount: 35,
+    image: '/assets/images/1_1.jpg',
+    backgroundColor: 'bg-[#ffd6d6]',
+  },
+  {
+    title: 'Healthy\nBakery Products',
+    discount: 30,
+    image: '/assets/images/5_1.jpg',
+    backgroundColor: 'bg-[#d6f5e6]',
+  },
+  {
+    title: 'Fresh\nSnacks & Sweets',
+    discount: 20,
+    image: '/assets/images/6_1.jpg',
+    backgroundColor: 'bg-[#ffe4d6]',
   },
 ];
