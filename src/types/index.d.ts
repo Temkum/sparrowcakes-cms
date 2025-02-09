@@ -31,32 +31,37 @@ interface BlogCardProps {
 }
 
 interface ProductCardProps {
-  title: string
-  category: string
-  price: number
-  originalPrice: number
-  rating: number
-  image: string
-  onAddToCart?: () => void
-  onAddToWishlist?: () => void
-  onQuickView?: () => void
+  title: string;
+  category: string;
+  price: number;
+  originalPrice: number;
+  rating: number;
+  image: string;
+  onAddToCart?: () => void;
+  onAddToWishlist?: () => void;
+  onQuickView?: () => void;
 }
 
 interface Product {
-  id: string
-  title: string
-  category: string
-  price: number
-  originalPrice: number
-  rating: number
-  image: string
+  id: string;
+  title: string;
+  category: string;
+  price: number;
+  originalPrice: number;
+  rating: number;
+  image: string;
 }
 
 interface ProductGridProps {
-  products: Product[]
-  onAddToCart?: (productId: string) => void
-  onAddToWishlist?: (productId: string) => void
-  onQuickView?: (productId: string) => void
-  className?: string
+  products: Product[];
+  onAddToCart?: (productId: string) => void;
+  onAddToWishlist?: (productId: string) => void;
+  onQuickView?: (productId: string) => void;
+  className?: string;
 }
 
+interface Service {
+  icon: JSX.Element;
+  title: string;
+  description: string;
+}

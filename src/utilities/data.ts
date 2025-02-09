@@ -1,3 +1,6 @@
+import { DollarSign, Headphones, Package, Truck } from 'lucide-react';
+import React from 'react';
+
 export const testimonials = [
   {
     name: 'Stephen Smith',
@@ -169,5 +172,36 @@ export const products: Product[] = [
     originalPrice: 60.0,
     rating: 4.3,
     image: '/assets/images/2_2.jpg?height=400&width=400',
+  },
+];
+
+export const services: Service[] = [
+  {
+    icon: React.createElement(Package, {
+      className: 'w-8 h-8 text-emerald-500',
+    }),
+    title: 'Product Packing',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
+  },
+  {
+    icon: React.createElement(Headphones, {
+      className: 'w-8 h-8 text-emerald-500',
+    }),
+    title: '24X7 Support',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
+  },
+  {
+    icon: React.createElement(Truck, {
+      className: 'w-8 h-8 text-emerald-500',
+    }),
+    title: 'Delivery in 5 Days',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
+  },
+  {
+    icon: React.createElement(DollarSign, {
+      className: 'w-8 h-8 text-emerald-500',
+    }),
+    title: 'Payment Secure',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
   },
 ];
