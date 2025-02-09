@@ -73,3 +73,8 @@ interface BannerProps {
   backgroundColor: string;
   onClick?: () => void;
 }
+
+interface PopularProductsProps {
+  products: Product[];
+  onAddToCart?: (productId: string) => void;
+}

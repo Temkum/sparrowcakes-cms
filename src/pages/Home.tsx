@@ -1,4 +1,5 @@
 import LatestGist from '@/components/sparrow/BlogSection';
+import PopularProducts from '@/components/sparrow/PopularProducts';
 import ProductBanners from '@/components/sparrow/ProductBanners';
 import ProductGrid from '@/components/sparrow/ProductGrid';
 import Services from '@/components/sparrow/Services';
@@ -30,6 +31,7 @@ const Home = () => {
           className="mb-8"
         />
       </div>
+      <PopularProducts products={products} onAddToCart={handleAddToCart} />
       <ProductBanners />
       <Services />
       <Testimonials />
