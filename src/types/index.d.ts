@@ -78,3 +78,17 @@ interface PopularProductsProps {
   products: Product[];
   onAddToCart?: (productId: string) => void;
 }
+
+interface Category {
+  id: string;
+  name: string;
+  itemCount: number;
+  banners: Banner[];
+}
+
+interface Banner {
+  image: string;
+  discount: number;
+  title: string;
+  position?: 'left' | 'right';
+}

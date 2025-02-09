@@ -223,3 +223,101 @@ export const banners: BannerProps[] = [
     backgroundColor: 'bg-[#ffe4d6]',
   },
 ];
+
+export const categories: Category[] = [
+  {
+    id: 'cake-milk',
+    name: 'Cake & Milk',
+    itemCount: 65,
+    banners: [
+      {
+        image: '/assets/images/3.jpg?height=400&width=600',
+        discount: 50,
+        title: 'Cake',
+        position: 'left',
+      },
+      {
+        image: '/assets/images/4.jpg?height=400&width=600',
+        discount: 40,
+        title: 'Milk',
+        position: 'right',
+      },
+    ],
+  },
+  {
+    id: 'fresh-meat',
+    name: 'Fresh Meat',
+    itemCount: 30,
+    banners: [
+      {
+        image: '/placeholder.svg?height=400&width=600',
+        discount: 30,
+        title: 'Fresh Meat',
+        position: 'left',
+      },
+      {
+        image: '/placeholder.svg?height=400&width=600',
+        discount: 25,
+        title: 'Premium Cuts',
+        position: 'right',
+      },
+    ],
+  },
+  {
+    id: 'vegetables',
+    name: 'Vegetables',
+    itemCount: 25,
+    banners: [
+      {
+        image: '/placeholder.svg?height=400&width=600',
+        discount: 45,
+        title: 'Fresh Vegetables',
+        position: 'left',
+      },
+      {
+        image: '/placeholder.svg?height=400&width=600',
+        discount: 35,
+        title: 'Organic Produce',
+        position: 'right',
+      },
+    ],
+  },
+  {
+    id: 'apple-mango',
+    name: 'Apple & Mango',
+    itemCount: 45,
+    banners: [
+      {
+        image: '/placeholder.svg?height=400&width=600',
+        discount: 20,
+        title: 'Fresh Fruits',
+        position: 'left',
+      },
+      {
+        image: '/placeholder.svg?height=400&width=600',
+        discount: 15,
+        title: 'Seasonal Picks',
+        position: 'right',
+      },
+    ],
+  },
+  {
+    id: 'strawberry',
+    name: 'Strawberry',
+    itemCount: 68,
+    banners: [
+      {
+        image: '/placeholder.svg?height=400&width=600',
+        discount: 40,
+        title: 'Fresh Strawberries',
+        position: 'left',
+      },
+      {
+        image: '/placeholder.svg?height=400&width=600',
+        discount: 30,
+        title: 'Berry Mix',
+        position: 'right',
+      },
+    ],
+  },
+];

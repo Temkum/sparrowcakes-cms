@@ -1,4 +1,5 @@
 import LatestGist from '@/components/sparrow/BlogSection';
+import CategoriesSection from '@/components/sparrow/CategoriesSection';
 import PopularProducts from '@/components/sparrow/PopularProducts';
 import ProductBanners from '@/components/sparrow/ProductBanners';
 import ProductGrid from '@/components/sparrow/ProductGrid';
@@ -21,6 +22,7 @@ const Home = () => {
 
   return (
     <>
+      <CategoriesSection />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-8 text-center">Our Products</h1>
         <ProductGrid
