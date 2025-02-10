@@ -1,3 +1,4 @@
+import BannerDeal from '@/components/sparrow/BannerDeal';
 import LatestGist from '@/components/sparrow/BlogSection';
 import CategoriesSection from '@/components/sparrow/CategoriesSection';
 import PopularProducts from '@/components/sparrow/PopularProducts';
@@ -36,6 +37,7 @@ const Home = () => {
       <PopularProducts products={products} onAddToCart={handleAddToCart} />
       <ProductBanners />
       <Services />
+      <BannerDeal />
       <Testimonials />
       <LatestGist />
     </>

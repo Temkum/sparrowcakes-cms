@@ -92,3 +92,10 @@ interface Banner {
   title: string;
   position?: 'left' | 'right';
 }
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
