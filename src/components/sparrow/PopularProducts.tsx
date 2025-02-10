@@ -5,8 +5,7 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
+  type CarouselApi,
 } from '../ui/carousel';
 import { useEffect, useState } from 'react';
 
@@ -34,10 +33,10 @@ function ProductCard({
       <div className="relative -mt-6 mb-2 z-10 flex justify-center">
         <button
           onClick={onAddToCart}
-          className="p-2 bg-emerald-500 rounded-full shadow-md hover:bg-emerald-600 transition-colors"
+          className="p-2 bg-gray-50 rounded-full shadow-md hover:bg-white transition-colors border border-gray"
           aria-label="Add to cart"
         >
-          <ShoppingBag className="w-5 h-5 text-white" />
+          <ShoppingBag className="w-4 h-4" color="green" />
         </button>
       </div>
 
@@ -106,7 +105,7 @@ export default function PopularProducts({
   products,
   onAddToCart,
 }: PopularProductsProps) {
-  const [api, setApi] = useState<any>();
+  const [api, setApi] = useState<CarouselApi>();
 
   useEffect(() => {
     if (!api) return;
@@ -121,7 +120,12 @@ export default function PopularProducts({
   return (
     <section className="py-12 px-4">
       <div className="container mx-auto">
-        <h2 className="text-2xl font-bold mb-8">Popular Products</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center">
+          Popular Products
+        </h2>
+        <p className="text-center mb-8">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit
+        </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3">
@@ -148,8 +152,6 @@ export default function PopularProducts({
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
             </Carousel>
           </div>
           <div className="lg:col-span-1">

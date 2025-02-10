@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
                 to="/"
                 className="block text-2xl font-medium text-gray-900 hover:opacity-75 sm:text-3xl"
               >
-                +237 675827455
+                +237 6 53 76 15 31
               </Link>
             </p>
 

@@ -61,12 +61,12 @@ const TopNav = () => {
       </div>
 
       {/* Authentication and Language Icons on the Right */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4 text-2xl">
         {/* Authentication */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <User size={20} />
+            <Button variant="ghost">
+              <User size={35} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -74,14 +74,23 @@ const TopNav = () => {
               <>
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsLoggedIn(false)}>
-                  Logout <LogOut size={16} className="ml-2" />
+                  Logout{' '}
+                  <LogOut
+                    size={16}
+                    className="ml-2"
+                    onClick={() => setIsLoggedIn(false)}
+                  />
                 </DropdownMenuItem>
               </>
             ) : (
               <>
                 <DropdownMenuItem onClick={() => setIsLoggedIn(true)}>
                   <Link to="/login">Login</Link>
-                  <LogIn size={16} className="ml-2" />
+                  <LogIn
+                    size={16}
+                    className="ml-2"
+                    onClick={() => setIsLoggedIn(true)}
+                  />
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Link to="/register">Register</Link>
@@ -96,7 +105,7 @@ const TopNav = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
-              <Globe size={20} />
+              <Globe size={35} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

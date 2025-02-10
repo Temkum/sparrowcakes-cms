@@ -85,7 +85,14 @@ export default function HeroSlider() {
 
   return (
     <div className="relative h-[80vh] overflow-hidden">
-      <Carousel setApi={setApi} className="w-full h-full">
+      <Carousel
+        setApi={setApi}
+        className="w-full h-full"
+        opts={{
+          align: 'start',
+          loop: true,
+        }}
+      >
         <CarouselContent>
           {slides.map((slide, index) => (
             <CarouselItem key={index} className="relative w-full h-[80vh]">

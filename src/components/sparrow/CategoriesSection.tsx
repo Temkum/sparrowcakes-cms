@@ -15,12 +15,12 @@ function CategoryList({
   onCategoryClick: (categoryId: string) => void;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm divide-y">
+    <div className="bg-white rounded-lg shadow-sm">
       {categories.map((category) => (
         <button
           key={category.id}
           onClick={() => onCategoryClick(category.id)}
-          className={`w-full px-6 py-4 text-left transition-colors hover:bg-gray-50 ${
+          className={`border rounded-md w-full px-6 py-4 text-left transition-colors hover:bg-gray-50 mb-2 ${
             activeCategory === category.id ? 'bg-gray-50' : ''
           }`}
         >
@@ -40,7 +40,7 @@ function CategoryList({
           </div>
         </button>
       ))}
-      <div className="px-6 py-4">
+      <div className="px-6 py-4 border rounded-md">
         <Button
           variant="link"
           className="p-0 h-auto text-emerald-500 hover:text-emerald-600"
@@ -92,7 +92,7 @@ export default function CategoriesSection() {
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Categories List */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-5">
             <CategoryList
               categories={categories}
               activeCategory={activeCategory}

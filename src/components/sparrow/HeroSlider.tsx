@@ -6,11 +6,12 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  type CarouselApi,
 } from '@/components/ui/carousel';
 import { slides } from '@/utilities/data';
 
 export default function HeroSlider() {
-  const [api, setApi] = useState<EmblaCarouselApi | null>();
+  const [api, setApi] = useState<CarouselApi | null>();
   const [current, setCurrent] = useState(0);
   //   const [loading, setLoading] = useState(true);
 
@@ -22,7 +23,7 @@ export default function HeroSlider() {
     });
 
     const timer = setInterval(() => {
-      api.next();
+      api.scrollNext();
     }, 5000); // Auto-slide every 5 seconds
 
     return () => clearInterval(timer);
