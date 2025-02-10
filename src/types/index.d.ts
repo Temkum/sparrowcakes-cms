@@ -99,3 +99,12 @@ interface TimeLeft {
   minutes: number;
   seconds: number;
 }
+
+interface Slide {
+  tag: string;
+  tagPercentage: string;
+  title: string;
+  description: string;
+  image: string;
+  backgroundColor: string;
+}

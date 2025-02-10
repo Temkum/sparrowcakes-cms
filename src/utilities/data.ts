@@ -321,3 +321,33 @@ export const categories: Category[] = [
     ],
   },
 ];
+
+export const slides: Slide[] = [
+  {
+    tag: 'Organic Vegetables',
+    tagPercentage: '100%',
+    title: 'The best way to stuff your wallet.',
+    description:
+      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+    image: '/assets/images/1_1.jpg',
+    backgroundColor: '#f8e7dd',
+  },
+  {
+    tag: 'Fresh Fruits',
+    tagPercentage: '100%',
+    title: 'Natural and healthy fruits for you.',
+    description:
+      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+    image: '/assets/images/banner.jpg',
+    backgroundColor: '#e7f8dd',
+  },
+  {
+    tag: 'Organic Products',
+    tagPercentage: '100%',
+    title: 'The best organic products selection.',
+    description:
+      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+    image: '/assets/images/tab-1.jpg',
+    backgroundColor: '#dde7f8',
+  },
+];
