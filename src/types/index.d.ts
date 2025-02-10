@@ -108,3 +108,10 @@ interface Slide {
   image: string;
   backgroundColor: string;
 }
+
+interface CarouselApi {
+  on: (event: string, callback: () => void) => void;
+  selectedScrollSnap: () => number;
+  next: () => void;
+  prev: () => void;
+}

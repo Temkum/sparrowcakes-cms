@@ -10,7 +10,7 @@ import {
 import { slides } from '@/utilities/data';
 
 export default function HeroSlider() {
-  const [api, setApi] = useState<any>();
+  const [api, setApi] = useState<EmblaCarouselApi | null>();
   const [current, setCurrent] = useState(0);
   //   const [loading, setLoading] = useState(true);
 
