@@ -55,7 +55,7 @@ const data = {
       title: 'Shop',
       url: '/shop',
       icon: SquareTerminal,
-      isActive: false,
+      isActive: true,
       items: [
         {
           title: 'Products',

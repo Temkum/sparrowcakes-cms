@@ -1,6 +1,5 @@
 import Layout from '@/pages/Layout';
 import { createBrowserRouter } from 'react-router-dom';
-import Dashboard from '@/pages/Dashboard';
 import BaseLayout from '@/pages/BaseLayout';
 import Register from '@/pages/Register';
 import Login from '@/pages/Login';
@@ -9,6 +8,7 @@ import ResetPasswordLink from '@/pages/ResetPasswordLink';
 import Home from '@/pages/Home';
 import ProductDashboard from '@/pages/admin/ProductDashboard';
 import Users from '@/pages/admin/Users';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
 
 const Root = createBrowserRouter([
   {
@@ -43,7 +43,7 @@ const Root = createBrowserRouter([
     children: [
       {
         path: '/admin/dashboard',
-        element: <Dashboard />,
+        element: <AdminDashboard />,
       },
       {
         path: '/admin/products',
