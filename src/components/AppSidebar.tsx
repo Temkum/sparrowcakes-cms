@@ -40,12 +40,12 @@ const data = {
       plan: 'Enterprise',
     },
     {
-      name: 'Acme Corp.',
+      name: 'Delivery Corp.',
       logo: AudioWaveform,
       plan: 'Startup',
     },
     {
-      name: 'Evil Corp.',
+      name: 'Beauty Corp.',
       logo: Command,
       plan: 'Free',
     },
@@ -55,11 +55,11 @@ const data = {
       title: 'Shop',
       url: '/shop',
       icon: SquareTerminal,
-      isActive: true,
+      isActive: false,
       items: [
         {
           title: 'Products',
-          url: '#',
+          url: '/admin/products',
         },
         {
           title: 'Orders',
@@ -124,7 +124,7 @@ const data = {
         },
         {
           title: 'Team',
-          url: '#',
+          url: '/admin/users',
         },
         {
           title: 'Billing',

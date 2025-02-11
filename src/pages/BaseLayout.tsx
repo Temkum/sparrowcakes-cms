@@ -9,9 +9,7 @@ const BaseLayout: React.FC = () => {
     <>
       <TopNav />
       <NavMenu />
-
       <Outlet />
-
       <Footer />
     </>
   );

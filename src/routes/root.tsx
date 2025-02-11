@@ -7,6 +7,8 @@ import Login from '@/pages/Login';
 import ResetPassword from '@/pages/ResetPassword';
 import ResetPasswordLink from '@/pages/ResetPasswordLink';
 import Home from '@/pages/Home';
+import ProductDashboard from '@/pages/admin/ProductDashboard';
+import Users from '@/pages/admin/Users';
 
 const Root = createBrowserRouter([
   {
@@ -42,6 +44,14 @@ const Root = createBrowserRouter([
       {
         path: '/admin/dashboard',
         element: <Dashboard />,
+      },
+      {
+        path: '/admin/products',
+        element: <ProductDashboard />,
+      },
+      {
+        path: '/admin/users',
+        element: <Users />,
       },
     ],
   },

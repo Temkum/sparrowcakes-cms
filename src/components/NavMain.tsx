@@ -1,4 +1,8 @@
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+import {
+  ChevronRight,
+  LayoutDashboardIcon,
+  type LucideIcon,
+} from 'lucide-react';
 
 import {
   Collapsible,
@@ -15,6 +19,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
+import { Link } from 'react-router-dom';
 
 export function NavMain({
   items,
@@ -33,6 +38,17 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarMenu className="mb-3">
+        <SidebarMenuItem>
+          <SidebarMenuButton tooltip={'Dashboard'}>
+            <LayoutDashboardIcon />
+            <Link to={'/admin/dashboard'}>
+              <span>{'Dashboard'}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+      <SidebarGroupLabel>Content Management</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
@@ -54,9 +70,9 @@ export function NavMain({
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
+                        <Link to={subItem.url}>
                           <span>{subItem.title}</span>
-                        </a>
+                        </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}
