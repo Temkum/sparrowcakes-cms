@@ -9,6 +9,7 @@ import Home from '@/pages/Home';
 import ProductDashboard from '@/pages/admin/ProductDashboard';
 import Users from '@/pages/admin/Users';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
+import OrdersPage from '@/pages/admin/Orders';
 
 const Root = createBrowserRouter([
   {
@@ -48,6 +49,10 @@ const Root = createBrowserRouter([
       {
         path: '/admin/products',
         element: <ProductDashboard />,
+      },
+      {
+        path: '/admin/orders',
+        element: <OrdersPage />,
       },
       {
         path: '/admin/users',
