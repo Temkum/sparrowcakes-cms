@@ -11,7 +11,9 @@ export default function Layout() {
       <SidebarInset>
         <TopMenu />
         <Header />
-        <Outlet />
+        <div className="bg-gray-50 h-full">
+          <Outlet />
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

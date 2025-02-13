@@ -72,7 +72,7 @@ const ProductDashboard = () => {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 mx-auto h-full w-full px-4 md:px-6 lg:px-8 xl:max-w-7xl">
-      <div className="p-6 min-h-[100vh] flex-1 bg-muted/50 rounded-xl md:min-h-min ">
+      <div className="p-6 min-h-[100vh] flex-1 rounded-xl md:min-h-min ">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Products</h1>
@@ -117,13 +117,17 @@ const ProductDashboard = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="flex gap-4 mb-6">
-          <Input className="flex-1" placeholder="Search" type="search" />
+        <div className="flex gap-4 mb-6 justify-end">
+          <Input
+            className="w-full md:w-1/3"
+            placeholder="Search"
+            type="search"
+          />
         </div>
 
         {/* Products Table */}
         <Card>
-          <Table>
+          <Table className="h-full">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12"></TableHead>

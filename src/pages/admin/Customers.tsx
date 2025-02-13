@@ -122,7 +122,7 @@ export default function Customers() {
 
       {/* Global Search */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="relative w-[400px]">
+        <div className="relative w-[400px] bg-white">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input placeholder="Search" className="pl-10" />
         </div>
@@ -140,8 +140,8 @@ export default function Customers() {
       {/* Table */}
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
-            <TableRow className="h-9 bg-slate-200 font-semibold">
+          <TableHeader className="">
+            <TableRow className="h-9 bg-slate-200">
               <TableHead className="w-12">
                 <Checkbox
                   checked={

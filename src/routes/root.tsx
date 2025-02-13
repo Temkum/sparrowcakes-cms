@@ -11,6 +11,7 @@ import Users from '@/pages/admin/Users';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import OrdersPage from '@/pages/admin/Orders';
 import Customers from '@/pages/admin/Customers';
+import CategoriesPage from '@/pages/admin/Categories';
 
 const Root = createBrowserRouter([
   {
@@ -62,6 +63,10 @@ const Root = createBrowserRouter([
       {
         path: '/admin/customers',
         element: <Customers />,
+      },
+      {
+        path: '/admin/categories',
+        element: <CategoriesPage />,
       },
     ],
   },
