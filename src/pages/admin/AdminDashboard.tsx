@@ -90,7 +90,7 @@ const AdminDashboard = () => {
       <div className="max-w-[1280px] mx-auto">
         <div className="flex justify-between items-center my-7">
           <div className="space-y-4">
-            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
             <div className="flex space-x-4">
               <Select defaultValue="business">
                 <SelectTrigger className="w-[200px]">
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
           </div>
           <div className="flex items-center space-x-4">
             <Avatar>
-              <img src="/api/placeholder/32/32" alt="User" />
+              <img src="/placeholder.svg" alt="User" />
             </Avatar>
             <div>
               <p className="font-medium">Welcome</p>

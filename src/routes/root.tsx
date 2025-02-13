@@ -10,6 +10,7 @@ import ProductDashboard from '@/pages/admin/ProductDashboard';
 import Users from '@/pages/admin/Users';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import OrdersPage from '@/pages/admin/Orders';
+import Customers from '@/pages/admin/Customers';
 
 const Root = createBrowserRouter([
   {
@@ -57,6 +58,10 @@ const Root = createBrowserRouter([
       {
         path: '/admin/users',
         element: <Users />,
+      },
+      {
+        path: '/admin/customers',
+        element: <Customers />,
       },
     ],
   },
