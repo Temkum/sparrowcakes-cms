@@ -71,7 +71,7 @@ export function CategoriesTable() {
     <div className="rounded-md border">
       <Table>
         <TableHeader>
-          <TableRow className="font-bold text-black">
+          <TableRow className="font-bold text-black-600 hover:bg-gray-100 bg-gray-200">
             <TableHead className="w-12">
               <Checkbox
                 checked={selectedCategories.length === categories.length}

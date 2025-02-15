@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Filter, Columns3, CircleCheck } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useState } from 'react';
 
 interface Order {
   id: string;
@@ -54,6 +56,8 @@ const ordersData: Order[] = [
 ];
 
 const OrdersPage = () => {
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+
   return (
     <div className="p-6 max-w-[1280px] mx-auto">
       {/* Header */}
@@ -79,15 +83,17 @@ const OrdersPage = () => {
       </div>
 
       {/* Status Filters */}
-      <div className="flex gap-2 mb-6 justify-center border rounded-md text-gray-500">
-        <Button variant="ghost" className="text-orange-500">
-          All
-        </Button>
-        <Button variant="ghost">New</Button>
-        <Button variant="ghost">Processing</Button>
-        <Button variant="ghost">Shipped</Button>
-        <Button variant="ghost">Delivered</Button>
-        <Button variant="ghost">Cancelled</Button>
+      <div className="flex gap-2 mb-6 justify-center ">
+        <div className="border rounded-md text-gray-500">
+          <Button variant="ghost" className="text-orange-500">
+            All
+          </Button>
+          <Button variant="ghost">New</Button>
+          <Button variant="ghost">Processing</Button>
+          <Button variant="ghost">Shipped</Button>
+          <Button variant="ghost">Delivered</Button>
+          <Button variant="ghost">Cancelled</Button>
+        </div>
       </div>
 
       {/* Table Controls */}
@@ -120,7 +126,16 @@ const OrdersPage = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[30px]">
-                <input type="checkbox" className="rounded border-gray-300" />
+                <Checkbox
+                  checked={selectedOrders.length === ordersData.length}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedOrders(ordersData.map((order) => order.id));
+                    } else {
+                      setSelectedOrders([]);
+                    }
+                  }}
+                />
               </TableHead>
               <TableHead>Number</TableHead>
               <TableHead>Customer</TableHead>
@@ -136,7 +151,18 @@ const OrdersPage = () => {
             {ordersData.map((order) => (
               <TableRow key={order.id}>
                 <TableCell>
-                  <input type="checkbox" className="rounded border-gray-300" />
+                  <Checkbox
+                    checked={selectedOrders.includes(order.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedOrders([...selectedOrders, order.id]);
+                      } else {
+                        setSelectedOrders(
+                          selectedOrders.filter((id) => id !== order.id)
+                        );
+                      }
+                    }}
+                  />
                 </TableCell>
                 <TableCell className="font-medium">{order.number}</TableCell>
                 <TableCell>{order.customer}</TableCell>

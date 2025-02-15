@@ -106,6 +106,7 @@ export const products: Product[] = [
     originalPrice: 123.25,
     rating: 4.5,
     image: '/assets/images/10_1.jpg?height=400&width=400',
+    display: true,
   },
   {
     id: '2',
@@ -115,6 +116,7 @@ export const products: Product[] = [
     originalPrice: 99.99,
     rating: 3,
     image: '/assets/images/9.jpg?height=400&width=400',
+    display: true,
   },
   {
     id: '3',
@@ -124,6 +126,7 @@ export const products: Product[] = [
     originalPrice: 50.0,
     rating: 4.2,
     image: '/assets/images/3_2.jpg?height=400&width=400',
+    display: false,
   },
   {
     id: '4',
@@ -133,6 +136,7 @@ export const products: Product[] = [
     originalPrice: 40.0,
     rating: 4.9,
     image: '/assets/images/1_1.jpg?height=400&width=400',
+    display: true,
   },
   {
     id: '5',
@@ -142,6 +146,7 @@ export const products: Product[] = [
     originalPrice: 75.0,
     rating: 4.6,
     image: '/assets/images/3_4.jpg?height=400&width=400',
+    display: false,
   },
   {
     id: '6',
@@ -151,6 +156,7 @@ export const products: Product[] = [
     originalPrice: 105.0,
     rating: 4.7,
     image: '/assets/images/17.jpg?height=400&width=400',
+    display: true,
   },
   {
     id: '7',
@@ -160,6 +166,7 @@ export const products: Product[] = [
     originalPrice: 32.99,
     rating: 4.4,
     image: '/assets/images/11.jpg?height=400&width=400',
+    display: true,
   },
   {
     id: '8',
@@ -169,6 +176,7 @@ export const products: Product[] = [
     originalPrice: 60.0,
     rating: 4.3,
     image: '/assets/images/2_2.jpg?height=400&width=400',
+    display: true,
   },
 ];
 

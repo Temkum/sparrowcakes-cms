@@ -92,7 +92,7 @@ export default function CategoriesSection() {
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Categories List */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-4">
             <CategoryList
               categories={categories}
               activeCategory={activeCategory}
@@ -101,7 +101,7 @@ export default function CategoriesSection() {
           </div>
 
           {/* Banners Grid */}
-          <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             {activeBanners.map((banner, index) => (
               <BannerCard key={index} banner={banner} />
             ))}

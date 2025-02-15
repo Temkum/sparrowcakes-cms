@@ -50,6 +50,7 @@ interface Product {
   originalPrice: number;
   rating: number;
   image: string;
+  display: boolean;
 }
 
 interface ProductGridProps {
@@ -77,6 +78,12 @@ interface BannerProps {
 interface PopularProductsProps {
   products: Product[];
   onAddToCart?: (productId: string) => void;
+}
+
+interface ProductStats {
+  totalProducts: number;
+  productInventory: number;
+  averagePrice: number;
 }
 
 interface Category {

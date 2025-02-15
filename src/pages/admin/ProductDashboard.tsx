@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -25,40 +25,8 @@ import {
   TagIcon,
   BoxIcon,
 } from 'lucide-react';
-
-// TypeScript interfaces
-interface Product {
-  id: string;
-  image: string;
-  name: string;
-  brand: string;
-  visibility: boolean;
-}
-
-interface ProductStats {
-  totalProducts: number;
-  productInventory: number;
-  averagePrice: number;
-}
-
-// Example data
-const initialProducts: Product[] = [
-  {
-    id: '1',
-    image: '/api/placeholder/40/40',
-    name: 'Exclusive methodical ability',
-    brand: 'Koss-Connelly',
-    visibility: false,
-  },
-  {
-    id: '2',
-    image: '/api/placeholder/40/40',
-    name: 'Organic user-facing portal',
-    brand: 'Langosh, VonRueden and Nikolaus',
-    visibility: true,
-  },
-  // Add more products as needed
-];
+import { Checkbox } from '@/components/ui/checkbox';
+import { products } from '@/utilities/data';
 
 const initialStats: ProductStats = {
   totalProducts: 50,
@@ -67,8 +35,9 @@ const initialStats: ProductStats = {
 };
 
 const ProductDashboard = () => {
-  const [products, setProducts] = React.useState<Product[]>(initialProducts);
+  // const [products, setProducts] = React.useState<Product[]>([]);
   const [stats, setStats] = React.useState<ProductStats>(initialStats);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 mx-auto h-full w-full px-4 md:px-6 lg:px-8 xl:max-w-7xl">
@@ -102,7 +71,7 @@ const ProductDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="p-4">
             <h3 className="text-sm text-gray-500">Total Products</h3>
-            <p className="text-2xl font-bold">{stats.totalProducts}</p>
+            <p className="text-2xl font-bold">{products.length}</p>
           </Card>
           <Card className="p-4">
             <h3 className="text-sm text-gray-500">Product Inventory</h3>
@@ -130,10 +99,23 @@ const ProductDashboard = () => {
           <Table className="h-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedProducts.length === products.length}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedProducts(
+                          products.map((product) => product.id)
+                        );
+                      } else {
+                        setSelectedProducts([]);
+                      }
+                    }}
+                  />
+                </TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Brand</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Visibility</TableHead>
                 <TableHead></TableHead>
               </TableRow>
@@ -142,22 +124,33 @@ const ProductDashboard = () => {
               {products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300"
+                    <Checkbox
+                      checked={selectedProducts.includes(product.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedProducts([
+                            ...selectedProducts,
+                            product.id,
+                          ]);
+                        } else {
+                          setSelectedProducts(
+                            selectedProducts.filter((id) => id !== product.id)
+                          );
+                        }
+                      }}
                     />
                   </TableCell>
                   <TableCell>
                     <img
                       src={product.image}
-                      alt={product.name}
+                      alt={product.title}
                       className="w-10 h-10 rounded object-cover"
                     />
                   </TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.brand}</TableCell>
+                  <TableCell>{product.title}</TableCell>
+                  <TableCell>{product.category}</TableCell>
                   <TableCell>
-                    {product.visibility ? (
+                    {product.display ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <XCircle className="w-5 h-5 text-red-500" />
