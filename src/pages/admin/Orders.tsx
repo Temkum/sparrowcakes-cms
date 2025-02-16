@@ -122,9 +122,31 @@ const OrdersPage = () => {
 
       {/* Orders Table */}
       <Card>
+        <div className="flex justify-between items-center mb-4 p-3">
+          <Select defaultValue="default">
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Group by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Group by</SelectItem>
+              <SelectItem value="status">Status</SelectItem>
+              <SelectItem value="date">Date</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-1">
+            <Input placeholder="Search" className="w-[200px]" />
+            <Button variant="ghost" size="icon">
+              <Filter className="h-4 w-4" fill="gray" color="gray" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Columns3 className="h-4 w-4" color="gray" />
+            </Button>
+          </div>
+        </div>
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="font-bold text-black-600 bg-gray-200">
               <TableHead className="w-[30px]">
                 <Checkbox
                   checked={selectedOrders.length === ordersData.length}

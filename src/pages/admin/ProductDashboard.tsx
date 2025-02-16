@@ -24,9 +24,12 @@ import {
   ZapIcon,
   TagIcon,
   BoxIcon,
+  Cake,
+  BadgeDollarSign,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { products } from '@/utilities/data';
+import { Link } from 'react-router-dom';
 
 const initialStats: ProductStats = {
   totalProducts: 50,
@@ -53,18 +56,21 @@ const ProductDashboard = () => {
         {/* Navigation */}
         <div className="flex gap-4 mb-6">
           <Button variant="ghost" className="flex items-center gap-2">
-            <ZapIcon className="w-4 h-4" />
+            <Cake className="w-4 h-4" />
             Products
-            <span className="ml-2 text-gray-500">21</span>
           </Button>
-          <Button variant="ghost" className="flex items-center gap-2">
-            <TagIcon className="w-4 h-4" />
-            Categories
-          </Button>
-          <Button variant="ghost" className="flex items-center gap-2">
-            <BoxIcon className="w-4 h-4" />
-            Brands
-          </Button>
+          <Link to="/admin/categories">
+            <Button variant="outline" className="flex items-center gap-2">
+              <TagIcon className="w-4 h-4" />
+              Categories
+            </Button>
+          </Link>
+          <Link to="/admin/orders">
+            <Button variant="outline" className="flex items-center gap-2">
+              <BadgeDollarSign className="w-4 h-4" />
+              Orders
+            </Button>
+          </Link>
         </div>
 
         {/* Stats Cards */}
