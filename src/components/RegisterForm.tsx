@@ -19,7 +19,7 @@ const RegisterForm = ({
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Sign Up</CardTitle>
+          <CardTitle className="text-2xl text-center">Sign Up</CardTitle>
           <CardDescription>
             Enter your email and password below to create an account
           </CardDescription>
@@ -52,7 +52,7 @@ const RegisterForm = ({
                 <Input id="confirm-password" type="password" required />
               </div>
               <Button type="submit" className="w-full">
-                Register
+                Sign Up
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">

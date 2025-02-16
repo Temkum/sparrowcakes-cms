@@ -16,14 +16,11 @@ const ResetPasswordLink: React.FC = ({
           <form>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center gap-2">
-                <Link
-                  to="/"
-                  className="flex items-center gap-2 font-medium text-red-400"
-                >
+                <Link to="/" className="flex items-center gap-2 font-medium">
                   <div className="flex h-8 w-8 items-center justify-center rounded-md">
                     <GalleryVerticalEnd className="size-6" />
                   </div>
-                  <span>Cancel</span>
+                  <span className="font-bold">Cakes By Sparrow</span>
                   <span className="sr-only">Cakes By Sparrow</span>
                 </Link>
                 <div className="text-center text-sm">

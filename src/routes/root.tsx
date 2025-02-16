@@ -1,11 +1,17 @@
 import Layout from '@/pages/Layout';
 import { createBrowserRouter } from 'react-router-dom';
-import Dashboard from '@/pages/Dashboard';
 import BaseLayout from '@/pages/BaseLayout';
 import Register from '@/pages/Register';
 import Login from '@/pages/Login';
 import ResetPassword from '@/pages/ResetPassword';
 import ResetPasswordLink from '@/pages/ResetPasswordLink';
+import Home from '@/pages/Home';
+import ProductDashboard from '@/pages/admin/ProductDashboard';
+import Users from '@/pages/admin/Users';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
+import OrdersPage from '@/pages/admin/Orders';
+import Customers from '@/pages/admin/Customers';
+import CategoriesPage from '@/pages/admin/Categories';
 
 const Root = createBrowserRouter([
   {
@@ -13,8 +19,8 @@ const Root = createBrowserRouter([
     element: <BaseLayout />,
     children: [
       {
-        path: '/orders',
-        element: <Dashboard />,
+        path: '/',
+        element: <Home />,
       },
     ],
   },
@@ -40,7 +46,27 @@ const Root = createBrowserRouter([
     children: [
       {
         path: '/admin/dashboard',
-        element: <Dashboard />,
+        element: <AdminDashboard />,
+      },
+      {
+        path: '/admin/products',
+        element: <ProductDashboard />,
+      },
+      {
+        path: '/admin/orders',
+        element: <OrdersPage />,
+      },
+      {
+        path: '/admin/users',
+        element: <Users />,
+      },
+      {
+        path: '/admin/customers',
+        element: <Customers />,
+      },
+      {
+        path: '/admin/categories',
+        element: <CategoriesPage />,
       },
     ],
   },

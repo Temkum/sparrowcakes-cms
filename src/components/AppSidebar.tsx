@@ -31,7 +31,7 @@ const data = {
   user: {
     name: 'Poupe',
     email: 'sparrow@example.com',
-    avatar: '/avatars/shadcn.jpg',
+    avatar: '/assets/profiles/poupe.png',
   },
   teams: [
     {
@@ -40,12 +40,12 @@ const data = {
       plan: 'Enterprise',
     },
     {
-      name: 'Acme Corp.',
+      name: 'Delivery Corp.',
       logo: AudioWaveform,
       plan: 'Startup',
     },
     {
-      name: 'Evil Corp.',
+      name: 'Beauty Corp.',
       logo: Command,
       plan: 'Free',
     },
@@ -58,16 +58,20 @@ const data = {
       isActive: true,
       items: [
         {
+          title: 'Categories',
+          url: '/admin/categories',
+        },
+        {
           title: 'Products',
-          url: '#',
+          url: '/admin/products',
         },
         {
           title: 'Orders',
-          url: '#',
+          url: '/admin/orders',
         },
         {
           title: 'Customers',
-          url: '#',
+          url: '/admin/customers',
         },
       ],
     },
@@ -124,7 +128,7 @@ const data = {
         },
         {
           title: 'Team',
-          url: '#',
+          url: '/admin/users',
         },
         {
           title: 'Billing',
