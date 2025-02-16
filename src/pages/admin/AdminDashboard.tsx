@@ -28,22 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { LogOut, Search, TrendingDown, TrendingUp } from 'lucide-react';
-
-// Types
-interface Order {
-  date: string;
-  number: string;
-  customer: string;
-  status: 'Processing' | 'Cancelled' | 'Shipped' | 'New';
-  currency: string;
-  totalPrice: number;
-  shippingCost: number;
-}
-
-interface ChartData {
-  name: string;
-  value: number;
-}
+import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 
 const monthlyOrders: ChartData[] = [
   { name: 'Jan', value: 2000 },
@@ -82,11 +67,20 @@ const orders: Order[] = [
   // Add more orders as needed
 ];
 
+const breadcrumbItems = [
+  { label: 'Cakes By Sparrow', href: '/admin' },
+  { label: 'Dashboard', href: '/admin/dashboard' },
+];
+
 const AdminDashboard = () => {
   return (
     <div className="min-h-screen">
+      {/* Breadcrumb */}
+      <div>
+        <BreadcrumbComponent items={breadcrumbItems} />
+      </div>
+
       {/* Main Content */}
-      {/* Header */}
       <div className="max-w-[1280px] mx-auto">
         <div className="flex justify-between items-center my-7">
           <div className="space-y-4">

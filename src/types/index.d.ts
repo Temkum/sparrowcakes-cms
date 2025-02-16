@@ -122,3 +122,27 @@ interface CarouselApi {
   next: () => void;
   prev: () => void;
 }
+
+interface BreadcrumbItem {
+  label: string;
+  href: string;
+}
+
+interface BreadcrumbProps {
+  items: BreadcrumbItem[];
+}
+
+interface Order {
+  date: string;
+  number: string;
+  customer: string;
+  status: 'Processing' | 'Cancelled' | 'Shipped' | 'New';
+  currency: string;
+  totalPrice: number;
+  shippingCost: number;
+}
+
+interface ChartData {
+  name: string;
+  value: number;
+}

@@ -1,18 +1,9 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-interface BreadcrumbItem {
-  label: string;
-  href: string;
-}
-
-interface BreadcrumbProps {
-  items: BreadcrumbItem[];
-}
-
-export function Breadcrumb({ items }: BreadcrumbProps) {
+export function BreadcrumbComponent({ items }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center space-x-1 text-sm text-gray-500">
+    <nav className="flex items-center space-x-1 text-sm text-gray-500 p-4 font-medium">
       {items.map((item, index) => (
         <div key={item.href} className="flex items-center">
           {index > 0 && <ChevronRight className="h-4 w-4 mx-1" />}
