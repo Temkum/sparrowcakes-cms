@@ -27,8 +27,6 @@ export function CategoriesTable() {
   // get all categories
   const [categories, setCategories] = useState<Category[]>([]);
 
-  console.log('first', categories);
-
   useEffect(() => {
     try {
       axios

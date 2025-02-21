@@ -152,9 +152,7 @@ export function CreateCategoryModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Editor value={field.value} onChange={field.onChange} />
-                  </FormControl>
+                  <Editor value={field.value || ''} onChange={field.onChange} />
                   <FormMessage />
                 </FormItem>
               )}
@@ -164,17 +162,16 @@ export function CreateCategoryModal({
               control={form.control}
               name="isVisible"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center rounded-lg p-4">
-                  <div className="space-y-0.5 mr-3 ">
+                <FormItem className="flex flex-row items-center rounded-lg">
+                  <div className="space-y-0.5 mr-3 mt-5 pl-0">
                     <FormLabel className="text-base">
                       Visible to customers
                     </FormLabel>
                   </div>
-                  <FormControl>
+                  <FormControl className="bg-orange-500 mt-5">
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      className="text-orange-500"
                     />
                   </FormControl>
                 </FormItem>

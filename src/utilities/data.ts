@@ -232,7 +232,7 @@ export const banners: BannerProps[] = [
   },
 ];
 
-export const categories: Category[] = [
+export const categories: CategoryForDisplay[] = [
   {
     id: 'cake-milk',
     name: 'Cake & Milk',

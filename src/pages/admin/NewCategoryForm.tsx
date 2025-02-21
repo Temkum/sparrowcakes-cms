@@ -88,8 +88,8 @@ export function NewCategoryForm() {
           control={form.control}
           name="visibility"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border py-4 mt-7">
+              <div className="space-y-0.5 mt-4">
                 <FormLabel className="text-base">Visibility</FormLabel>
                 <div className="text-sm text-muted-foreground">
                   Make this category visible to customers

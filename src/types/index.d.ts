@@ -86,7 +86,7 @@ interface ProductStats {
   averagePrice: number;
 }
 
-interface Category {
+interface CategoryForDisplay {
   id: string;
   name: string;
   itemCount: number;
@@ -155,4 +155,9 @@ interface Category {
   description: string;
   is_active: boolean;
   updatedDate: string;
+}
+
+interface EditorProps {
+  value: string;
+  onChange: (value: string) => void;
 }
