@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -17,55 +17,30 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronDown, Edit, CheckCircle, XCircle } from 'lucide-react';
+import axios from 'axios';
 
-interface Category {
-  id: string;
-  name: string;
-  parent: string;
-  visibility: boolean;
-  updatedDate: string;
-}
-
-const categories: Category[] = [
-  {
-    id: '1',
-    name: 'qui ut illum',
-    parent: '',
-    visibility: true,
-    updatedDate: 'Sep 24, 2024',
-  },
-  {
-    id: '2',
-    name: 'neque quis dolorem',
-    parent: 'qui ut illum',
-    visibility: true,
-    updatedDate: 'Dec 11, 2024',
-  },
-  {
-    id: '3',
-    name: 'pariatur perferendis quasi',
-    parent: 'qui ut illum',
-    visibility: true,
-    updatedDate: 'Jan 22, 2025',
-  },
-  {
-    id: '4',
-    name: 'reiciendis praesentium quia',
-    parent: 'qui ut illum',
-    visibility: false,
-    updatedDate: 'Jan 14, 2025',
-  },
-  {
-    id: '5',
-    name: 'non sit placeat',
-    parent: '',
-    visibility: true,
-    updatedDate: 'Sep 21, 2024',
-  },
-];
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function CategoriesTable() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // get all categories
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  console.log('first', categories);
+
+  useEffect(() => {
+    try {
+      axios
+        .get(`${API_BASE_URL}/categories`)
+        .then((res) => setCategories(res.data));
+    } catch (error) {
+      console.error(error);
+      // Display an error message to the user
+      alert('Failed to load categories');
+    }
+  }, []);
+  // get all products
 
   return (
     <div className="rounded-md border">
@@ -84,6 +59,7 @@ export function CategoriesTable() {
                 }}
               />
             </TableHead>
+            <TableHead>Image</TableHead>
             <TableHead>
               <div className="flex items-center justify-between">
                 Name
@@ -92,8 +68,7 @@ export function CategoriesTable() {
             </TableHead>
             <TableHead>
               <div className="flex items-center justify-between">
-                Parent
-                <ChevronDown className="h-4 w-4" />
+                Description
               </div>
             </TableHead>
             <TableHead>
@@ -131,10 +106,17 @@ export function CategoriesTable() {
                   }}
                 />
               </TableCell>
-              <TableCell>{category.name}</TableCell>
-              <TableCell>{category.parent}</TableCell>
               <TableCell>
-                {category.visibility ? (
+                <img
+                  src={category.imageUrl}
+                  alt={category.name}
+                  className="w-10 h-10 rounded object-cover"
+                />
+              </TableCell>
+              <TableCell>{category.name}</TableCell>
+              <TableCell>{category.description}</TableCell>
+              <TableCell>
+                {category.is_active ? (
                   <CheckCircle className="h-5 w-5 text-green-500" />
                 ) : (
                   <XCircle className="h-5 w-5 text-red-500" />

@@ -146,3 +146,13 @@ interface ChartData {
   name: string;
   value: number;
 }
+
+interface Category {
+  id: string;
+  name: string;
+  imageUrl: string;
+  slug: string;
+  description: string;
+  is_active: boolean;
+  updatedDate: string;
+}

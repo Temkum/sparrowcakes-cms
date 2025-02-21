@@ -68,6 +68,10 @@ const Root = createBrowserRouter([
         path: '/admin/categories',
         element: <CategoriesPage />,
       },
+      {
+        path: '/admin/categories/new',
+        element: <CategoriesPage />,
+      },
     ],
   },
 ]);

@@ -3,7 +3,10 @@ import { CategoriesTable } from '@/components/CategoriesTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CreateCategoryModal } from './CreateCategoryModal';
+import { Toaster } from '@/components/ui/toaster';
 
 const breadcrumbItems = [
   {
@@ -14,6 +17,8 @@ const breadcrumbItems = [
 ];
 
 export default function CategoriesPage() {
+  const [open, setOpen] = useState(false);
+
   return (
     <>
       <BreadcrumbComponent items={breadcrumbItems} />
@@ -23,8 +28,11 @@ export default function CategoriesPage() {
           <h1 className="text-2xl font-bold">Categories</h1>
           <div className="flex gap-3">
             <Button variant="outline">Import categories</Button>
-            <Link to="/categories/new">
-              <Button className="bg-orange-500 hover:bg-orange-600">
+            <Link to="/admin/categories/new">
+              <Button
+                className="bg-orange-500 hover:bg-orange-600"
+                onClick={() => setOpen(true)}
+              >
                 New category
               </Button>
             </Link>
@@ -39,6 +47,16 @@ export default function CategoriesPage() {
 
         {/* Table */}
         <CategoriesTable />
+
+        <CreateCategoryModal
+          open={open}
+          onOpenChange={setOpen}
+          onSuccess={() => {
+            // Refresh your categories data here
+          }}
+        />
+
+        <Toaster />
       </div>
     </>
   );
