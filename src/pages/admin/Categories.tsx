@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CreateCategoryModal } from './CreateCategoryModal';
 import { Toaster } from '@/components/ui/toaster';
-import axios from 'axios';
 
 const breadcrumbItems = [
   {
@@ -19,21 +18,6 @@ const breadcrumbItems = [
 
 export default function CategoriesPage() {
   const [open, setOpen] = useState(false);
-  const [categories, setCategories] = useState([]);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get('/categories');
-      const fetchedCategories = response.data;
-      // Update the state with the fetched categories
-      // For example:
-      setCategories(fetchedCategories);
-      console.log('Categories fetched:', fetchedCategories);
-      // return fetchedCategories;
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
 
   return (
     <>

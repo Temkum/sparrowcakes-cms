@@ -12,6 +12,7 @@ import AdminDashboard from '@/pages/admin/AdminDashboard';
 import OrdersPage from '@/pages/admin/Orders';
 import Customers from '@/pages/admin/Customers';
 import CategoriesPage from '@/pages/admin/Categories';
+import AddProduct from '@/pages/admin/AddProduct';
 
 const Root = createBrowserRouter([
   {
@@ -51,6 +52,10 @@ const Root = createBrowserRouter([
       {
         path: '/admin/products',
         element: <ProductDashboard />,
+      },
+      {
+        path: '/admin/products/new',
+        element: <AddProduct />,
       },
       {
         path: '/admin/orders',

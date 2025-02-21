@@ -46,6 +46,7 @@ interface Product {
   id: string;
   title: string;
   category: string;
+  quantity: number;
   price: number;
   originalPrice: number;
   rating: number;

@@ -57,9 +57,11 @@ const ProductDashboard = () => {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Products</h1>
-            <Button className="bg-orange-500 hover:bg-orange-600">
-              New product
-            </Button>
+            <Link to="/admin/products/new">
+              <Button className="bg-orange-500 hover:bg-orange-600">
+                New product
+              </Button>
+            </Link>
           </div>
 
           {/* Navigation */}

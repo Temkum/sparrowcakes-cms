@@ -97,7 +97,7 @@ export const blogPosts = [
   },
 ];
 
-export const products: Product[] = [
+export const products: ProductDisplay[] = [
   {
     id: '1',
     title: 'Best snakes with hazel nut mix pack 200gm',
