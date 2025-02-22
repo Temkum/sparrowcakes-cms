@@ -1,5 +1,4 @@
-'use client';
-
+import { Trash2 } from 'lucide-react';
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 
@@ -11,13 +10,18 @@ interface ImageUploadProps {
 export function ImageUpload({ value, onChange }: ImageUploadProps) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      // Here you would typically upload the files to your server
-      // For now, we'll just create URLs for preview
+      // Create URLs for preview
       const urls = acceptedFiles.map((file) => URL.createObjectURL(file));
       onChange([...value, ...urls]);
     },
     [value, onChange]
   );
+
+  const removeImage = (index: number, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent event propagation
+    const newValue = value.filter((_, i) => i !== index);
+    onChange(newValue);
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -46,12 +50,19 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
       {value.length > 0 && (
         <div className="grid grid-cols-4 gap-4 mt-4">
           {value.map((url, index) => (
-            <img
-              key={index}
-              src={url || '/placeholder.svg'}
-              alt={`Upload ${index + 1}`}
-              className="w-full h-24 object-cover rounded-lg"
-            />
+            <div key={index} className="relative">
+              <img
+                src={url || '/placeholder.svg'}
+                alt={`Upload ${index + 1}`}
+                className="w-full h-24 object-cover rounded-lg"
+              />
+              <button
+                onClick={(event) => removeImage(index, event)}
+                className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           ))}
         </div>
       )}
