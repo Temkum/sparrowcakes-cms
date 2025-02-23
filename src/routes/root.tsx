@@ -9,10 +9,11 @@ import Home from '@/pages/Home';
 import ProductDashboard from '@/pages/admin/ProductDashboard';
 import Users from '@/pages/admin/Users';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
-import OrdersPage from '@/pages/admin/Orders';
+import OrdersPage from '@/pages/admin/orders/Orders';
 import Customers from '@/pages/admin/Customers';
 import CategoriesPage from '@/pages/admin/Categories';
 import AddProduct from '@/pages/admin/AddProduct';
+import CreateOrder from '@/pages/admin/orders/CreateOrder';
 
 const Root = createBrowserRouter([
   {
@@ -60,6 +61,10 @@ const Root = createBrowserRouter([
       {
         path: '/admin/orders',
         element: <OrdersPage />,
+      },
+      {
+        path: '/admin/orders/new',
+        element: <CreateOrder />,
       },
       {
         path: '/admin/users',

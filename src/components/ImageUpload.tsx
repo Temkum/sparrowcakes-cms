@@ -28,6 +28,9 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif'],
     },
+    multiple: true,
+    maxFiles: 4,
+    maxSize: 10 * 1024 * 1024, // 10 MB
   });
 
   return (

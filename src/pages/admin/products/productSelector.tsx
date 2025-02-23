@@ -1,0 +1,160 @@
+import { useEffect } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
+
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+
+interface ProductSelectorProps {
+  name: string;
+  products: { id: string; name: string; price: number }[];
+}
+
+export function ProductSelector({ name, products }: ProductSelectorProps) {
+  const { control, setValue } = useFormContext();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: name,
+  });
+
+  // Initialize with one product field
+  useEffect(() => {
+    if (fields.length === 0) {
+      append({ product: '', quantity: 1, unitPrice: 0 });
+    }
+  }, [append, fields.length]);
+
+  const handleAddProduct = () => {
+    append({ product: '', quantity: 1, unitPrice: 0 });
+  };
+
+  const handleProductChange = (index: number, productId: string) => {
+    const selectedProduct = products.find((p) => p.id === productId);
+    if (selectedProduct) {
+      setValue(`${name}.${index}.unitPrice`, selectedProduct.price);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {fields.map((field, index) => (
+        <div key={field.id} className="border p-4 rounded-lg space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Product Selection */}
+            <FormField
+              control={control}
+              name={`${name}.${index}.product`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Product*</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value); // Update the product field
+                      handleProductChange(index, value); // Update the unit price
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {products.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Quantity */}
+            <FormField
+              control={control}
+              name={`${name}.${index}.quantity`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quantity*</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min={1}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Unit Price */}
+            <FormField
+              control={control}
+              name={`${name}.${index}.unitPrice`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Unit Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min={0}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      value={field.value}
+                      readOnly
+                      className="bg-gray-100"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Remove Button (only show if there's more than one product) */}
+          {fields.length > 1 && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => remove(index)}
+              className="w-full md:w-auto"
+            >
+              <Trash2 size={16} className="mr-2" />
+              Remove Product
+            </Button>
+          )}
+        </div>
+      ))}
+
+      {/* Add Product Button */}
+      <div className="flex justify-center">
+        <Button
+          type="button"
+          onClick={handleAddProduct}
+          className="w-full md:w-auto"
+        >
+          Add 1 more item
+        </Button>
+      </div>
+    </div>
+  );
+}

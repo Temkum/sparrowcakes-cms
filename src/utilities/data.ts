@@ -359,3 +359,27 @@ export const slides: Slide[] = [
     backgroundColor: '#dde7f8',
   },
 ];
+
+export const ordersData: OrdersProp[] = [
+  {
+    id: '1',
+    number: 'OR571702',
+    customer: 'Dahlia Conroy',
+    status: 'Processing',
+    currency: 'USD',
+    totalPrice: 1261.25,
+    shippingCost: 323.42,
+    orderDate: 'Feb 29, 2024',
+  },
+  {
+    id: '2',
+    number: 'OR323020',
+    customer: 'Mitchel Moen',
+    status: 'Delivered',
+    currency: 'Saudi Riyal',
+    totalPrice: 104.0,
+    shippingCost: 103.23,
+    orderDate: 'Apr 19, 2024',
+  },
+  // Add more orders as needed
+];

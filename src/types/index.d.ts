@@ -162,3 +162,25 @@ interface EditorProps {
   value: string;
   onChange: (value: string) => void;
 }
+
+interface OrdersProp {
+  id: string;
+  number: string;
+  customer: string;
+  status: 'Processing' | 'Delivered' | 'Shipped' | 'New' | 'Cancelled';
+  currency: string;
+  totalPrice: number;
+  shippingCost: number;
+  orderDate: string;
+}
+
+interface ProductDisplay {
+  id: string;
+  title: string;
+  category: string;
+  price: number;
+  originalPrice: number;
+  rating: number;
+  image: string;
+  display: boolean;
+}
