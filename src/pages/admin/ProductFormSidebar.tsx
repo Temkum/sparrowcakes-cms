@@ -12,7 +12,7 @@ import {
 
 const ProductFormSidebar = () => {
   return (
-    <div className="space-y-6 w-full max-w-md">
+    <div className="space-y-6 w-full max-w-lg">
       <Card className="bg-white shadow-sm border border-gray-200">
         <CardHeader className="border-b px-6 py-4">
           <CardTitle className="text-base font-medium">Status</CardTitle>

@@ -18,7 +18,7 @@ export const productFormSchema = z.object({
   compareAtPrice: z
     .number()
     .min(0, { message: 'Compare at price is required' }),
-  costPerItem: z.number().optional(),
+  costPerItem: z.number().min(0, { message: 'Cost per item is required' }),
 });
 
 export type ProductFormValues = z.infer<typeof productFormSchema>;

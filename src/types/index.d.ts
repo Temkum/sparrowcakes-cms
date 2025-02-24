@@ -184,3 +184,14 @@ interface ProductDisplay {
   image: string;
   display: boolean;
 }
+
+interface options {
+  value: string;
+  label: string;
+}
+
+interface DynamicCategoriesProps {
+  name: string;
+  label: string;
+  isRequired?: boolean;
+}

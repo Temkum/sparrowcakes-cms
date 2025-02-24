@@ -26,9 +26,9 @@ import { Editor } from './Editor';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import toast from 'react-hot-toast';
 import { productFormSchema } from '@/form-schema/productFormSchema';
+import { DynamicCategories } from './categories/DynamicCategories';
 
 const ProductForm = () => {
   const [isImagesOpen, setIsImagesOpen] = useState(true);
@@ -39,6 +39,7 @@ const ProductForm = () => {
     defaultValues: {
       isVisible: true,
       availability: new Date(),
+      slug: '',
       description: '',
       categories: [], // Default value for categories
     },
@@ -60,101 +61,68 @@ const ProductForm = () => {
     form.reset();
   }
 
-  // Example categories data
-  const categories = [
-    { id: 1, name: 'Category 1' },
-    { id: 2, name: 'Category 2' },
-    { id: 3, name: 'Category 3' },
-  ];
-
   return (
     <>
       <FormProvider {...form}>
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Form */}
           <Form {...form}>
-            <Card className="flex-1 space-y-8 p-4 bg-white shadow-sm border border-gray-200">
-              <form onSubmit={form.handleSubmit(onSubmit)}>
-                <div className="space-y-8">
-                  {/* Basic Information */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              Name<span className="text-red-500">*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                  form.setValue(
-                                    'slug',
-                                    generateSlug(e.target.value)
-                                  );
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+            <div className="w-full">
+              <Card className="space-y-8 p-4 bg-white shadow-sm border border-gray-200">
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                  <div className="space-y-8">
+                    {/* Basic Information */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                Name<span className="text-red-500">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    form.setValue(
+                                      'slug',
+                                      generateSlug(e.target.value)
+                                    );
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="slug"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Slug</FormLabel>
+                              <FormControl>
+                                <Input {...field} readOnly />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       <FormField
                         control={form.control}
-                        name="slug"
+                        name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Slug</FormLabel>
+                            <FormLabel>Description</FormLabel>
                             <FormControl>
-                              <Input {...field} readOnly />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Editor
-                              value={field.value}
-                              onChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Images */}
-                  <div className="space-y-4">
-                    <div
-                      className="flex items-center justify-between cursor-pointer"
-                      onClick={() => setIsImagesOpen(!isImagesOpen)}
-                    >
-                      <h2 className="text-lg font-semibold mt-5">Images</h2>
-                      {isImagesOpen ? <ChevronUp /> : <ChevronDown />}
-                    </div>
-                    {isImagesOpen && (
-                      <FormField
-                        control={form.control}
-                        name="images"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <ImageUpload
-                                value={field.value ?? []}
+                              <Editor
+                                value={field.value}
                                 onChange={field.onChange}
                               />
                             </FormControl>
@@ -162,53 +130,102 @@ const ProductForm = () => {
                           </FormItem>
                         )}
                       />
-                    )}
-                  </div>
-
-                  {/* Pricing */}
-                  <div className="space-y-4">
-                    <div
-                      className="flex items-center justify-between cursor-pointer"
-                      onClick={() => setIsPricingOpen(!isPricingOpen)}
-                    >
-                      <h2 className="text-lg font-semibold mt-5">Pricing</h2>
-                      {isPricingOpen ? <ChevronUp /> : <ChevronDown />}
                     </div>
-                    {isPricingOpen && (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="price"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  Price<span className="text-red-500">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+
+                    {/* Images */}
+                    <div className="space-y-4">
+                      <div
+                        className="flex items-center justify-between cursor-pointer"
+                        onClick={() => setIsImagesOpen(!isImagesOpen)}
+                      >
+                        <h2 className="text-lg font-semibold mt-5">Images</h2>
+                        {isImagesOpen ? <ChevronUp /> : <ChevronDown />}
+                      </div>
+                      {isImagesOpen && (
+                        <FormField
+                          control={form.control}
+                          name="images"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <ImageUpload
+                                  value={field.value ?? []}
+                                  onChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+
+                    {/* Pricing */}
+                    <div className="space-y-4">
+                      <div
+                        className="flex items-center justify-between cursor-pointer"
+                        onClick={() => setIsPricingOpen(!isPricingOpen)}
+                      >
+                        <h2 className="text-lg font-semibold mt-5">Pricing</h2>
+                        {isPricingOpen ? <ChevronUp /> : <ChevronDown />}
+                      </div>
+                      {isPricingOpen && (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="price"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    Price<span className="text-red-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      type="number"
+                                      step="0.01"
+                                      onChange={(e) =>
+                                        field.onChange(Number(e.target.value))
+                                      }
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="compareAtPrice"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    Compare at price
+                                    <span className="text-red-500">*</span>
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      type="number"
+                                      step="0.01"
+                                      onChange={(e) =>
+                                        field.onChange(Number(e.target.value))
+                                      }
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
 
                           <FormField
                             control={form.control}
-                            name="compareAtPrice"
+                            name="costPerItem"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>
-                                  Compare at price
-                                  <span className="text-red-500">*</span>
-                                </FormLabel>
+                                <FormLabel>Cost per item</FormLabel>
                                 <FormControl>
                                   <Input
                                     {...field}
@@ -220,73 +237,64 @@ const ProductForm = () => {
                                   />
                                 </FormControl>
                                 <FormMessage />
+                                <p className="text-sm text-muted-foreground">
+                                  Customers won't see this price.
+                                </p>
                               </FormItem>
                             )}
                           />
                         </div>
+                      )}
+                    </div>
 
-                        <FormField
-                          control={form.control}
-                          name="costPerItem"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Cost per item</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="number"
-                                  step="0.01"
-                                  onChange={(e) =>
-                                    field.onChange(Number(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              <p className="text-sm text-muted-foreground">
-                                Customers won't see this price.
-                              </p>
-                            </FormItem>
-                          )}
-                        />
+                    {/* Buttons */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-4">
+                        <Button
+                          type="submit"
+                          className="bg-orange-500 hover:bg-orange-600"
+                        >
+                          Create
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleCreateAnother()}
+                        >
+                          Create & create another
+                        </Button>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Buttons */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-4">
-                      <Button
-                        type="submit"
-                        className="bg-orange-500 hover:bg-orange-600"
-                      >
-                        Create
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleCreateAnother()}
-                      >
-                        Create & create another
-                      </Button>
                     </div>
                   </div>
-                </div>
-              </form>
-            </Card>
+                </form>
+              </Card>
+            </div>
 
             {/* Right Sidebar */}
-            <div className="w-full lg:w-80 space-y-8">
+            <div className="w-full lg:w-2/4 flex flex-col space-y-8">
               {/* Status Card */}
               <Card className="bg-white shadow-sm border border-gray-200">
                 <CardHeader className="border-b px-6 py-4">
                   <CardTitle className="text-base font-medium">
-                    Status
+                    Visibility
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center gap-3">
-                    <Switch className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500" />
-                    <Label className="font-normal">Visible</Label>
+                    <FormField
+                      control={form.control}
+                      name="isVisible"
+                      render={({ field }) => (
+                        <>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                          />
+                          <Label className="font-normal">Visible</Label>
+                        </>
+                      )}
+                    />
                   </div>
                   <p className="text-gray-500 text-sm">
                     This product will be hidden from all sales channels.
@@ -344,43 +352,7 @@ const ProductForm = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="categories"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          Categories<span className="text-red-500">*</span>
-                        </FormLabel>
-                        <div className="space-y-2">
-                          {categories.map((category) => (
-                            <FormItem
-                              key={category.id}
-                              className="flex items-center space-x-2"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(category.id)}
-                                  onCheckedChange={(checked) => {
-                                    const newValue = checked
-                                      ? [...(field.value || []), category.id]
-                                      : field.value?.filter(
-                                          (id) => id !== category.id
-                                        );
-                                    field.onChange(newValue);
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">
-                                {category.name}
-                              </FormLabel>
-                            </FormItem>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <DynamicCategories name="categories" label="Categories" />
                 </CardContent>
               </Card>
             </div>
