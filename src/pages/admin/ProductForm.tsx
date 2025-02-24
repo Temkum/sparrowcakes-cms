@@ -16,13 +16,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -33,37 +26,21 @@ import { Editor } from './Editor';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-// import ProductFormSidebar from './ProductFormSidebar';
-
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
-  }),
-  slug: z.string(),
-  description: z.string(),
-  isVisible: z.boolean().default(true),
-  availability: z.date(),
-  brand: z.string().optional(),
-  categories: z.string(),
-  images: z.array(z.string()).optional(),
-  price: z.string().min(1, { message: 'Price is required' }),
-  compareAtPrice: z
-    .string()
-    .min(1, { message: 'Compare at price is required' }),
-  costPerItem: z.string().optional(),
-});
+import { Checkbox } from '@/components/ui/checkbox';
+import toast from 'react-hot-toast';
+import { productFormSchema } from '@/form-schema/productFormSchema';
 
 const ProductForm = () => {
   const [isImagesOpen, setIsImagesOpen] = useState(true);
   const [isPricingOpen, setIsPricingOpen] = useState(true);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof productFormSchema>>({
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
       isVisible: true,
       availability: new Date(),
       description: '',
-      images: [],
+      categories: [], // Default value for categories
     },
   });
 
@@ -74,21 +51,29 @@ const ProductForm = () => {
       .replace(/(^-|-$)+/g, '');
   };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof productFormSchema>) {
     console.log(values);
+    toast.success('Product created successfully!');
   }
 
   function handleCreateAnother() {
     form.reset();
   }
 
+  // Example categories data
+  const categories = [
+    { id: 1, name: 'Category 1' },
+    { id: 2, name: 'Category 2' },
+    { id: 3, name: 'Category 3' },
+  ];
+
   return (
     <>
       <FormProvider {...form}>
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Form */}
-          <Card className="flex-1 space-y-8 p-4 bg-white shadow-sm border border-gray-200">
-            <Form {...form}>
+          <Form {...form}>
+            <Card className="flex-1 space-y-8 p-4 bg-white shadow-sm border border-gray-200">
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <div className="space-y-8">
                   {/* Basic Information */}
@@ -201,7 +186,14 @@ const ProductForm = () => {
                                   Price<span className="text-red-500">*</span>
                                 </FormLabel>
                                 <FormControl>
-                                  <Input {...field} type="number" step="0.01" />
+                                  <Input
+                                    {...field}
+                                    type="number"
+                                    step="0.01"
+                                    onChange={(e) =>
+                                      field.onChange(Number(e.target.value))
+                                    }
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -218,7 +210,14 @@ const ProductForm = () => {
                                   <span className="text-red-500">*</span>
                                 </FormLabel>
                                 <FormControl>
-                                  <Input {...field} type="number" step="0.01" />
+                                  <Input
+                                    {...field}
+                                    type="number"
+                                    step="0.01"
+                                    onChange={(e) =>
+                                      field.onChange(Number(e.target.value))
+                                    }
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -233,7 +232,14 @@ const ProductForm = () => {
                             <FormItem>
                               <FormLabel>Cost per item</FormLabel>
                               <FormControl>
-                                <Input {...field} type="number" step="0.01" />
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  onChange={(e) =>
+                                    field.onChange(Number(e.target.value))
+                                  }
+                                />
                               </FormControl>
                               <FormMessage />
                               <p className="text-sm text-muted-foreground">
@@ -266,106 +272,119 @@ const ProductForm = () => {
                   </div>
                 </div>
               </form>
-            </Form>
-          </Card>
+            </Card>
 
-          {/* Right Sidebar */}
-          <div className="w-full lg:w-80 space-y-8">
-            {/* Status Card */}
-            <Card className="bg-white shadow-sm border border-gray-200">
-              <CardHeader className="border-b px-6 py-4">
-                <CardTitle className="text-base font-medium">Status</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Switch className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500" />
-                  <Label className="font-normal">Visible</Label>
-                </div>
-                <p className="text-gray-500 text-sm">
-                  This product will be hidden from all sales channels.
-                </p>
+            {/* Right Sidebar */}
+            <div className="w-full lg:w-80 space-y-8">
+              {/* Status Card */}
+              <Card className="bg-white shadow-sm border border-gray-200">
+                <CardHeader className="border-b px-6 py-4">
+                  <CardTitle className="text-base font-medium">
+                    Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Switch className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500" />
+                    <Label className="font-normal">Visible</Label>
+                  </div>
+                  <p className="text-gray-500 text-sm">
+                    This product will be hidden from all sales channels.
+                  </p>
 
-                <FormField
-                  control={form.control}
-                  name="availability"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>
-                        Availability<span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
+                  <FormField
+                    control={form.control}
+                    name="availability"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>
+                          Availability<span className="text-red-500">*</span>
+                        </FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={'outline'}
+                                className={cn(
+                                  'w-full pl-3 text-left font-normal',
+                                  !field.value && 'text-muted-foreground'
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, 'PPP')
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Associations Card */}
+              <Card className="bg-white shadow-sm border border-gray-200">
+                <CardHeader className="border-b px-6 py-4">
+                  <CardTitle className="text-base font-medium">
+                    Associations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="categories"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Categories<span className="text-red-500">*</span>
+                        </FormLabel>
+                        <div className="space-y-2">
+                          {categories.map((category) => (
+                            <FormItem
+                              key={category.id}
+                              className="flex items-center space-x-2"
                             >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Associations Card */}
-            <Card className="bg-white shadow-sm border border-gray-200">
-              <CardHeader className="border-b px-6 py-4">
-                <CardTitle className="text-base font-medium">
-                  Associations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <FormField
-                  control={form.control}
-                  name="categories"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Categories<span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange([value])}
-                        defaultValue={field.value?.[0]}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="category1">Category 1</SelectItem>
-                          <SelectItem value="category2">Category 2</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          </div>
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(category.id)}
+                                  onCheckedChange={(checked) => {
+                                    const newValue = checked
+                                      ? [...(field.value || []), category.id]
+                                      : field.value?.filter(
+                                          (id) => id !== category.id
+                                        );
+                                    field.onChange(newValue);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {category.name}
+                              </FormLabel>
+                            </FormItem>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </Form>
         </div>
       </FormProvider>
     </>
