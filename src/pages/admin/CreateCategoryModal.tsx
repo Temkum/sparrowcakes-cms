@@ -162,16 +162,17 @@ export function CreateCategoryModal({
               control={form.control}
               name="isVisible"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center rounded-lg">
-                  <div className="space-y-0.5 mr-3 mt-5 pl-0">
+                <FormItem className="flex flex-row items-center rounded-lg pt-7 align-center">
+                  <div className="space-y-0.5 mr-3 pl-0">
                     <FormLabel className="text-base">
                       Visible to customers
                     </FormLabel>
                   </div>
-                  <FormControl className="bg-orange-500 mt-5">
+                  <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-orange-500"
                     />
                   </FormControl>
                 </FormItem>

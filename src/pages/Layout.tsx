@@ -9,9 +9,7 @@ export default function Layout() {
       <AppSidebar />
       <SidebarInset>
         <TopMenu />
-        <div className="bg-gray-50 h-full">
-          <Outlet />
-        </div>
+        <Outlet />
       </SidebarInset>
     </SidebarProvider>
   );

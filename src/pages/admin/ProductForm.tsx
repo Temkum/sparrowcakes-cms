@@ -29,10 +29,12 @@ import { Label } from '@/components/ui/label';
 import toast from 'react-hot-toast';
 import { productFormSchema } from '@/form-schema/productFormSchema';
 import { DynamicCategories } from './categories/DynamicCategories';
+import { Toaster } from 'react-hot-toast';
 
 const ProductForm = () => {
   const [isImagesOpen, setIsImagesOpen] = useState(true);
   const [isPricingOpen, setIsPricingOpen] = useState(true);
+  // const { toast } = useToast();
 
   const form = useForm<z.infer<typeof productFormSchema>>({
     resolver: zodResolver(productFormSchema),
@@ -63,6 +65,7 @@ const ProductForm = () => {
 
   return (
     <>
+      <Toaster />
       <FormProvider {...form}>
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Form */}
