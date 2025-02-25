@@ -6,7 +6,7 @@ export const testimonials = [
     name: 'Stephen Smith',
     role: 'Co Founder',
     quote:
-      'elusmpsu dolor sit amet, conse cte tur ng elit, sed do eiusmod tem lacus vel facilisis.',
+      'The quality of the products is outstanding and the customer service is top-notch. Highly recommend!',
     rating: 5,
     image: '/assets/profiles/tk.jpg',
   },
@@ -14,15 +14,15 @@ export const testimonials = [
     name: 'Lorem Robinson',
     role: 'Manager',
     quote:
-      'elusmpsu dolor sit amet, conse cte tur ng elit, sed do eiusmod tem lacus vel facilisis.',
-    rating: 3,
+      'Great selection of healthy snacks and quick delivery. Will definitely order again.',
+    rating: 4,
     image: '/assets/profiles/ceci.jpg',
   },
   {
     name: 'Saddika Alard',
     role: 'Team Leader',
     quote:
-      'elusmpsu dolor sit amet, conse cte tur ng elit, sed do eiusmod tem lacus vel facilisis.',
+      'I love the variety of organic products available. The website is easy to navigate and the prices are reasonable.',
     rating: 5,
     image: '/assets/profiles/annyia.jpg',
   },
@@ -32,40 +32,40 @@ export const blogPosts = [
   {
     author: 'Admin',
     category: 'Snacks',
-    title: 'Urna pretium elit mauris cursus at elit Vestibulum',
+    title: 'Exploring the Best Snacks for a Healthy Lifestyle',
     image: '/assets/images/2_4.jpg',
     date: {
       day: 10,
       month: 'OCT',
     },
-    slug: '/blog/urna-pretium',
+    slug: '/blog/exploring-best-snacks',
   },
   {
     author: 'Chef Maria',
     category: 'Healthy Eating',
-    title: 'Mediterranean Bowl with Grilled Vegetables',
+    title: 'Mediterranean Bowl with Grilled Vegetables Recipe',
     image: '/assets/images/3_4.jpg',
     date: {
       day: 12,
       month: 'OCT',
     },
-    slug: '/blog/mediterranean-bowl',
+    slug: '/blog/mediterranean-bowl-recipe',
   },
   {
     author: 'Nutritionist Sam',
     category: 'Nutrition',
-    title: 'Benefits of Plant-Based Protein Sources',
+    title: 'Top Benefits of Plant-Based Protein Sources',
     image: '/assets/images/8_1.jpg',
     date: {
       day: 15,
       month: 'OCT',
     },
-    slug: '/blog/plant-protein',
+    slug: '/blog/plant-protein-benefits',
   },
   {
     author: 'Food Editor',
     category: 'Recipes',
-    title: 'Quick and Easy Lunch Box Ideas',
+    title: 'Quick and Easy Lunch Box Ideas for Busy Days',
     image: '/assets/images/5.jpg',
     date: {
       day: 18,
@@ -76,24 +76,24 @@ export const blogPosts = [
   {
     author: 'Chef John',
     category: 'Cooking Tips',
-    title: 'Master the Art of Meal Prepping',
+    title: 'Master the Art of Meal Prepping: Tips and Tricks',
     image: '/assets/images/3_4.jpg',
     date: {
       day: 20,
       month: 'OCT',
     },
-    slug: '/blog/meal-prep',
+    slug: '/blog/meal-prep-tips',
   },
   {
     author: 'Health Coach',
     category: 'Wellness',
-    title: 'Balanced Nutrition for Active Lifestyle',
+    title: 'Balanced Nutrition Tips for an Active Lifestyle',
     image: '/assets/images/3_4.jpg',
     date: {
       day: 22,
       month: 'OCT',
     },
-    slug: '/blog/balanced-nutrition',
+    slug: '/blog/balanced-nutrition-tips',
   },
 ];
 
@@ -186,28 +186,32 @@ export const services: Service[] = [
       className: 'w-8 h-8 text-emerald-500',
     }),
     title: 'Product Packing',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
+    description:
+      'We ensure that all products are packed with utmost care to maintain their quality.',
   },
   {
     icon: React.createElement(Headphones, {
       className: 'w-8 h-8 text-emerald-500',
     }),
     title: '24X7 Support',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
+    description:
+      'Our customer support team is available 24/7 to assist you with any queries.',
   },
   {
     icon: React.createElement(Truck, {
       className: 'w-8 h-8 text-emerald-500',
     }),
     title: 'Delivery in 5 Days',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
+    description:
+      'We guarantee delivery within 5 days for all orders placed within the country.',
   },
   {
     icon: React.createElement(DollarSign, {
       className: 'w-8 h-8 text-emerald-500',
     }),
     title: 'Payment Secure',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipisicing.',
+    description:
+      'Your payments are secure with our advanced encryption technology.',
   },
 ];
 
@@ -336,7 +340,7 @@ export const slides: Slide[] = [
     tagPercentage: '100%',
     title: 'The best way to stuff your wallet.',
     description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+      'Discover our wide range of organic vegetables, grown without synthetic pesticides or fertilizers. Fresh, healthy, and delicious!',
     image: '/assets/images/1_1.jpg',
     backgroundColor: '#f8e7dd',
   },
@@ -345,7 +349,7 @@ export const slides: Slide[] = [
     tagPercentage: '100%',
     title: 'Natural and healthy fruits for you.',
     description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+      'Enjoy our selection of fresh fruits, picked at the peak of ripeness. Perfect for a healthy snack or as part of a balanced diet.',
     image: '/assets/images/banner.jpg',
     backgroundColor: '#e7f8dd',
   },
@@ -354,7 +358,7 @@ export const slides: Slide[] = [
     tagPercentage: '100%',
     title: 'The best organic products selection.',
     description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+      'Browse our curated collection of organic products, including snacks, beverages, and more. Quality you can trust, naturally.',
     image: '/assets/images/tab-1.jpg',
     backgroundColor: '#dde7f8',
   },
@@ -385,14 +389,9 @@ export const ordersData: OrdersProp[] = [
 ];
 
 export const dbCategories = [
-  { id: 1, name: 'Category 1' },
-  { id: 2, name: 'Category 2' },
-  { id: 3, name: 'Category 3' },
-  { id: 4, name: 'Category 4' },
-  { id: 5, name: 'Category 5' },
-  { id: 6, name: 'Category 6' },
-  { id: 7, name: 'Category 7' },
-  { id: 8, name: 'Category 8' },
-  { id: 9, name: 'Category 9' },
-  { id: 10, name: 'Category 10' },
+  { id: 'cake-milk', name: 'Cake & Milk' },
+  { id: 'fresh-meat', name: 'Fresh Meat' },
+  { id: 'vegetables', name: 'Vegetables' },
+  { id: 'apple-mango', name: 'Apple & Mango' },
+  { id: 'strawberry', name: 'Strawberry' },
 ];

@@ -10,8 +10,9 @@ const Testimonials = () => {
             Great Words From People
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore lacus vel facilisis.
+            Our products are designed to be easy to use, and easy to love, no
+            matter how you use them. And with our commitment to quality, you can
+            trust that they'll be durable and long-lasting.
           </p>
         </div>
 

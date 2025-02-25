@@ -25,21 +25,4 @@ const customerFormSchema = z.object({
   occupation: z.string().optional(),
 });
 
-// Example usage
-try {
-  const formData = {
-    name: 'John Doe',
-    email: 'john.doe@example.com', // Valid email
-    phone: '+237671234567', // Valid MTN number
-    city: 'Yaoundé',
-    address: 'Main Street',
-    occupation: 'Mr.',
-  };
-
-  const validatedData = customerFormSchema.parse(formData);
-  console.log('Validated Data:', validatedData);
-} catch (error) {
-  console.error('Validation Error:', error.errors);
-}
-
 export default customerFormSchema;

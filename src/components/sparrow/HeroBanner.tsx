@@ -20,40 +20,40 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    tag: 'Organic Vegetables',
-    tagPercentage: '100%',
-    title: 'The best way to stuff your wallet.',
+    tag: 'Seasonal Cakes',
+    tagPercentage: '20% OFF',
+    title: 'Celebrate with our seasonal cakes!',
     description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+      'Enjoy our delicious seasonal cakes made with the freshest ingredients. Perfect for any celebration.',
     image: '/assets/images/banner.jpg',
-    backgroundColor: '#f8e7dd',
+    backgroundColor: '#ffe5e5',
   },
   {
-    tag: 'Fresh Fruits',
-    tagPercentage: '100%',
-    title: 'Natural and healthy fruits for you.',
+    tag: 'Custom Cakes',
+    tagPercentage: '15% OFF',
+    title: 'Create your dream cake with us!',
     description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+      'Design your own cake for any occasion. Our custom cakes are made to order with your favorite flavors and decorations.',
     image: '/assets/images/banner-2.jpg',
-    backgroundColor: '#e7f8dd',
+    backgroundColor: '#e5f7ff',
   },
   {
-    tag: 'Organic Products',
-    tagPercentage: '100%',
-    title: 'The best organic products selection.',
+    tag: 'Wedding Cakes',
+    tagPercentage: '10% OFF',
+    title: 'Make your special day unforgettable!',
     description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
-    image: '/assets/images/banner-3.png',
-    backgroundColor: '#dde7f8',
+      'Our wedding cakes are crafted with love and attention to detail. Choose from a variety of designs and flavors.',
+    image: '/assets/images/banner-3.jpg',
+    backgroundColor: '#fff5e5',
   },
   {
-    tag: 'Organic Products',
-    tagPercentage: '100%',
-    title: 'The best organic products selection.',
+    tag: 'Birthday Cakes',
+    tagPercentage: '25% OFF',
+    title: 'Celebrate your birthday with a bang!',
     description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet reiciendis beatae consequuntur.',
+      'Our birthday cakes are perfect for any age. Choose from a wide range of themes and flavors to make your day extra special.',
     image: '/assets/images/banner-2.jpg',
-    backgroundColor: '#dde7f8',
+    backgroundColor: '#e5ffe5',
   },
 ];
 
