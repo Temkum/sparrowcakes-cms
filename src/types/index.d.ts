@@ -195,3 +195,9 @@ interface DynamicCategoriesProps {
   label: string;
   isRequired?: boolean;
 }
+
+interface CreateCustomerModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+}

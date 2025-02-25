@@ -19,6 +19,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Filter, Search, Edit, ArrowDownAZ } from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
+import { Link } from 'react-router-dom';
+import CreateCustomerModal from './CreateCustomerModal';
 
 interface Customer {
   id: string;
@@ -26,6 +28,7 @@ interface Customer {
   email: string;
   town: string;
   phone: string;
+  image?: string;
 }
 
 const customers: Customer[] = [
@@ -35,6 +38,7 @@ const customers: Customer[] = [
     email: 'steuber.woodrow@example.net',
     town: 'Madagascar',
     phone: '986.381.4395',
+    image: 'https://via.placeholder.com/150',
   },
   {
     id: '2',
@@ -42,6 +46,7 @@ const customers: Customer[] = [
     email: 'mollie.huel@example.org',
     town: 'Bonaire, Saint Eustatius and Saba',
     phone: '276-594-4610',
+    image: 'https://via.placeholder.com/150',
   },
   {
     id: '3',
@@ -49,6 +54,7 @@ const customers: Customer[] = [
     email: 'natalie.hill@example.org',
     town: 'Mozambique',
     phone: '910-372-5087',
+    image: 'https://via.placeholder.com/150',
   },
   {
     id: '4',
@@ -56,6 +62,7 @@ const customers: Customer[] = [
     email: 'schiller.brannon@example.net',
     town: 'Nigeria',
     phone: '754-524-7077',
+    image: 'https://via.placeholder.com/150',
   },
   {
     id: '5',
@@ -63,6 +70,7 @@ const customers: Customer[] = [
     email: 'crodriguez@example.com',
     town: 'Turks and Caicos Islands',
     phone: '(254) 435-1369',
+    image: 'https://via.placeholder.com/150',
   },
   // ... add more customers as needed
 ];
@@ -96,6 +104,7 @@ export default function Customers() {
     town: '',
     phone: '',
   });
+  const [open, setOpen] = useState(false);
 
   const totalPages = Math.ceil(customers.length / itemsPerPage);
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -139,9 +148,14 @@ export default function Customers() {
             <span className="sr-only">Filter</span>
           </Button>
           <div className="ml-auto">
-            <Button className="bg-orange-500 hover:bg-orange-600">
-              New customer
-            </Button>
+            <Link to="/admin/customers/new">
+              <Button
+                className="bg-orange-500 hover:bg-orange-600"
+                onClick={() => setOpen(true)}
+              >
+                New customer
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -301,6 +315,14 @@ export default function Customers() {
             </div>
           </div>
         </div>
+
+        <CreateCustomerModal
+          open={open}
+          onOpenChange={setOpen}
+          onSuccess={() => {
+            setOpen(false);
+          }}
+        />
       </div>
     </>
   );

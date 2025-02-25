@@ -3,7 +3,7 @@ import TopMenu from '@/components/TopMenu';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Outlet } from 'react-router-dom';
 
-export default function Layout() {
+export default function AdminBaseLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
