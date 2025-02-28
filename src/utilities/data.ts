@@ -238,7 +238,7 @@ export const banners: BannerProps[] = [
 
 export const categories: CategoryForDisplay[] = [
   {
-    id: 'cake-milk',
+    id: 1,
     name: 'Cake & Milk',
     itemCount: 65,
     banners: [
@@ -257,7 +257,7 @@ export const categories: CategoryForDisplay[] = [
     ],
   },
   {
-    id: 'fresh-meat',
+    id: 2,
     name: 'Fresh Meat',
     itemCount: 30,
     banners: [
@@ -276,7 +276,7 @@ export const categories: CategoryForDisplay[] = [
     ],
   },
   {
-    id: 'vegetables',
+    id: 3,
     name: 'Vegetables',
     itemCount: 25,
     banners: [
@@ -295,7 +295,7 @@ export const categories: CategoryForDisplay[] = [
     ],
   },
   {
-    id: 'apple-mango',
+    id: 4,
     name: 'Apple & Mango',
     itemCount: 45,
     banners: [
@@ -314,7 +314,7 @@ export const categories: CategoryForDisplay[] = [
     ],
   },
   {
-    id: 'strawberry',
+    id: 5,
     name: 'Strawberry',
     itemCount: 68,
     banners: [
@@ -388,10 +388,10 @@ export const ordersData: OrdersProp[] = [
   // Add more orders as needed
 ];
 
-export const dbCategories = [
-  { id: 'cake-milk', name: 'Cake & Milk' },
-  { id: 'fresh-meat', name: 'Fresh Meat' },
-  { id: 'vegetables', name: 'Vegetables' },
-  { id: 'apple-mango', name: 'Apple & Mango' },
-  { id: 'strawberry', name: 'Strawberry' },
+export const dbCategories: { id: number; name: string }[] = [
+  { id: 1, name: 'Cake & Milk' },
+  { id: 2, name: 'Fresh Meat' },
+  { id: 3, name: 'Vegetables' },
+  { id: 4, name: 'Apple & Mango' },
+  { id: 5, name: 'Strawberry' },
 ];

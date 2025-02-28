@@ -29,8 +29,8 @@ const MultiSelectCategories: React.FC<MultiSelectCategoriesProps> = ({
   maxItems = 5,
 }) => {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const filteredCategories = dbCategories.filter(
     (category: { id: number; name: string }) =>

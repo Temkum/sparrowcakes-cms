@@ -7,12 +7,13 @@ const Testimonials = () => {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Great Words From People
+            Sweet Words From Our Customers
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Our products are designed to be easy to use, and easy to love, no
-            matter how you use them. And with our commitment to quality, you can
-            trust that they'll be durable and long-lasting.
+            Our cakes and pastries are crafted with love and the finest
+            ingredients. Each bite is a delightful experience, and our
+            commitment to quality ensures that every treat is as delicious as it
+            is beautiful.
           </p>
         </div>
 

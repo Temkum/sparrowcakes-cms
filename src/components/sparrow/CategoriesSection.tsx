@@ -10,9 +10,9 @@ function CategoryList({
   activeCategory,
   onCategoryClick,
 }: {
-  categories: Category[];
-  activeCategory: string;
-  onCategoryClick: (categoryId: string) => void;
+  categories: CategoryForDisplay[];
+  activeCategory: number;
+  onCategoryClick: (categoryId: number) => void;
 }) {
   return (
     <div className="bg-white rounded-lg shadow-sm">
@@ -35,7 +35,7 @@ function CategoryList({
               {category.name}
             </span>
             <span className="text-sm text-gray-500">
-              ({category.itemCount} items)
+              {/* ({category.itemCount} items) */}
             </span>
           </div>
         </button>

@@ -88,7 +88,7 @@ interface ProductStats {
 }
 
 interface CategoryForDisplay {
-  id: string;
+  id: number;
   name: string;
   itemCount: number;
   banners: Banner[];
@@ -185,8 +185,8 @@ interface ProductDisplay {
   display: boolean;
 }
 
-interface options {
-  value: string;
+interface Option {
+  value: number;
   label: string;
 }
 

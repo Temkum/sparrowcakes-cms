@@ -41,8 +41,11 @@ export function DynamicCategories({
   }, []);
 
   // Handle selection change
-  const handleChange = (selectedOptions: any, field: any) => {
-    const selectedIds = selectedOptions.map((option: options) => option.value);
+  const handleChange = (
+    selectedOptions: readonly Option[],
+    field: { onChange: (value: number[]) => void }
+  ) => {
+    const selectedIds = selectedOptions.map((option) => option.value);
     field.onChange(selectedIds); // Update form value with selected IDs
   };
 
