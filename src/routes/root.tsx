@@ -1,4 +1,3 @@
-import Layout from '@/pages/Layout';
 import { createBrowserRouter } from 'react-router-dom';
 import BaseLayout from '@/pages/BaseLayout';
 import Register from '@/pages/Register';
@@ -9,9 +8,12 @@ import Home from '@/pages/Home';
 import ProductDashboard from '@/pages/admin/ProductDashboard';
 import Users from '@/pages/admin/Users';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
-import OrdersPage from '@/pages/admin/Orders';
-import Customers from '@/pages/admin/Customers';
+import OrdersPage from '@/pages/admin/orders/Orders';
+import Customers from '@/pages/admin/customers/Customers';
 import CategoriesPage from '@/pages/admin/Categories';
+import AddProduct from '@/pages/admin/AddProduct';
+import CreateOrder from '@/pages/admin/orders/CreateOrder';
+import AdminBaseLayout from '@/pages/AdminBaseLayout';
 
 const Root = createBrowserRouter([
   {
@@ -42,7 +44,7 @@ const Root = createBrowserRouter([
   },
   {
     path: '/admin',
-    element: <Layout />,
+    element: <AdminBaseLayout />,
     children: [
       {
         path: '/admin/dashboard',
@@ -53,8 +55,16 @@ const Root = createBrowserRouter([
         element: <ProductDashboard />,
       },
       {
+        path: '/admin/products/new',
+        element: <AddProduct />,
+      },
+      {
         path: '/admin/orders',
         element: <OrdersPage />,
+      },
+      {
+        path: '/admin/orders/new',
+        element: <CreateOrder />,
       },
       {
         path: '/admin/users',
@@ -65,7 +75,15 @@ const Root = createBrowserRouter([
         element: <Customers />,
       },
       {
+        path: '/admin/customers/new',
+        element: <Customers />,
+      },
+      {
         path: '/admin/categories',
+        element: <CategoriesPage />,
+      },
+      {
+        path: '/admin/categories/new',
         element: <CategoriesPage />,
       },
     ],

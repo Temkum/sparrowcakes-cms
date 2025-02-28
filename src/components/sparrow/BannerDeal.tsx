@@ -88,8 +88,8 @@ export default function BannerDeal() {
                 Great deal on home made food.
               </h1>
               <p className="text-gray-600 mb-8">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                maecenas accumsan lacus vel facilisis.
+                Enjoy delicious, homemade food with a special 45% discount.
+                Don't miss out on this limited-time offer!
               </p>
               <div className="border border-gray-300 shadow-lg p-4 rounded-lg bg-orange-100 w-fit">
                 <CountdownTimer />

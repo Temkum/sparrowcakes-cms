@@ -124,7 +124,7 @@ export default function PopularProducts({
           Popular Products
         </h2>
         <p className="text-center mb-8">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit
+          Discover our most popular products, loved by our customers!
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

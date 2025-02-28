@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 export default function BlogCard({
   author = 'Admin',
   category = 'Snacks',
-  title = 'Urna pretium elit mauris cursus at elit Vestibulum',
+  title = 'Discover the Best Snacks with Our Exclusive Selection',
   image = '/placeholder.svg?height=300&width=400',
   date = { day: 10, month: 'OCT' },
   slug = '/',

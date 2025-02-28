@@ -13,16 +13,14 @@ const GistCard = () => {
         <div className="p-4 sm:p-6">
           <Link to="/">
             <h3 className="text-lg font-medium text-gray-900">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit.
+              Discover Our Delicious Cakes
             </h3>
           </Link>
 
           <p className="mt-2 line-clamp-3 text-sm/relaxed text-gray-500">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Recusandae
-            dolores, possimus pariatur animi temporibus nesciunt praesentium
-            dolore sed nulla ipsum eveniet corporis quidem, mollitia itaque
-            minus soluta, voluptates neque explicabo tempora nisi culpa eius
-            atque dignissimos. Molestias explicabo corporis voluptatem?
+            Explore our wide variety of cakes made with the finest ingredients.
+            Whether you're celebrating a special occasion or just craving
+            something sweet, we have the perfect cake for you.
           </p>
 
           <Link

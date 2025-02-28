@@ -46,6 +46,7 @@ interface Product {
   id: string;
   title: string;
   category: string;
+  quantity: number;
   price: number;
   originalPrice: number;
   rating: number;
@@ -86,8 +87,8 @@ interface ProductStats {
   averagePrice: number;
 }
 
-interface Category {
-  id: string;
+interface CategoryForDisplay {
+  id: number;
   name: string;
   itemCount: number;
   banners: Banner[];
@@ -145,4 +146,58 @@ interface Order {
 interface ChartData {
   name: string;
   value: number;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  imageUrl: string;
+  slug: string;
+  description: string;
+  is_active: boolean;
+  updatedDate: string;
+}
+
+interface EditorProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+interface OrdersProp {
+  id: string;
+  number: string;
+  customer: string;
+  status: 'Processing' | 'Delivered' | 'Shipped' | 'New' | 'Cancelled';
+  currency: string;
+  totalPrice: number;
+  shippingCost: number;
+  orderDate: string;
+}
+
+interface ProductDisplay {
+  id: string;
+  title: string;
+  category: string;
+  price: number;
+  originalPrice: number;
+  rating: number;
+  image: string;
+  display: boolean;
+}
+
+interface Option {
+  value: number;
+  label: string;
+}
+
+interface DynamicCategoriesProps {
+  name: string;
+  label: string;
+  isRequired?: boolean;
+}
+
+interface CreateCustomerModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
