@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { LogOut, Search, TrendingDown, TrendingUp } from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
+import { logout } from '@/services/auth.service';
 
 const monthlyOrders: ChartData[] = [
   { name: 'Jan', value: 2000 },
@@ -113,7 +114,14 @@ const AdminDashboard = () => {
               <p className="font-medium">Welcome</p>
               <p className="text-sm text-gray-500">Demo User</p>
             </div>
-            <Button variant="ghost" size="icon">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                logout();
+                console.log('User logged out');
+              }}
+            >
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
