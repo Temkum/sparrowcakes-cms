@@ -85,16 +85,20 @@ const TopNav = () => {
             ) : (
               <>
                 <DropdownMenuItem onClick={() => setIsLoggedIn(true)}>
-                  <Link to="/login">Login</Link>
-                  <LogIn
-                    size={16}
-                    className="ml-2"
-                    onClick={() => setIsLoggedIn(true)}
-                  />
+                  <Link to="/login" className="flex items-center">
+                    Login
+                    <LogIn
+                      size={16}
+                      className="ml-2"
+                      onClick={() => setIsLoggedIn(true)}
+                    />
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link to="/register">Register</Link>
-                  <UserPlus size={16} className="ml-2" />
+                  <Link to="/register" className="flex items-center">
+                    Register
+                    <UserPlus size={16} className="ml-2" />
+                  </Link>
                 </DropdownMenuItem>
               </>
             )}
