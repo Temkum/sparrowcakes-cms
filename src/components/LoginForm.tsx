@@ -16,8 +16,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
+import { Toaster } from 'react-hot-toast';
 
 const LoginForm = ({
   className,
@@ -59,10 +59,8 @@ const LoginForm = ({
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Invalid credentials.');
-        toast.error('An error occurred during login.');
       } else {
-        setError('Failed to login. An unexpected error occurred.');
-        toast.error('Failed to login.');
+        setError('Failed to login. Invalid Credentials.');
       }
     } finally {
       setIsLoading(false);
@@ -74,7 +72,11 @@ const LoginForm = ({
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome Back</CardTitle>
-          <CardDescription>Login to your account to continue</CardDescription>
+          {error ? (
+            <span className="text-sm text-red-500 text-center">{error}</span>
+          ) : (
+            <CardDescription>Login to your account to continue</CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -114,11 +116,7 @@ const LoginForm = ({
                   </span>
                 )}
               </div>
-              {error && (
-                <span className="text-sm text-red-500 text-center">
-                  {error}
-                </span>
-              )}
+
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Logging in...' : 'Login'}
               </Button>
@@ -132,7 +130,7 @@ const LoginForm = ({
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{' '}
+              Don't have an account?{' '}
               <Link to="/register" className="underline underline-offset-4">
                 Sign up
               </Link>
@@ -140,6 +138,7 @@ const LoginForm = ({
           </form>
         </CardContent>
       </Card>
+      <Toaster />
     </div>
   );
 };

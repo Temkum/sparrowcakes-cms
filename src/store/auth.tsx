@@ -6,6 +6,7 @@ import {
   isAuthenticated,
   getToken,
 } from '../services/auth.service';
+import toast from 'react-hot-toast';
 
 interface AuthState {
   token: string | null;
@@ -26,8 +27,11 @@ export const useAuthStore = create<AuthState>()(
           set({ token: response.token, isAuthenticated: true });
           return true;
         } catch (error) {
-          console.error('Login failed:', error);
-          return false;
+          console.error('Invalid credentials:', error);
+          toast.error('Invalid Credentials. Please try again.', {
+            position: 'bottom-center',
+          });
+          throw new Error('Invalid Credentials!');
         }
       },
       logoutUser: () => {
