@@ -17,11 +17,18 @@ import {
   Globe,
   ChevronDown,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/store/auth';
 
 const TopNav = () => {
-  // Simulate authentication state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const logoutUser = useAuthStore((state) => state.logoutUser);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logoutUser();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <nav className="flex items-center justify-between px-6 py-6 bg-white shadow-md">
@@ -75,11 +82,7 @@ const TopNav = () => {
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsLoggedIn(false)}>
                   Logout{' '}
-                  <LogOut
-                    size={16}
-                    className="ml-2"
-                    onClick={() => setIsLoggedIn(false)}
-                  />
+                  <LogOut size={16} className="ml-2" onClick={handleLogout} />
                 </DropdownMenuItem>
               </>
             ) : (

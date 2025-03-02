@@ -13,7 +13,7 @@ import Customers from '@/pages/admin/customers/Customers';
 import CategoriesPage from '@/pages/admin/Categories';
 import AddProduct from '@/pages/admin/AddProduct';
 import CreateOrder from '@/pages/admin/orders/CreateOrder';
-import AdminBaseLayout from '@/pages/AdminBaseLayout';
+import ProtectedRoute from './ProtectedRoute';
 
 const Root = createBrowserRouter([
   {
@@ -44,7 +44,7 @@ const Root = createBrowserRouter([
   },
   {
     path: '/admin',
-    element: <AdminBaseLayout />,
+    element: <ProtectedRoute />,
     children: [
       {
         path: '/admin/dashboard',
