@@ -32,17 +32,22 @@ export const login = async (data: { email: string; password: string }) => {
       'Content-Type': 'application/json',
     },
   });
-  console.log('Login successful:', response.data.user);
   localStorage.setItem('token', response.data.token);
 
   return response.data;
 };
 
-export const register = async (email: string, password: string) => {
+export const register = async (
+  name: string,
+  email: string,
+  password: string
+) => {
   const response = await axios.post(`${API_URL}/auth/register`, {
+    name,
     email,
     password,
   });
+
   return response.data;
 };
 
