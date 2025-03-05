@@ -44,8 +44,8 @@ const RegisterForm = ({
       const success = await registerUser(data.name, data.email, data.password);
       if (success) {
         toast.success(`${data.name} registered successfully!`);
-        navigate('/admin/dashboard', { replace: true });
       }
+      navigate('/login', { replace: true });
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Registration failed.');
