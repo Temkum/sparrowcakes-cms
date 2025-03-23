@@ -107,3 +107,15 @@ export const refreshToken = async () => {
     return null;
   }
 };
+
+export const sendPasswordReset = async (email: string) => {
+  await axios.post(`${API_URL}/auth/forgot-password`, { email });
+};
+
+export const resetPassword = async (data: FormData) => {
+  try {
+    await axios.post(`${API_URL}/auth/reset-password`, data);
+  } catch (error) {
+    console.error('Password reset failed:', error);
+  }
+};

@@ -207,3 +207,7 @@ interface AuthContextType {
   login: (token: string) => void;
   logout: () => void;
 }
+
+type ForgotPasswordFormValues = {
+  email: string;
+};

@@ -9,11 +9,48 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const schema = z
+  .object({
+    password: z.string().min(8),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
+
+type FormData = z.infer<typeof schema>;
 
 const PasswordResetForm = ({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<'div'>) => {
+  const { token } = useParams();
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      await axios.post(`/api/auth/reset-password/${token}`, {
+        password: data.password,
+      });
+      navigate('/login');
+    } catch (error) {
+      console.error('Password reset failed:', error);
+    }
+  };
+
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card>
