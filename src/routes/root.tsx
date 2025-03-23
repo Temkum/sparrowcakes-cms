@@ -14,8 +14,6 @@ import CategoriesPage from '@/pages/admin/Categories';
 import AddProduct from '@/pages/admin/AddProduct';
 import CreateOrder from '@/pages/admin/orders/CreateOrder';
 import ProtectedRoute from './ProtectedRoute';
-import ForgotPassword from '@/components/ForgotPassword';
-
 const Root = createBrowserRouter([
   {
     path: '/',

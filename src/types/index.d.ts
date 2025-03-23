@@ -211,3 +211,9 @@ interface AuthContextType {
 type ForgotPasswordFormValues = {
   email: string;
 };
+
+interface PasswordResetResponse {
+  error?: {
+    message: string;
+  };
+}

@@ -10,6 +10,8 @@ import ForgotPasswordDialog from '@/components/ForgotPasswordDialog';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import toast, { Toaster } from 'react-hot-toast';
+import axios from 'axios';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -38,17 +40,29 @@ const ResetPasswordLink: React.FC = ({
     },
   });
 
-  // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
       setError('');
-      await passwordResetApi.requestPasswordReset(values.email);
-      setIsForgotPasswordDialogOpen(true); // Open success dialog
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'An unexpected error occurred'
+      const response = await passwordResetApi.requestPasswordReset(
+        values.email
       );
+
+      if (response?.error) {
+        toast.error(response.error.message);
+      } else {
+        setIsForgotPasswordDialogOpen(true);
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        // Access the error message from the backend response
+        const errorMessage = err.response?.data?.message || err.message;
+        toast.error(errorMessage);
+      } else {
+        toast.error(
+          err instanceof Error ? err.message : 'An unexpected error occurred'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -104,8 +118,9 @@ const ResetPasswordLink: React.FC = ({
       <ForgotPasswordDialog
         isOpen={isForgotPasswordDialogOpen}
         onOpenChange={setIsForgotPasswordDialogOpen}
-        onSubmit={async () => {}}
       />
+
+      <Toaster />
     </>
   );
 };

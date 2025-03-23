@@ -19,26 +19,19 @@ export const fetchHello = async () => {
 };
 
 export const passwordResetApi = {
-  requestPasswordReset: async (email: string): Promise<void> => {
-    console.log('requestPasswordReset', email);
-    await api.post('/auth/forgot-password', { email });
+  requestPasswordReset: async (
+    email: string
+  ): Promise<PasswordResetResponse> => {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      console.error('Error requesting password reset:', error);
+      throw error;
+    }
   },
 
   resetPassword: async (token: string, password: string): Promise<void> => {
     await api.post('/auth/reset-password', { token, password });
   },
 };
-
-const sendPasswordResetEmail = async (email: string, resetUrl: string) => {
-  try {
-    const response = await axios.post('/email/password-reset', {
-      email,
-      resetUrl,
-    });
-    console.log('Email sent:', response.data);
-  } catch (error) {
-    console.error('Error sending email:', error);
-  }
-};
-
-export { sendPasswordResetEmail };
