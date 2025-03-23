@@ -1,13 +1,14 @@
 {
   "name": "sparrow-cakes-cms",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release": "standard-version"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.0",
@@ -46,6 +47,7 @@
     "react-router-dom": "^7.1.5",
     "react-select": "^5.10.0",
     "recharts": "^2.15.1",
+    "standard-version": "^9.5.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "vite-tsconfig-paths": "^5.1.4",
