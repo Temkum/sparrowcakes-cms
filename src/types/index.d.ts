@@ -201,3 +201,19 @@ interface CreateCustomerModalProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
+
+interface AuthContextType {
+  isAuthenticated: boolean;
+  login: (token: string) => void;
+  logout: () => void;
+}
+
+type ForgotPasswordFormValues = {
+  email: string;
+};
+
+interface PasswordResetResponse {
+  error?: {
+    message: string;
+  };
+}
