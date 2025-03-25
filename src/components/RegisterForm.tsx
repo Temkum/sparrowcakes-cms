@@ -40,6 +40,8 @@ const RegisterForm = ({
     setIsLoading(true);
     setError(null);
 
+    console.log(data);
+
     try {
       const success = await registerUser(data.name, data.email, data.password);
       if (success) {
