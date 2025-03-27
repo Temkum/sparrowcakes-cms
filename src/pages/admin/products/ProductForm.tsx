@@ -22,14 +22,14 @@ import {
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Editor } from './Editor';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import toast from 'react-hot-toast';
 import { productFormSchema } from '@/form-schema/productFormSchema';
-import { DynamicCategories } from './categories/DynamicCategories';
 import { Toaster } from 'react-hot-toast';
+import { Editor } from '../Editor';
+import { DynamicCategories } from '../categories/DynamicCategories';
 
 const ProductForm = () => {
   const [isImagesOpen, setIsImagesOpen] = useState(true);

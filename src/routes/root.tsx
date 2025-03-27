@@ -5,15 +5,15 @@ import Login from '@/pages/Login';
 import ResetPassword from '@/pages/ResetPassword';
 import ResetPasswordLink from '@/pages/ResetPasswordLink';
 import Home from '@/pages/Home';
-import ProductDashboard from '@/pages/admin/ProductDashboard';
+import ProductDashboard from '@/pages/admin/products/ProductDashboard';
 import Users from '@/pages/admin/Users';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import OrdersPage from '@/pages/admin/orders/Orders';
 import Customers from '@/pages/admin/customers/Customers';
-import CategoriesPage from '@/pages/admin/Categories';
-import AddProduct from '@/pages/admin/AddProduct';
+import CategoriesPage from '@/pages/admin/categories/Categories';
 import CreateOrder from '@/pages/admin/orders/CreateOrder';
 import ProtectedRoute from './ProtectedRoute';
+import AddProduct from '@/pages/admin/products/AddProduct';
 const Root = createBrowserRouter([
   {
     path: '/',

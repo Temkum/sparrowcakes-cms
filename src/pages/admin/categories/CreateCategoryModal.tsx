@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Editor } from './Editor';
+import { Editor } from '../Editor';
 import axios from 'axios';
 
 const formSchema = z.object({
