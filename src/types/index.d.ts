@@ -155,7 +155,7 @@ interface Category {
   slug: string;
   description: string;
   isActive: boolean;
-  updatedDate: string;
+  updated_at: string;
 }
 
 interface EditorProps {
