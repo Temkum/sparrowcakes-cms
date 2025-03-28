@@ -27,7 +27,12 @@ export default function CategoriesPage() {
         <div className="flex items-center justify-between mt-4 mb-8">
           <h1 className="text-2xl font-bold">Categories</h1>
           <div className="flex gap-3">
-            <Button variant="outline">Import categories</Button>
+            <Button variant="outline" disabled>
+              Import categories
+              <span className="text-xs text-gray-500 ml-1">
+                (Not functional)
+              </span>
+            </Button>
             <Link to="/admin/categories/new">
               <Button
                 className="bg-orange-500 hover:bg-orange-600"

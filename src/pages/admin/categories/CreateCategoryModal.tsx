@@ -38,6 +38,7 @@ const formSchema = z.object({
     }),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
+  imageUrl: z.string().optional(),
 });
 
 interface CreateCategoryModalProps {
@@ -51,17 +52,17 @@ export function CreateCategoryModal({
   onOpenChange,
   onSuccess,
 }: CreateCategoryModalProps) {
-  // const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useAuthStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      isActive: false,
+      isActive: true,
       description: '',
       name: '',
       slug: '',
+      imageUrl: '',
     },
   });
 
@@ -162,6 +163,42 @@ export function CreateCategoryModal({
                   </FormItem>
                 )}
               />
+
+              <div className="col-span-2">
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Image Upload</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                field.onChange(reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {form.watch('imageUrl') && (
+                  <img
+                    src={form.watch('imageUrl')}
+                    alt="Uploaded"
+                    className="mt-4 w-full h-32 object-cover rounded-lg"
+                  />
+                )}
+              </div>
             </div>
 
             <FormField
