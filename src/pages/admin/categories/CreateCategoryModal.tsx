@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { Editor } from '../Editor';
 import axios from 'axios';
 import { useAuthStore } from '@/store/auth';
 import toast, { Toaster } from 'react-hot-toast';
+import { Loader2, Trash } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -38,7 +39,28 @@ const formSchema = z.object({
     }),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
-  imageUrl: z.string().optional(),
+  image: z
+    .any()
+    .refine(
+      (file) =>
+        !file || // Allow empty value
+        (file instanceof File &&
+          [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/bmp',
+            'image/svg+xml',
+            'image/tiff',
+            'image/jpg',
+          ].includes(file.type)),
+      {
+        message:
+          'Image must be a valid file with formats: JPEG, PNG, GIF, WEBP, BMP, SVG, TIFF, or JPG.',
+      }
+    )
+    .optional(),
 });
 
 interface CreateCategoryModalProps {
@@ -54,6 +76,7 @@ export function CreateCategoryModal({
 }: CreateCategoryModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useAuthStore();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,9 +85,18 @@ export function CreateCategoryModal({
       description: '',
       name: '',
       slug: '',
-      imageUrl: '',
+      image: null,
     },
   });
+
+  // Clear preview when component unmounts or when image changes
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const generateSlug = (name: string) => {
     return name
@@ -73,45 +105,77 @@ export function CreateCategoryModal({
       .replace(/(^-|-$)+/g, '');
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(token);
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (optional, adjust as needed)
+      const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSizeInBytes) {
+        toast.error('File is too large. Maximum size is 10MB.');
+        return;
+      }
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+
+      // Clean up previous preview if exists
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+
+      // Set new preview and form value
+      setImagePreview(previewUrl);
+      form.setValue('image', file);
+    }
+  };
+
+  const resetForm = () => {
+    form.reset({
+      isActive: true,
+      description: '',
+      name: '',
+      slug: '',
+      image: null,
+    });
+    setImagePreview(null);
+  };
+
+  const handleSubmit = async (keepOpen?: boolean) => {
     try {
       setIsSubmitting(true);
 
-      // Sanitize description by removing HTML tags
-      const sanitizedValues = {
-        ...values,
-        description: (values?.description || '').replace(/<\/?p>/g, '').trim(),
-      };
+      // const formData = new FormData();
+      const values = form.getValues();
+      console.log('Form Values:', values);
 
-      // Extensive logging for debugging
-      console.group('Category Creation Debug');
-      console.log('Token:', token);
-      console.log('Token Length:', token?.length);
-      console.log('Token First 10 chars:', token?.substring(0, 10));
-      console.log('Full Request Payload:', sanitizedValues);
-
-      // return;
+      if (values.description) {
+        values.description = values.description?.replace(/<p>|<\/p>/g, '');
+      }
 
       const response = await axios.post(
         'http://localhost:5000/categories',
-        sanitizedValues,
+        values,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
 
-      console.log('Response:', response);
-      console.groupEnd();
+      console.log(response.data);
 
       toast.success('Category created successfully');
-
-      form.reset();
       onSuccess?.();
-      onOpenChange(false);
+
+      if (keepOpen) {
+        resetForm(); // Clear fields but keep modal open
+      } else {
+        onOpenChange(false); // Close modal
+        resetForm();
+      }
+
+      onSuccess?.();
     } catch (error) {
       toast.error('Something went wrong. Failed to create category!');
       console.error(error);
@@ -128,7 +192,7 @@ export function CreateCategoryModal({
           <DialogTitle>Create category</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form {...form} className="space-y-6">
             <div className="grid grid-cols-2 gap-4 w-full">
               <FormField
                 control={form.control}
@@ -167,36 +231,40 @@ export function CreateCategoryModal({
               <div className="col-span-2">
                 <FormField
                   control={form.control}
-                  name="imageUrl"
-                  render={({ field }) => (
+                  name="image"
+                  render={() => (
                     <FormItem className="col-span-2">
                       <FormLabel>Image Upload</FormLabel>
                       <FormControl>
                         <Input
                           type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                field.onChange(reader.result as string);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
+                          accept="image/jpeg,image/png,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff,image/jpg"
+                          onChange={handleImageChange}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {form.watch('imageUrl') && (
-                  <img
-                    src={form.watch('imageUrl')}
-                    alt="Uploaded"
-                    className="mt-4 w-full h-32 object-cover rounded-lg"
-                  />
+                {imagePreview && (
+                  <div className="mt-4">
+                    <img
+                      src={imagePreview}
+                      alt="Category Preview"
+                      className="w-32 h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      className="mt-2 flex items-center text-red-500 hover:text-red-600"
+                      onClick={() => {
+                        setImagePreview(null);
+                        form.setValue('image', null);
+                      }}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Remove
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -239,20 +307,37 @@ export function CreateCategoryModal({
                 type="submit"
                 className="bg-orange-500 hover:bg-orange-600"
                 disabled={isSubmitting}
+                onClick={() => handleSubmit(false)}
               >
-                Create
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create'
+                )}
+              </Button>
+              <Button
+                type="submit"
+                variant="outline"
+                onClick={() => handleSubmit(true)}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create & create another'
+                )}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-              >
-                Create & create another
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>

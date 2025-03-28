@@ -22,23 +22,37 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function CategoriesTable() {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-  // get all categories
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [page, setPage] = useState(1); // Current page
+  const [limit, setLimit] = useState(20); // Items per page
+  const [total, setTotal] = useState(0); // Total number of categories
 
-  useEffect(() => {
+  // Fetch categories from the backend
+  const fetchCategories = async () => {
     try {
-      axios
-        .get(`${API_BASE_URL}/categories`)
-        .then((res) => setCategories(res.data));
+      const response = await axios.get(`${API_BASE_URL}/categories`, {
+        params: { page, limit },
+      });
+      setCategories(response.data.data);
+      setTotal(response.data.total);
     } catch (error) {
       console.error(error);
-      // Display an error message to the user
       alert('Failed to load categories');
     }
-  }, []);
-  // get all products
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, [page, limit]); // Refetch categories when page or limit changes
+
+  const handlePageChange = (direction: 'next' | 'prev') => {
+    if (direction === 'next' && page * limit < total) {
+      setPage(page + 1);
+    } else if (direction === 'prev' && page > 1) {
+      setPage(page - 1);
+    }
+  };
 
   return (
     <div className="rounded-md border">
@@ -64,23 +78,14 @@ export function CategoriesTable() {
                 <ChevronDown className="h-4 w-4" />
               </div>
             </TableHead>
-            <TableHead>
-              <div className="flex items-center justify-between">
-                Description
-              </div>
-            </TableHead>
+            <TableHead>Description</TableHead>
             <TableHead>
               <div className="flex items-center justify-between">
                 Visibility
                 <ChevronDown className="h-4 w-4" />
               </div>
             </TableHead>
-            <TableHead>
-              <div className="flex items-center justify-between">
-                Updated Date
-                <ChevronDown className="h-4 w-4" />
-              </div>
-            </TableHead>
+            <TableHead></TableHead>
             <TableHead className="w-20"></TableHead>
           </TableRow>
         </TableHeader>
@@ -140,7 +145,10 @@ export function CategoriesTable() {
       <div className="flex items-center justify-between p-4 border-t">
         <div className="flex items-center gap-2">
           <span className="text-sm">Per page</span>
-          <Select defaultValue="10">
+          <Select
+            value={limit.toString()}
+            onValueChange={(value) => setLimit(Number(value))}
+          >
             <SelectTrigger className="w-20">
               <SelectValue />
             </SelectTrigger>
@@ -151,9 +159,27 @@ export function CategoriesTable() {
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" size="sm">
-          Next
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange('prev')}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm">
+            Page {page} of {Math.ceil(total / limit)}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange('next')}
+            disabled={page * limit >= total}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );
