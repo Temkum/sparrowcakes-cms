@@ -154,7 +154,7 @@ interface Category {
   imageUrl: string;
   slug: string;
   description: string;
-  is_active: boolean;
+  isActive: boolean;
   updatedDate: string;
 }
 

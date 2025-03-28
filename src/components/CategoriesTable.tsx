@@ -114,7 +114,7 @@ export function CategoriesTable() {
               <TableCell>{category.name}</TableCell>
               <TableCell>{category.description}</TableCell>
               <TableCell>
-                {category.is_active ? (
+                {category.isActive ? (
                   <CheckCircle className="h-5 w-5 text-green-500" />
                 ) : (
                   <XCircle className="h-5 w-5 text-red-500" />

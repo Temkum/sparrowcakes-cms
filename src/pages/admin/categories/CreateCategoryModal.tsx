@@ -19,9 +19,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
 import { Editor } from '../Editor';
 import axios from 'axios';
+import { useAuthStore } from '@/store/auth';
+import toast, { Toaster } from 'react-hot-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -36,7 +37,7 @@ const formSchema = z.object({
       message: 'Slug must contain only lowercase letters, numbers, and hyphens',
     }),
   description: z.string().optional(),
-  isVisible: z.boolean().default(true),
+  isActive: z.boolean().default(true),
 });
 
 interface CreateCategoryModalProps {
@@ -50,13 +51,14 @@ export function CreateCategoryModal({
   onOpenChange,
   onSuccess,
 }: CreateCategoryModalProps) {
-  const { toast } = useToast();
+  // const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { token } = useAuthStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      isVisible: true,
+      isActive: false,
       description: '',
       name: '',
       slug: '',
@@ -71,31 +73,46 @@ export function CreateCategoryModal({
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log(token);
     try {
       setIsSubmitting(true);
+
+      // Sanitize description by removing HTML tags
+      const sanitizedValues = {
+        ...values,
+        description: (values?.description || '').replace(/<\/?p>/g, '').trim(),
+      };
+
+      // Extensive logging for debugging
+      console.group('Category Creation Debug');
+      console.log('Token:', token);
+      console.log('Token Length:', token?.length);
+      console.log('Token First 10 chars:', token?.substring(0, 10));
+      console.log('Full Request Payload:', sanitizedValues);
+
+      // return;
+
       const response = await axios.post(
         'http://localhost:5000/categories',
-        values
+        sanitizedValues,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
       );
 
-      if (!response.data.success) {
-        throw new Error(response.data.message);
-      }
+      console.log('Response:', response);
+      console.groupEnd();
 
-      toast({
-        title: 'Success',
-        description: 'Category created successfully',
-      });
+      toast.success('Category created successfully');
 
       form.reset();
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to create category',
-        variant: 'destructive',
-      });
+      toast.error('Something went wrong. Failed to create category!');
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -104,6 +121,7 @@ export function CreateCategoryModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <Toaster />
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Create category</DialogTitle>
@@ -160,7 +178,7 @@ export function CreateCategoryModal({
 
             <FormField
               control={form.control}
-              name="isVisible"
+              name="isActive"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center rounded-lg pt-7 align-center">
                   <div className="space-y-0.5 mr-3 pl-0">
