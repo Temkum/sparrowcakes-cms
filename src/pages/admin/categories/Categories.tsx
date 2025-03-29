@@ -1,11 +1,11 @@
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
-import { CategoriesTable } from '@/components/CategoriesTable';
+import CategoriesTable from '@/components/CategoriesTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CreateCategoryModal } from './CreateCategoryModal';
+import CreateCategoryModal from './CreateCategoryModal';
 import { Toaster } from '@/components/ui/toaster';
 
 const breadcrumbItems = [

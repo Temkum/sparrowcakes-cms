@@ -69,11 +69,11 @@ interface CreateCategoryModalProps {
   onSuccess?: () => void;
 }
 
-export function CreateCategoryModal({
+const CreateCategoryModal = ({
   open,
   onOpenChange,
   onSuccess,
-}: CreateCategoryModalProps) {
+}: CreateCategoryModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useAuthStore();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -192,7 +192,10 @@ export function CreateCategoryModal({
           <DialogTitle>Create category</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form {...form} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(() => handleSubmit(false))}
+            className="space-y-6"
+          >
             <div className="grid grid-cols-2 gap-4 w-full">
               <FormField
                 control={form.control}
@@ -307,7 +310,6 @@ export function CreateCategoryModal({
                 type="submit"
                 className="bg-orange-500 hover:bg-orange-600"
                 disabled={isSubmitting}
-                onClick={() => handleSubmit(false)}
               >
                 {isSubmitting ? (
                   <>
@@ -321,7 +323,7 @@ export function CreateCategoryModal({
               <Button
                 type="submit"
                 variant="outline"
-                onClick={() => handleSubmit(true)}
+                onClick={form.handleSubmit(() => handleSubmit(true))}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -347,4 +349,6 @@ export function CreateCategoryModal({
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default CreateCategoryModal;

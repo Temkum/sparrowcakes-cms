@@ -23,14 +23,27 @@ import {
   XCircle,
   ChevronUp,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/store/auth';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './ui/alert-dialog';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export function CategoriesTable() {
+const CategoriesTable = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [page, setPage] = useState(1);
@@ -41,6 +54,8 @@ export function CategoriesTable() {
     field: string;
     direction: 'asc' | 'desc';
   }>({ field: 'name', direction: 'asc' });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { token } = useAuthStore();
 
   // Fetch categories with sorting and pagination
   const fetchCategories = useCallback(async () => {
@@ -66,7 +81,7 @@ export function CategoriesTable() {
 
   useEffect(() => {
     fetchCategories();
-  });
+  }, [fetchCategories]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -79,6 +94,55 @@ export function CategoriesTable() {
         prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
     }));
     setPage(1); // Reset to first page when sorting changes
+  };
+
+  const handleDelete = async (categoryId: string) => {
+    setIsDeleting(false);
+    try {
+      await axios.delete(`${API_BASE_URL}/categories/${categoryId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success('Category deleted successfully');
+      await fetchCategories(); // Refresh the list after deletion
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to delete category. Please try again later!', {
+        duration: 5000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedCategories.length === 0) return;
+    setIsDeleting(true);
+
+    try {
+      await Promise.all(
+        selectedCategories.map((id) =>
+          axios.delete(`${API_BASE_URL}/categories/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+        )
+      );
+      toast.success(
+        `${selectedCategories.length} categories deleted successfully`
+      );
+      setSelectedCategories([]);
+      await fetchCategories(); // Refresh the list after deletion
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to delete some categories. Please try again later!', {
+        duration: 5000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const totalPages = useMemo(() => Math.ceil(total / limit), [total, limit]);
@@ -95,6 +159,68 @@ export function CategoriesTable() {
 
   return (
     <div className="rounded-md border">
+      {/* Add bulk actions toolbar */}
+      {/* {selectedCategories.length > 0 && (
+        <div className="flex items-center justify-between p-2 bg-gray-100 border-b">
+          <div className="text-sm">{selectedCategories.length} selected</div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            disabled={isDeleting !== null}
+          >
+            {isDeleting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Trash className="mr-2 h-4 w-4" />
+            )}
+            Delete Selected
+          </Button>
+        </div>
+      )} */}
+
+      {selectedCategories.length > 0 && (
+        <div className="p-4 bg-gray-100 flex justify-between items-center">
+          <span className="text-sm">
+            {selectedCategories.length} categor
+            {selectedCategories.length > 1 ? 'ies' : 'y'} selected
+          </span>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" disabled={isDeleting}>
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Selected'
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete {selectedCategories.length}
+                  {selectedCategories.length > 1 ? ' categories' : ' category'}.
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleBulkDelete}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+
       <Table>
         <TableHeader>
           <TableRow className="font-bold text-black-600 hover:bg-gray-100 bg-gray-200">
@@ -209,15 +335,48 @@ export function CategoriesTable() {
                   {format(new Date(category.updated_at), 'MMM dd, yyyy')}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-orange-500 hover:text-orange-600"
-                    // onClick={() => handleEdit(category.id)}
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-orange-600"
+                      // onClick={() => handleEdit(category.id)}
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span className="sr-only">Edit</span>
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-600"
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete the category "
+                            {category.name}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(category.id)}
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))
@@ -320,4 +479,6 @@ export function CategoriesTable() {
       </div>
     </div>
   );
-}
+};
+
+export default CategoriesTable;
