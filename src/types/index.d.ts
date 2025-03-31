@@ -156,6 +156,7 @@ interface Category {
   description: string;
   isActive: boolean;
   updated_at: string;
+  created_at: string;
 }
 
 interface EditorProps {

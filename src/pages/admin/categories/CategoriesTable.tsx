@@ -44,6 +44,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import CategoryFormModal from '@/pages/admin/categories/CategoryFormModal';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -65,6 +71,10 @@ const CategoriesTable = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
+
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedCategoryDetails, setSelectedCategoryDetails] =
+    useState<Category | null>(null);
 
   const { token } = useAuthStore();
 
@@ -193,6 +203,11 @@ const CategoriesTable = () => {
     ) : (
       <ChevronDown className="h-4 w-4" />
     );
+  };
+
+  const handleRowClick = (category: Category) => {
+    setSelectedCategoryDetails(category);
+    setDetailsOpen(true);
   };
 
   return (
@@ -364,7 +379,17 @@ const CategoriesTable = () => {
                       }}
                     />
                   </TableCell>
-                  <TableCell>{category.name}</TableCell>
+                  <TableCell>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRowClick(category);
+                      }}
+                      className="text-left font-medium"
+                    >
+                      {category.name}
+                    </button>
+                  </TableCell>
                   <TableCell className="max-w-xs truncate">
                     {category.description || '-'}
                   </TableCell>
@@ -539,6 +564,114 @@ const CategoriesTable = () => {
         category={selectedCategory}
         mode="edit"
       />
+
+      {/* Category Details Sheet */}
+      <Sheet open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <SheetContent className="w-full sm:max-w-md lg:max-w-lg">
+          {selectedCategoryDetails && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{selectedCategoryDetails.name}</SheetTitle>
+              </SheetHeader>
+
+              <div className="mt-6 space-y-6">
+                {/* Large Image */}
+                <div className="flex justify-center">
+                  <img
+                    src={selectedCategoryDetails.imageUrl || '/placeholder.svg'}
+                    alt={selectedCategoryDetails.name}
+                    className="w-full max-h-64 object-contain rounded-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500">Slug</p>
+                    <p>{selectedCategoryDetails.slug}</p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500">Status</p>
+                    <div className="flex items-center">
+                      {selectedCategoryDetails.isActive ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                          <span>Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 text-red-500 mr-2" />
+                          <span>Inactive</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 col-span-2">
+                    <p className="text-sm font-medium text-gray-500">
+                      Description
+                    </p>
+                    <p className="whitespace-pre-line">
+                      {selectedCategoryDetails.description || 'No description'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500">Created</p>
+                    <p>
+                      {format(
+                        new Date(selectedCategoryDetails.created_at),
+                        'MMM dd, yyyy'
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500">
+                      Last Updated
+                    </p>
+                    <p>
+                      {format(
+                        new Date(selectedCategoryDetails.updated_at),
+                        'MMM dd, yyyy'
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDetailsOpen(false);
+                      handleEdit(selectedCategoryDetails);
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDetailsOpen(false);
+                      handleDelete(selectedCategoryDetails.id);
+                    }}
+                    className="text-red-500 hover:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </>
   );
 };
