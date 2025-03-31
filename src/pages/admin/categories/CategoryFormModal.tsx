@@ -63,17 +63,23 @@ const formSchema = z.object({
     .optional(),
 });
 
-interface CreateCategoryModalProps {
+interface CategoryFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  category?: Category | null; // Add this for edit mode
+  mode?: 'create' | 'edit'; // Add mode prop
 }
 
-const CreateCategoryModal = ({
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const CategoryFormModal = ({
   open,
   onOpenChange,
   onSuccess,
-}: CreateCategoryModalProps) => {
+  category,
+  mode,
+}: CategoryFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useAuthStore();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -88,6 +94,30 @@ const CreateCategoryModal = ({
       image: null,
     },
   });
+
+  // Initialize form with category data when in edit mode
+  useEffect(() => {
+    if (mode === 'edit' && category) {
+      form.reset({
+        name: category.name,
+        slug: category.slug,
+        description: category.description || '',
+        isActive: category.isActive,
+        image: null, // We'll handle the image separately
+      });
+      setImagePreview(category.imageUrl || null);
+    } else {
+      // Reset to defaults for create mode
+      form.reset({
+        isActive: true,
+        description: '',
+        name: '',
+        slug: '',
+        image: null,
+      });
+      setImagePreview(null);
+    }
+  }, [category, mode, form]);
 
   // Clear preview when component unmounts or when image changes
   useEffect(() => {
@@ -143,53 +173,112 @@ const CreateCategoryModal = ({
   const handleSubmit = async (keepOpen?: boolean) => {
     try {
       setIsSubmitting(true);
-
-      // const formData = new FormData();
       const values = form.getValues();
-      console.log('Form Values:', values);
 
-      if (values.description) {
-        values.description = values.description?.replace(/<p>|<\/p>/g, '');
+      const formData = new FormData();
+      formData.append('name', values.name);
+      formData.append('slug', values.slug);
+      formData.append('description', values.description || '');
+      formData.append('isActive', String(values.isActive));
+
+      // Handle image changes
+      if (values.image === null && mode === 'edit') {
+        // Image was removed
+        formData.append('isImageDeleted', 'true');
+      } else if (values.image instanceof File) {
+        // New image provided
+        formData.append('image', values.image);
       }
 
-      const response = await axios.post(
-        'http://localhost:5000/categories',
-        values,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+      console.log('Form data:', formData);
+
+      const url =
+        mode === 'edit' && category
+          ? `${API_BASE_URL}/categories/${category.id}`
+          : `${API_BASE_URL}/categories`;
+
+      const method = mode === 'edit' ? 'patch' : 'post';
+
+      await axios[method](url, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success(
+        `Category ${mode === 'edit' ? 'updated' : 'created'} successfully`
       );
-
-      console.log(response.data);
-
-      toast.success('Category created successfully');
       onSuccess?.();
 
-      if (keepOpen) {
-        resetForm(); // Clear fields but keep modal open
-      } else {
-        onOpenChange(false); // Close modal
+      if (keepOpen && mode === 'create') {
         resetForm();
+      } else {
+        onOpenChange(false);
       }
-
-      onSuccess?.();
     } catch (error) {
-      toast.error('Something went wrong. Failed to create category!');
+      toast.error(
+        `Failed to ${mode === 'edit' ? 'update' : 'create'} category`
+      );
       console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  /* const handleSubmit = async (keepOpen?: boolean) => {
+    try {
+      setIsSubmitting(true);
+      const values = form.getValues();
+
+      if (mode === 'edit' && category) {
+        console.log('Editing category:', values);
+
+        // Edit mode - PUT request
+        await axios.patch(`${API_BASE_URL}/categories/${category.id}`, values, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        toast.success('Category updated successfully');
+      } else {
+        // Create mode - POST request
+        await axios.post(`${API_BASE_URL}/categories`, values, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        toast.success('Category created successfully');
+      }
+
+      onSuccess?.();
+
+      if (keepOpen) {
+        if (mode === 'create') {
+          resetForm(); // Only reset for create mode
+        }
+      } else {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      const action = mode === 'edit' ? 'update' : 'create';
+      toast.error(`Something went wrong. Failed to ${action} category!`);
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }; */
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Toaster />
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-4xl" aria-describedby="Category Form">
         <DialogHeader>
-          <DialogTitle>Create category</DialogTitle>
+          <DialogTitle>
+            {mode === 'edit' ? 'Edit category' : 'Create category'}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -314,27 +403,34 @@ const CreateCategoryModal = ({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {mode === 'edit' ? 'Updating...' : 'Creating...'}
                   </>
+                ) : mode === 'edit' ? (
+                  'Update'
                 ) : (
                   'Create'
                 )}
               </Button>
-              <Button
-                type="submit"
-                variant="outline"
-                onClick={form.handleSubmit(() => handleSubmit(true))}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create & create another'
-                )}
-              </Button>
+
+              {/* Only show "Create & create another" in create mode */}
+              {mode === 'create' && (
+                <Button
+                  type="submit"
+                  variant="outline"
+                  onClick={form.handleSubmit(() => handleSubmit(true))}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create & create another'
+                  )}
+                </Button>
+              )}
+
               <Button
                 type="button"
                 variant="outline"
@@ -351,4 +447,4 @@ const CreateCategoryModal = ({
   );
 };
 
-export default CreateCategoryModal;
+export default CategoryFormModal;

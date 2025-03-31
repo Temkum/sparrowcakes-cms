@@ -23,6 +23,8 @@ interface AuthState {
   checkAuth: () => Promise<void>;
 }
 
+const tokenExpirationInterval = 1000 * 60 * 30; // 30 minutes
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -76,6 +78,15 @@ export const useAuthStore = create<AuthState>()(
         const token = getToken();
         set({ token, isAuthenticated: isAuthenticated() });
         set({ loading: false });
+      },
+
+      init: () => {
+        setInterval(() => {
+          if (!isAuthenticated()) {
+            logout();
+            window.location.href = '/login';
+          }
+        }, tokenExpirationInterval);
       },
     }),
     {

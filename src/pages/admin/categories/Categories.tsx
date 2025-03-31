@@ -1,12 +1,10 @@
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import CategoriesTable from '@/components/CategoriesTable';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import CreateCategoryModal from './CreateCategoryModal';
 import { Toaster } from '@/components/ui/toaster';
+import CategoryFormModal from './CategoryFormModal';
 
 const breadcrumbItems = [
   {
@@ -44,21 +42,16 @@ export default function CategoriesPage() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative w-[400px] mb-6 bg-white">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input placeholder="Search" className="pl-10" />
-        </div>
-
         {/* Table */}
         <CategoriesTable />
 
-        <CreateCategoryModal
+        <CategoryFormModal
           open={open}
           onOpenChange={setOpen}
           onSuccess={() => {
             setOpen(false);
           }}
+          mode="create"
         />
 
         <Toaster />
