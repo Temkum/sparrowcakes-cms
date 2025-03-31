@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from './ui/alert-dialog';
+} from '../../../components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import CategoryFormModal from '@/pages/admin/categories/CategoryFormModal';

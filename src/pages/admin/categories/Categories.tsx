@@ -1,5 +1,5 @@
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
-import CategoriesTable from '@/components/CategoriesTable';
+import CategoriesTable from '@/pages/admin/categories/CategoriesTable';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
