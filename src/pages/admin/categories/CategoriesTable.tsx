@@ -50,6 +50,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Link } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -68,6 +69,7 @@ const CategoriesTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
@@ -213,17 +215,39 @@ const CategoriesTable = () => {
   return (
     <>
       {/* Search */}
-      <div className="relative w-[400px] mb-6 bg-white">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-        <Input
-          placeholder="Search categories..."
-          className="pl-10"
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-        {isLoading && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />
-        )}
+      <div className="relative w-full mb-6 bg-white flex items-center justify-between">
+        <div className="relative w-[400px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search categories..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+          {isLoading && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <Button variant="outline" disabled>
+            Import categories
+            <span className="text-xs text-gray-500 ml-1">(Not functional)</span>
+          </Button>
+          <Link to="/admin/categories/new">
+            <Button
+              className="bg-orange-500 hover:bg-orange-600"
+              disabled={isDeleting}
+              type="button"
+              onClick={() => {
+                setCreateModalOpen(true);
+                setSelectedCategory(null); // Reset selected category for new creation
+              }}
+            >
+              New category
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -385,7 +409,7 @@ const CategoriesTable = () => {
                         e.stopPropagation();
                         handleRowClick(category);
                       }}
-                      className="text-left font-medium"
+                      className="text-left font-medium hover:text-orange-600"
                     >
                       {category.name}
                     </button>
@@ -565,6 +589,14 @@ const CategoriesTable = () => {
         mode="edit"
       />
 
+      {/* add category modal */}
+      <CategoryFormModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onSuccess={fetchCategories} // Refresh the table
+        mode="create"
+      />
+
       {/* Category Details Sheet */}
       <Sheet open={detailsOpen} onOpenChange={setDetailsOpen}>
         <SheetContent className="w-full sm:max-w-md lg:max-w-lg">
@@ -652,7 +684,7 @@ const CategoriesTable = () => {
                       handleEdit(selectedCategoryDetails);
                     }}
                   >
-                    <Edit className="h-4 w-4 mr-2" />
+                    <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </Button>
                   <Button
@@ -661,9 +693,10 @@ const CategoriesTable = () => {
                       setDetailsOpen(false);
                       handleDelete(selectedCategoryDetails.id);
                     }}
-                    className="text-red-500 hover:text-red-600"
+                    className="hover:bg-red-500 hover:text-white text-red-500"
+                    disabled={isDeleting}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-4 w-4 mr-1 hover:text-white" />
                     Delete
                   </Button>
                 </div>

@@ -1,22 +1,39 @@
-'use client';
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { categories } from '@/utilities/data';
+import axios from 'axios';
 
-function CategoryList({
-  categories,
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const CategoryList = ({
   activeCategory,
   onCategoryClick,
 }: {
   categories: CategoryForDisplay[];
   activeCategory: number;
   onCategoryClick: (categoryId: number) => void;
-}) {
+}) => {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/categories/all`);
+      const categories = response.data;
+      console.log(categories);
+      setCategories(categories);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm">
-      {categories.map((category) => (
+      {categories.map((category: CategoryForDisplay) => (
         <button
           key={category.id}
           onClick={() => onCategoryClick(category.id)}
@@ -51,7 +68,7 @@ function CategoryList({
       </div>
     </div>
   );
-}
+};
 
 function BannerCard({ banner }: { banner: Banner }) {
   return (

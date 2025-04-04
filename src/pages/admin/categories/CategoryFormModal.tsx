@@ -83,6 +83,7 @@ const CategoryFormModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { token } = useAuthStore();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isImageRemoved, setIsImageRemoved] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -168,6 +169,7 @@ const CategoryFormModal = ({
       image: null,
     });
     setImagePreview(null);
+    setIsImageRemoved(false);
   };
 
   const handleSubmit = async (keepOpen?: boolean) => {
@@ -181,16 +183,15 @@ const CategoryFormModal = ({
       formData.append('description', values.description || '');
       formData.append('isActive', String(values.isActive));
 
-      // Handle image changes
-      if (values.image === null && mode === 'edit') {
-        // Image was removed
+      if (isImageRemoved && mode === 'edit') {
         formData.append('isImageDeleted', 'true');
       } else if (values.image instanceof File) {
-        // New image provided
         formData.append('image', values.image);
       }
 
-      console.log('Form data:', formData);
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
 
       const url =
         mode === 'edit' && category
@@ -225,51 +226,6 @@ const CategoryFormModal = ({
       setIsSubmitting(false);
     }
   };
-
-  /* const handleSubmit = async (keepOpen?: boolean) => {
-    try {
-      setIsSubmitting(true);
-      const values = form.getValues();
-
-      if (mode === 'edit' && category) {
-        console.log('Editing category:', values);
-
-        // Edit mode - PUT request
-        await axios.patch(`${API_BASE_URL}/categories/${category.id}`, values, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        toast.success('Category updated successfully');
-      } else {
-        // Create mode - POST request
-        await axios.post(`${API_BASE_URL}/categories`, values, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        toast.success('Category created successfully');
-      }
-
-      onSuccess?.();
-
-      if (keepOpen) {
-        if (mode === 'create') {
-          resetForm(); // Only reset for create mode
-        }
-      } else {
-        onOpenChange(false);
-      }
-    } catch (error) {
-      const action = mode === 'edit' ? 'update' : 'create';
-      toast.error(`Something went wrong. Failed to ${action} category!`);
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }; */
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -351,6 +307,7 @@ const CategoryFormModal = ({
                       onClick={() => {
                         setImagePreview(null);
                         form.setValue('image', null);
+                        setIsImageRemoved(true);
                       }}
                     >
                       <Trash className="mr-2 h-4 w-4" />
