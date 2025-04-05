@@ -20,10 +20,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Editor } from '../Editor';
-import axios from 'axios';
+// import axios from 'axios';
 import { useAuthStore } from '@/store/auth';
 import toast, { Toaster } from 'react-hot-toast';
 import { Loader2, Trash } from 'lucide-react';
+import axiosInstance from '@/services/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -84,6 +86,7 @@ const CategoryFormModal = ({
   const { token } = useAuthStore();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isImageRemoved, setIsImageRemoved] = useState(false);
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -200,7 +203,7 @@ const CategoryFormModal = ({
 
       const method = mode === 'edit' ? 'patch' : 'post';
 
-      await axios[method](url, formData, {
+      await axiosInstance[method](url, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -214,6 +217,7 @@ const CategoryFormModal = ({
 
       if (keepOpen && mode === 'create') {
         resetForm();
+        navigate('/admin/categories');
       } else {
         onOpenChange(false);
       }
