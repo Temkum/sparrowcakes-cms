@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/Temkum/sparrowcakes-cms/compare/v1.2.0...v1.3.0) (2025-04-05)
+
+
+### Features
+
+* fetch categories from API in CategoryList; update CategoriesTable to include create category modal ([6908a46](https://github.com/Temkum/sparrowcakes-cms/commit/6908a46e5965bdc3421baf6d67c3dc434a600051))
+* implement category details view with modal; add created_at to Category interface; update global styles ([8152639](https://github.com/Temkum/sparrowcakes-cms/commit/815263979460ad731a2d7a146b3000f8895f3e3e))
+
 ## 1.2.0 (2025-03-31)
 
 
