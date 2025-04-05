@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/Temkum/sparrowcakes-cms/compare/v1.3.0...v1.4.0) (2025-04-05)
+
+
+### Features
+
+* add axios instance with authentication and token handling ([9376c41](https://github.com/Temkum/sparrowcakes-cms/commit/9376c41c2e593c992379855aed761c7ac13356fc))
+* add DOMPurify for sanitizing category descriptions in CategoriesTable ([9308868](https://github.com/Temkum/sparrowcakes-cms/commit/9308868a451fa948d8ce980cc67aeb6f1245cba1))
+* replace axios with axiosInstance for API calls; handle token and error responses ([a06009f](https://github.com/Temkum/sparrowcakes-cms/commit/a06009febb8d80581dbd73cfd412f004d50cb476))
+
 ## [1.3.0](https://github.com/Temkum/sparrowcakes-cms/compare/v1.2.0...v1.3.0) (2025-04-05)
 
 
