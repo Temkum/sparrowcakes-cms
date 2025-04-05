@@ -52,6 +52,7 @@ import {
 } from '@/components/ui/sheet';
 import { Link } from 'react-router-dom';
 import axiosWithAuth from '@/services/axiosInstance';
+import DOMPurify from 'dompurify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -648,9 +649,15 @@ const CategoriesTable = () => {
                     <p className="text-sm font-medium text-gray-500">
                       Description
                     </p>
-                    <p className="whitespace-pre-line">
-                      {selectedCategoryDetails.description || 'No description'}
-                    </p>
+                    <div
+                      className="whitespace-pre-line"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(
+                          selectedCategoryDetails.description ||
+                            'No description'
+                        ),
+                      }}
+                    />
                   </div>
 
                   <div className="space-y-1">

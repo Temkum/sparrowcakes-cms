@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 
@@ -20,16 +19,14 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    const navigate = useNavigate();
     if (error.response && error.response.status === 401) {
       const authStore = useAuthStore.getState();
       authStore.logoutUser();
-      // window.location.href = '/login';
 
       toast.error('Session expired. Please log in again.', {
         position: 'bottom-center',
       });
-      navigate('/login');
+      window.location.href = '/login';
     }
     if (error.response && error.response.status === 403) {
       toast.error('You do not have permission to perform this action.', {
