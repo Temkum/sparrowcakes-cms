@@ -8,7 +8,8 @@ const axiosInstance = axios.create({
 
 // Attach token to each request
 axiosInstance.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
+  const { token } = useAuthStore.getState();
+  console.log('TOKEN', token);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

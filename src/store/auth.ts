@@ -1,18 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import {
-  login,
-  logout,
-  isAuthenticated,
-  getToken,
-  register,
-} from '../services/auth.service';
+import { login, logout, register } from '../services/auth.service';
 import toast from 'react-hot-toast';
 
-interface AuthState {
+interface AuthStoreState {
   token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
+}
+
+interface AuthStoreActions {
   registerUser: (
     name: string,
     email: string,
@@ -23,13 +20,13 @@ interface AuthState {
   checkAuth: () => Promise<void>;
 }
 
-// const tokenExpirationInterval = 1000 * 60 * 30; // 30 minutes
+type AuthStore = AuthStoreState & AuthStoreActions;
 
-export const useAuthStore = create<AuthState>()(
+export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
-      token: getToken(),
-      isAuthenticated: isAuthenticated(),
+    (set, get) => ({
+      token: null,
+      isAuthenticated: false,
       loading: false,
 
       registerUser: async (name, email, password) => {
@@ -56,11 +53,16 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true });
         try {
           const response = await login({ email, password });
-          set({ token: response.token, isAuthenticated: true, loading: false });
+          set({
+            token: response.token,
+            isAuthenticated: true,
+            loading: false,
+          });
           return true;
         } catch (error) {
           set({ loading: false });
-          console.error('Invalid credentials:', error);
+          console.error('Login error:', error);
+
           toast.error('Invalid Credentials. Please try again.', {
             position: 'bottom-center',
           });
@@ -70,27 +72,27 @@ export const useAuthStore = create<AuthState>()(
 
       logoutUser: () => {
         logout();
-        set({ token: null, isAuthenticated: false, loading: false });
+        set({
+          token: null,
+          isAuthenticated: false,
+          loading: false,
+        });
+        // persist middleware handles storage cleanup automatically
       },
 
       checkAuth: async () => {
         set({ loading: true });
-        const token = getToken();
-        set({ token, isAuthenticated: isAuthenticated() });
-        set({ loading: false });
+        const currentToken = get().token;
+        set({
+          isAuthenticated: !!currentToken,
+          loading: false,
+        });
       },
-
-      // init: () => {
-      //   setInterval(() => {
-      //     if (!isAuthenticated()) {
-      //       logout();
-      //       window.location.href = '/login';
-      //     }
-      //   }, tokenExpirationInterval);
-      // },
     }),
     {
       name: 'auth-storage',
+      // Optional: you can blacklist certain properties from being persisted
+      // partialize: (state) => ({ ...state, loading: false })
     }
   )
 );
