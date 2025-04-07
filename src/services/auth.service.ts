@@ -1,5 +1,4 @@
 import axios from 'axios';
-import axiosInstance from './axiosInstance';
 import { useAuthStore } from '@/store/auth';
 
 // import from .env file since I'm using vite
@@ -7,7 +6,7 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export const login = async (data: { email: string; password: string }) => {
-  const response = await axiosInstance.post(`${API_URL}/auth/login`, data, {
+  const response = await axios.post(`${API_URL}/auth/login`, data, {
     headers: {
       'Content-Type': 'application/json',
     },

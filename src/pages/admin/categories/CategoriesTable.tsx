@@ -27,7 +27,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import {
@@ -51,7 +50,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Link } from 'react-router-dom';
-import axiosWithAuth from '@/services/axiosInstance';
+import axiosInstance from '@/services/axiosInstance';
 import DOMPurify from 'dompurify';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -95,23 +94,24 @@ const CategoriesTable = () => {
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await axiosWithAuth.get(`${API_BASE_URL}/categories`, {
+      const response = await axiosInstance.get(`${API_BASE_URL}/categories`, {
         params: {
           page,
           limit,
           sortBy: sortConfig.field,
           sortOrder: sortConfig.direction,
-          search: debouncedSearchTerm || undefined, // Send undefined if empty to avoid empty string param
+          search: debouncedSearchTerm || undefined,
         },
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      setCategories(response.data.data);
-      setTotal(response.data.total);
+      setCategories(response.data);
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching categories:', error);
       toast.error('Failed to load categories');
+      setCategories([]);
+      setTotal(0);
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +146,7 @@ const CategoriesTable = () => {
   const handleDelete = async (categoryId: string) => {
     setIsDeleting(true);
     try {
-      await axios.delete(`${API_BASE_URL}/categories/${categoryId}`, {
+      await axiosInstance.delete(`${API_BASE_URL}/categories/${categoryId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -170,7 +170,7 @@ const CategoriesTable = () => {
     try {
       await Promise.all(
         selectedCategories.map((id) =>
-          axios.delete(`${API_BASE_URL}/categories/${id}`, {
+          axiosInstance.delete(`${API_BASE_URL}/categories/${id}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -253,7 +253,7 @@ const CategoriesTable = () => {
       </div>
 
       <div className="rounded-md border">
-        {selectedCategories.length > 0 && (
+        {selectedCategories && selectedCategories.length > 0 && (
           <div className="p-4 bg-gray-100 flex justify-between items-center">
             <span className="text-sm">
               {selectedCategories.length}
@@ -305,12 +305,14 @@ const CategoriesTable = () => {
                 <Checkbox
                   aria-label="Select all categories"
                   checked={
-                    selectedCategories.length === categories.length &&
+                    selectedCategories?.length === categories?.length &&
                     categories.length > 0
                   }
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      setSelectedCategories(categories.map((c) => c.id));
+                      setSelectedCategories(
+                        categories && categories.map((c) => c.id)
+                      );
                     } else {
                       setSelectedCategories([]);
                     }
@@ -359,7 +361,7 @@ const CategoriesTable = () => {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : categories.length === 0 ? (
+            ) : categories && categories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
                   {searchTerm ? (
@@ -373,6 +375,7 @@ const CategoriesTable = () => {
                 </TableCell>
               </TableRow>
             ) : (
+              categories &&
               categories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell>

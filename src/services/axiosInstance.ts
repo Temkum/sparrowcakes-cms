@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 
 const axiosInstance = axios.create({
@@ -6,7 +7,6 @@ const axiosInstance = axios.create({
   timeout: 10000,
 });
 
-// Token management
 let authToken = '';
 export const setAxiosToken = (token: string) => {
   authToken = token;
@@ -45,7 +45,7 @@ axiosInstance.interceptors.response.use(
       toast.error(message, { position: 'bottom-center' });
 
       if (status === 401) {
-        // Handle logout through your auth system
+        useAuthStore.getState().logoutUser();
         window.location.href = '/login';
       }
     } else if (error.code === 'ECONNABORTED') {
