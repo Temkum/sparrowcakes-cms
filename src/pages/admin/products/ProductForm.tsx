@@ -28,7 +28,7 @@ import { Label } from '@/components/ui/label';
 import toast from 'react-hot-toast';
 import { productFormSchema } from '@/form-schema/productFormSchema';
 import { Toaster } from 'react-hot-toast';
-import { Editor } from '../Editor';
+import Editor from '../Editor';
 import { DynamicCategories } from '../categories/DynamicCategories';
 
 const ProductForm = () => {

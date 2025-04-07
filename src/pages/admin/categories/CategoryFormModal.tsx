@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -19,11 +19,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Editor } from '../Editor';
 import { useAuthStore } from '@/store/auth';
 import toast, { Toaster } from 'react-hot-toast';
 import { Loader2, Trash } from 'lucide-react';
 import axiosInstance from '@/services/axiosInstance';
+import Editor from '../Editor';
+import ReactQuill from 'react-quill';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -71,6 +72,16 @@ interface CategoryFormModalProps {
   mode?: 'create' | 'edit'; // Add mode prop
 }
 
+const QuillEditor = forwardRef<
+  ReactQuill,
+  {
+    value: string;
+    onChange: (value: string) => void;
+  }
+>(({ value, onChange }, ref) => (
+  <Editor ref={ref} value={value} onChange={onChange} />
+));
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const CategoryFormModal = ({
@@ -84,6 +95,7 @@ const CategoryFormModal = ({
   const { token } = useAuthStore();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isImageRemoved, setIsImageRemoved] = useState(false);
+  const editorRef = useRef<ReactQuill>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -324,7 +336,11 @@ const CategoryFormModal = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
-                  <Editor value={field.value || ''} onChange={field.onChange} />
+                  <QuillEditor
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    ref={editorRef}
+                  />
                   <FormMessage />
                 </FormItem>
               )}

@@ -106,7 +106,9 @@ const CategoriesTable = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.table(response);
       setCategories(response.data);
+      setTotal(response.total);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to load categories');

@@ -218,3 +218,12 @@ interface PasswordResetResponse {
     message: string;
   };
 }
+
+interface AxiosResponse<T = unknown, D = unknown> {
+  data: T;
+  status: number;
+  statusText: string;
+  headers: unknown;
+  config: AxiosRequestConfig<D>;
+  request?: unknown;
+}

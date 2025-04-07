@@ -36,7 +36,7 @@ const errorMessages: Record<number, string> = {
 
 // Response interceptor
 axiosInstance.interceptors.response.use(
-  (response) => response.data, // Unwrap response
+  (response) => response.data,
   (error) => {
     if (error.response) {
       const status = error.response.status;
