@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { ImageUpload } from '@/components/ImageUpload';
+// import { ImageUpload } from '@/components/ImageUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import toast from 'react-hot-toast';
@@ -30,20 +30,53 @@ import { productFormSchema } from '@/form-schema/productFormSchema';
 import { Toaster } from 'react-hot-toast';
 import Editor from '../Editor';
 import { DynamicCategories } from '../categories/DynamicCategories';
+import {
+  createProduct,
+  deleteProduct,
+  updateProduct,
+} from '@/services/products.service';
+import { useAuthStore } from '@/store/auth';
+import ImageUpload from './ImageUpload';
 
-const ProductForm = () => {
+interface Product {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  discount: number;
+  costPerUnit: number;
+  isActive: boolean;
+  availability: Date;
+  categories: number[];
+  images: string[];
+}
+
+interface ProductFormProps {
+  product?: Product;
+  onSuccess: () => void;
+  mode: 'create' | 'edit';
+}
+
+const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
   const [isImagesOpen, setIsImagesOpen] = useState(true);
   const [isPricingOpen, setIsPricingOpen] = useState(true);
-  // const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { token } = useAuthStore();
 
-  const form = useForm<z.infer<typeof productFormSchema>>({
-    resolver: zodResolver(productFormSchema),
+  const form = useForm<z.infer<ReturnType<typeof productFormSchema>>>({
+    resolver: zodResolver(productFormSchema(mode)),
     defaultValues: {
-      isVisible: true,
-      availability: new Date(),
-      slug: '',
-      description: '',
-      categories: [], // Default value for categories
+      name: product?.name || '',
+      slug: product?.slug || '',
+      description: product?.description || '',
+      price: product?.price || 0,
+      discount: product?.discount || 0,
+      costPerUnit: product?.costPerUnit || 0,
+      isActive: product?.isActive ?? true,
+      availability: product?.availability || new Date(),
+      categories: product?.categories || [],
+      images: product?.images || [], // Initialize with existing images if in edit mode
     },
   });
 
@@ -53,15 +86,124 @@ const ProductForm = () => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
   };
+  const onSubmit = async (
+    values: z.infer<ReturnType<typeof productFormSchema>>
+  ) => {
+    try {
+      const formData = new FormData();
 
-  function onSubmit(values: z.infer<typeof productFormSchema>) {
-    console.log(values);
-    toast.success('Product created successfully!');
-  }
+      // Append all non-file fields
+      Object.entries(values).forEach(([key, value]) => {
+        if (key !== 'images') {
+          if (typeof value === 'object') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, String(value));
+          }
+        }
+      });
+
+      // Handle images
+      if (mode === 'create') {
+        (values.images as File[]).forEach((file) => {
+          formData.append('images', file);
+        });
+      } else {
+        const existingUrls = (values.images as (string | File)[]).filter(
+          (img) => typeof img === 'string'
+        );
+        const newFiles = (values.images as (string | File)[]).filter(
+          (img) => img instanceof File
+        ) as File[];
+
+        formData.append('existingImages', JSON.stringify(existingUrls));
+        newFiles.forEach((file) => {
+          formData.append('newImages', file);
+        });
+      }
+
+      if (mode === 'create') {
+        await createProduct(formData, token!);
+        toast.success('Product created successfully');
+      } else {
+        await updateProduct(product!.id, formData, token!);
+        toast.success('Product updated successfully');
+      }
+
+      onSuccess();
+    } catch (error) {
+      toast.error('Failed to save product');
+      console.error('Submission error:', error);
+    }
+  };
+
+  const onSubmit9 = async (
+    values: z.infer<ReturnType<typeof productFormSchema>>
+  ) => {
+    try {
+      const formData = new FormData();
+
+      // Append basic fields
+      formData.append('name', values.name);
+      formData.append('slug', values.slug || '');
+      formData.append('description', values.description);
+      formData.append('price', values.price.toString());
+      formData.append('discount', values.discount.toString());
+      formData.append('costPerUnit', values.costPerUnit.toString());
+      formData.append('isActive', values.isActive.toString());
+      formData.append('availability', values.availability.toISOString());
+      formData.append('categories', JSON.stringify(values.categories));
+
+      // Handle images
+      if (Array.isArray(values.images)) {
+        values.images.forEach((image) => {
+          if (image instanceof File) {
+            formData.append('images', image);
+          } else if (typeof image === 'string') {
+            formData.append('existingImages', image);
+          }
+        });
+      }
+
+      // Debug: Log FormData entries
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      if (mode === 'create') {
+        await createProduct(formData, token!);
+        toast.success('Product created successfully');
+      } else {
+        await updateProduct(product!.id, formData, token!);
+        toast.success('Product updated successfully');
+      }
+
+      onSuccess();
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast.error('Failed to save product');
+    }
+  };
 
   function handleCreateAnother() {
     form.reset();
   }
+
+  const handleDelete = async () => {
+    if (!product) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteProduct(product.id, token!);
+      toast.success('Product deleted successfully');
+      onSuccess();
+    } catch (error) {
+      toast.error('Failed to delete product');
+      console.error(error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -152,8 +294,18 @@ const ProductForm = () => {
                             <FormItem>
                               <FormControl>
                                 <ImageUpload
-                                  value={field.value ?? []}
-                                  onChange={field.onChange}
+                                  value={
+                                    Array.isArray(field.value)
+                                      ? field.value.filter(
+                                          (item): item is string =>
+                                            typeof item === 'string'
+                                        )
+                                      : []
+                                  }
+                                  onChange={(urls) => {
+                                    field.onChange(urls);
+                                    form.trigger('images'); // Trigger validation
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -200,7 +352,7 @@ const ProductForm = () => {
 
                             <FormField
                               control={form.control}
-                              name="compareAtPrice"
+                              name="discount"
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>
@@ -225,7 +377,7 @@ const ProductForm = () => {
 
                           <FormField
                             control={form.control}
-                            name="costPerItem"
+                            name="costPerUnit"
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Cost per item</FormLabel>
@@ -257,15 +409,37 @@ const ProductForm = () => {
                           type="submit"
                           className="bg-orange-500 hover:bg-orange-600"
                         >
-                          Create
+                          {mode === 'create' ? 'Create' : 'Update'}
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleCreateAnother()}
-                        >
-                          Create & create another
-                        </Button>
+                        {mode === 'edit' && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                          </Button>
+                        )}
+                        {mode === 'create' && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="bg-secondary-500
+                            text-dark-100 hover:bg-orange-600 hover:text-white"
+                            onClick={handleCreateAnother}
+                          >
+                            Create and Create Another
+                          </Button>
+                        )}
+                        {mode && (
+                          <Button
+                            type="button"
+                            onClick={() => window.history.back()}
+                          >
+                            Cancel
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -286,7 +460,7 @@ const ProductForm = () => {
                   <div className="flex items-center gap-3">
                     <FormField
                       control={form.control}
-                      name="isVisible"
+                      name="isActive"
                       render={({ field }) => (
                         <>
                           <Switch

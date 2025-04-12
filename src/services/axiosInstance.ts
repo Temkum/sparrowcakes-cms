@@ -45,7 +45,7 @@ axiosInstance.interceptors.response.use(
       toast.error(message, { position: 'bottom-center' });
 
       if (status === 401) {
-        useAuthStore.getState().logoutUser();
+        useAuthStore().logoutUser();
         window.location.href = '/login';
       }
     } else if (error.code === 'ECONNABORTED') {

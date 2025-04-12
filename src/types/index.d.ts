@@ -31,7 +31,7 @@ interface BlogCardProps {
 }
 
 interface ProductCardProps {
-  title: string;
+  title: number;
   category: string;
   price: number;
   originalPrice: number;
@@ -43,7 +43,7 @@ interface ProductCardProps {
 }
 
 interface Product {
-  id: string;
+  id: number;
   title: string;
   category: string;
   quantity: number;
@@ -52,6 +52,8 @@ interface Product {
   rating: number;
   image: string;
   display: boolean;
+  description: string;
+  discount: number;
 }
 
 interface ProductGridProps {
@@ -78,7 +80,7 @@ interface BannerProps {
 
 interface PopularProductsProps {
   products: Product[];
-  onAddToCart?: (productId: string) => void;
+  onAddToCart?: (productId: number) => void;
 }
 
 interface ProductStats {

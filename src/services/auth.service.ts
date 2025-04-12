@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useAuthStore } from '@/store/auth';
 
 // import from .env file since I'm using vite
 const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -47,11 +46,6 @@ export const logout = () => {
 };
 
 export const getToken = () => {
-  const { token } = useAuthStore.getState(); // Use Zustand's state
+  const token = localStorage.getItem('token'); // Use Zustand's state
   return token;
-};
-
-export const isAuthenticated = () => {
-  const { isAuthenticated } = useAuthStore.getState(); // Use Zustand's state
-  return isAuthenticated;
 };

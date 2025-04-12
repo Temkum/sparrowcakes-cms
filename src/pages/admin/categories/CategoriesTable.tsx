@@ -106,7 +106,6 @@ const CategoriesTable = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.table(response);
       setCategories(response.data);
       setTotal(response.total);
     } catch (error) {

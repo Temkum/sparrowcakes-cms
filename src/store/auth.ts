@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { login, logout, register } from '../services/auth.service';
+import { getToken, login, logout, register } from '../services/auth.service';
 import toast from 'react-hot-toast';
+import { jwtDecode } from 'jwt-decode';
 
 interface AuthStoreState {
   token: string | null;
@@ -18,14 +19,26 @@ interface AuthStoreActions {
   loginUser: (email: string, password: string) => Promise<boolean>;
   logoutUser: () => void;
   checkAuth: () => Promise<void>;
+  init: () => () => void;
 }
 
 type AuthStore = AuthStoreState & AuthStoreActions;
 
-export const useAuthStore = create<AuthStore>()(
+const tokenExpirationInterval = 1000 * 60 * 30;
+
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const decoded: { exp: number } = jwtDecode(token);
+    return decoded.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
+export const useAuthStore: () => AuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      token: null,
+      token: getToken(),
       isAuthenticated: false,
       loading: false,
 
@@ -46,6 +59,8 @@ export const useAuthStore = create<AuthStore>()(
             position: 'bottom-center',
           });
           throw error;
+        } finally {
+          set({ loading: false });
         }
       },
 
@@ -53,46 +68,58 @@ export const useAuthStore = create<AuthStore>()(
         set({ loading: true });
         try {
           const response = await login({ email, password });
-          set({
-            token: response.token,
-            isAuthenticated: true,
-            loading: false,
-          });
+          set({ token: response.token, isAuthenticated: true });
           return true;
         } catch (error) {
           set({ loading: false });
-          console.error('Login error:', error);
-
+          console.error(error);
           toast.error('Invalid Credentials. Please try again.', {
             position: 'bottom-center',
           });
           throw new Error('Invalid Credentials!');
+        } finally {
+          set({ loading: false });
         }
       },
 
       logoutUser: () => {
         logout();
-        set({
-          token: null,
-          isAuthenticated: false,
-          loading: false,
+        set({ token: null, isAuthenticated: false });
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth-storage');
+        toast.success('Logged out successfully!', {
+          position: 'bottom-center',
         });
-        // persist middleware handles storage cleanup automatically
       },
 
       checkAuth: async () => {
         set({ loading: true });
-        const currentToken = get().token;
-        set({
-          isAuthenticated: !!currentToken,
-          loading: false,
-        });
+        const token = get().token;
+        if (token && !isTokenExpired(token)) {
+          set({ token, isAuthenticated: true });
+        } else {
+          set({ token: null, isAuthenticated: false });
+          logout();
+          window.location.href = '/login';
+        }
+        set({ loading: false });
+      },
+
+      init: () => {
+        const interval = setInterval(() => {
+          const token = get().token;
+          if (!token || isTokenExpired(token)) {
+            logout();
+            set({ token: null, isAuthenticated: false });
+            window.location.href = '/login';
+          }
+        }, tokenExpirationInterval);
+
+        return () => clearInterval(interval);
       },
     }),
     {
       name: 'auth-storage',
-      // Optional: you can blacklist certain properties from being persisted
-      // partialize: (state) => ({ ...state, loading: false })
     }
   )
 );
