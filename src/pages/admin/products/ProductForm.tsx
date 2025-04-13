@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { CalendarIcon, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -22,21 +22,16 @@ import {
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-// import { ImageUpload } from '@/components/ImageUpload';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import toast from 'react-hot-toast';
-import { productFormSchema } from '@/form-schema/productFormSchema';
 import { Toaster } from 'react-hot-toast';
 import Editor from '../Editor';
 import { DynamicCategories } from '../categories/DynamicCategories';
-import {
-  createProduct,
-  deleteProduct,
-  updateProduct,
-} from '@/services/products.service';
-import { useAuthStore } from '@/store/auth';
-import ImageUpload from './ImageUpload';
+import { useNavigate } from 'react-router-dom';
+import { productFormSchema } from '@/form-schema/productFormSchema';
+import { ImageUpload } from './ImageUpload';
+import useProductStore from '@/store/product';
 
 interface Product {
   id: number;
@@ -54,15 +49,25 @@ interface Product {
 
 interface ProductFormProps {
   product?: Product;
-  onSuccess: () => void;
+  onSuccess?: () => void;
   mode: 'create' | 'edit';
 }
 
 const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
+  const navigate = useNavigate();
   const [isImagesOpen, setIsImagesOpen] = useState(true);
   const [isPricingOpen, setIsPricingOpen] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { token } = useAuthStore();
+
+  // Zustand store
+  const {
+    submitting,
+    validationErrors,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    clearValidationErrors,
+  } = useProductStore();
 
   const form = useForm<z.infer<ReturnType<typeof productFormSchema>>>({
     resolver: zodResolver(productFormSchema(mode)),
@@ -76,27 +81,38 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       isActive: product?.isActive ?? true,
       availability: product?.availability || new Date(),
       categories: product?.categories || [],
-      images: product?.images || [], // Initialize with existing images if in edit mode
+      images: product?.images || [],
     },
   });
 
+  // Generate slug from name
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
   };
+
+  // Handle form submission
   const onSubmit = async (
     values: z.infer<ReturnType<typeof productFormSchema>>
   ) => {
+    clearValidationErrors();
+
     try {
       const formData = new FormData();
 
       // Append all non-file fields
       Object.entries(values).forEach(([key, value]) => {
         if (key !== 'images') {
-          if (typeof value === 'object') {
+          if (
+            typeof value === 'object' &&
+            !(value instanceof File) &&
+            !(value instanceof Date)
+          ) {
             formData.append(key, JSON.stringify(value));
+          } else if (value instanceof Date) {
+            formData.append(key, value.toISOString());
           } else {
             formData.append(key, String(value));
           }
@@ -122,88 +138,79 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
         });
       }
 
+      let result;
       if (mode === 'create') {
-        await createProduct(formData, token!);
+        result = await createProduct(formData);
         toast.success('Product created successfully');
-      } else {
-        await updateProduct(product!.id, formData, token!);
+      } else if (product) {
+        result = await updateProduct(product.id, formData);
         toast.success('Product updated successfully');
       }
 
-      onSuccess();
-    } catch (error) {
-      toast.error('Failed to save product');
-      console.error('Submission error:', error);
-    }
-  };
-
-  const onSubmit9 = async (
-    values: z.infer<ReturnType<typeof productFormSchema>>
-  ) => {
-    try {
-      const formData = new FormData();
-
-      // Append basic fields
-      formData.append('name', values.name);
-      formData.append('slug', values.slug || '');
-      formData.append('description', values.description);
-      formData.append('price', values.price.toString());
-      formData.append('discount', values.discount.toString());
-      formData.append('costPerUnit', values.costPerUnit.toString());
-      formData.append('isActive', values.isActive.toString());
-      formData.append('availability', values.availability.toISOString());
-      formData.append('categories', JSON.stringify(values.categories));
-
-      // Handle images
-      if (Array.isArray(values.images)) {
-        values.images.forEach((image) => {
-          if (image instanceof File) {
-            formData.append('images', image);
-          } else if (typeof image === 'string') {
-            formData.append('existingImages', image);
-          }
-        });
+      if (result && onSuccess) {
+        onSuccess();
+      } else if (result) {
+        navigate('/products');
       }
-
-      // Debug: Log FormData entries
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-
-      if (mode === 'create') {
-        await createProduct(formData, token!);
-        toast.success('Product created successfully');
-      } else {
-        await updateProduct(product!.id, formData, token!);
-        toast.success('Product updated successfully');
-      }
-
-      onSuccess();
     } catch (error) {
       console.error('Submission error:', error);
       toast.error('Failed to save product');
     }
   };
 
+  // Handle creating another product
   function handleCreateAnother() {
-    form.reset();
+    form.reset({
+      name: '',
+      slug: '',
+      description: '',
+      price: 0,
+      discount: 0,
+      costPerUnit: 0,
+      isActive: true,
+      availability: new Date(),
+      categories: [],
+      images: [],
+    });
+    toast.success('Ready to create another product');
   }
 
+  // Handle product deletion
   const handleDelete = async () => {
     if (!product) return;
 
     setIsDeleting(true);
     try {
-      await deleteProduct(product.id, token!);
-      toast.success('Product deleted successfully');
-      onSuccess();
+      const result = await deleteProduct(product.id);
+      if (result) {
+        toast.success('Product deleted successfully');
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate('/products');
+        }
+      }
     } catch (error) {
+      console.error('Error deleting product:', error);
       toast.error('Failed to delete product');
-      console.error(error);
     } finally {
       setIsDeleting(false);
     }
   };
+
+  // Set validation errors from API on form fields
+  useEffect(() => {
+    if (validationErrors.length > 0) {
+      validationErrors.forEach((error) => {
+        console.error('Validation error:', error);
+        const fieldName = error.field.toLowerCase() as any;
+        form.setError(fieldName, {
+          type: 'server',
+          message: error.message,
+        });
+      });
+    }
+  }, [validationErrors, form]);
 
   return (
     <>
@@ -408,7 +415,11 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                         <Button
                           type="submit"
                           className="bg-orange-500 hover:bg-orange-600"
+                          disabled={submitting}
                         >
+                          {submitting && (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          )}
                           {mode === 'create' ? 'Create' : 'Update'}
                         </Button>
                         {mode === 'edit' && (
@@ -432,14 +443,12 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                             Create and Create Another
                           </Button>
                         )}
-                        {mode && (
-                          <Button
-                            type="button"
-                            onClick={() => window.history.back()}
-                          >
-                            Cancel
-                          </Button>
-                        )}
+                        <Button
+                          type="button"
+                          onClick={() => window.history.back()}
+                        >
+                          Cancel
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -489,7 +498,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
-                                variant={'outline'}
+                                variant="outline"
                                 className={cn(
                                   'w-full pl-3 text-left font-normal',
                                   !field.value && 'text-muted-foreground'

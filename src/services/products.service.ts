@@ -1,82 +1,91 @@
+import axios from 'axios';
 import axiosInstance from './axiosInstance';
+import { getToken } from './auth.service';
 
-export const createProduct = async (productData: FormData, token: string) => {
-  try {
-    const response = await axiosInstance.post('/products', productData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-    return response.data;
-  } catch (error) {
-    console.error('Error creating product:', error);
-    throw error;
-  }
-};
+export const productService = {
+  // Get all products with optional pagination
+  async getProducts(page = 1, limit = 10) {
+    try {
+      const response = await axios.get(`${API_URL}/products`, {
+        params: { page, limit },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  },
 
-export const updateProduct = async (
-  id: number,
-  productData: FormData,
-  token: string
-) => {
-  try {
-    const response = await axiosInstance.put(`/products/${id}`, productData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error updating product:', error);
-    throw error;
-  }
-};
+  // Get a single product by ID
+  async getProductById(id: number) {
+    try {
+      const response = await axios.get(`${API_URL}/products/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching product with ID ${id}:`, error);
+      throw error;
+    }
+  },
 
-export const deleteProduct = async (id: number, token: string) => {
-  try {
-    const response = await axiosInstance.delete(`/products/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting product:', error);
-    throw error;
-  }
-};
+  // Create a new product
+  async createProduct(productData: FormData) {
+    console.log('creating...');
+    const token = getToken();
+    try {
+      const response = await axiosInstance.post(
+        `${API_URL}/products`,
+        productData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  },
 
-export const getProductById = async (id: string) => {
-  try {
-    const response = await axiosInstance.get(`/products/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching product by ID:', error);
-    throw error;
-  }
-};
+  // Update an existing product
+  async updateProduct(id: number, productData: FormData) {
+    try {
+      const response = await axios.put(
+        `${API_URL}/products/${id}`,
+        productData
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating product with ID ${id}:`, error);
+      throw error;
+    }
+  },
 
-export const getProductBySlug = async (slug: string) => {
-  try {
-    const response = await axiosInstance.get(`/products/slug/${slug}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching product by slug:', error);
-    throw error;
-  }
-};
+  // Delete a product
+  async deleteProduct(id: number) {
+    try {
+      const response = await axios.delete(`${API_URL}/products/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting product with ID ${id}:`, error);
+      throw error;
+    }
+  },
 
-export const getProducts = async (params?: {
-  page?: number;
-  limit?: number;
-  search?: string;
-}) => {
-  try {
-    const response = await axiosInstance.get('/products', { params });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    throw error;
-  }
+  // Bulk delete products
+  async bulkDeleteProducts(ids: string[]) {
+    try {
+      const response = await axios.post(`${API_URL}/products/bulk-delete`, {
+        ids,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error bulk deleting products:', error);
+      throw error;
+    }
+  },
 };

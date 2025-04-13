@@ -46,6 +46,7 @@ export const logout = () => {
 };
 
 export const getToken = () => {
-  const token = localStorage.getItem('token'); // Use Zustand's state
+  const token = localStorage.getItem('auth-storage');
+  console.log('token', token);
   return token;
 };
