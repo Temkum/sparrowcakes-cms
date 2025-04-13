@@ -1,4 +1,4 @@
-import { productService } from './../services/products.service';
+import { productService } from '../services/products.service';
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 
@@ -39,8 +39,12 @@ interface ProductState {
   resetFilter: () => void;
   loadProducts: () => Promise<void>;
   loadProduct: (id: number) => Promise<Product | null>;
-  createProduct: (formData: FormData) => Promise<Product | null>;
-  updateProduct: (id: number, formData: FormData) => Promise<Product | null>;
+  createProduct: (formData: FormData, token: string) => Promise<Product | null>;
+  updateProduct: (
+    id: number,
+    formData: FormData,
+    token: string
+  ) => Promise<Product | null>;
   deleteProduct: (id: number) => Promise<boolean>;
   clearCurrentProduct: () => void;
   clearValidationErrors: () => void;
@@ -54,17 +58,6 @@ interface ProductFilter {
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
 }
-
-// Import your actual API services or define them here
-// import {
-//   getProducts,
-//   getProductById,
-//   createProduct as apiCreateProduct,
-//   updateProduct as apiUpdateProduct,
-//   deleteProduct as apiDeleteProduct,
-// } from '@/services/products.service';
-// import { useAuthStore } from '@/store/auth';
-// import { getToken } from '@/services/auth.service';
 
 const useProductStore = create<ProductState>((set, get) => ({
   products: [],
@@ -145,15 +138,17 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   // Create new product
-  createProduct: async (formData: FormData) => {
+  createProduct: async (formData: FormData, token: string) => {
     set({
       submitting: true,
       validationErrors: [],
     });
 
     try {
-      // const token = getToken();
-      const response = await productService.createProduct(formData);
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+      const response = await productService.createProduct(formData, token);
 
       set({ submitting: false });
       return response.data;

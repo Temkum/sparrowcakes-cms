@@ -61,7 +61,7 @@ const baseProductSchema = z.object({
   description: z.string(),
   isActive: z.boolean().default(true),
   availability: z.date(),
-  categories: z.array(z.number()).min(1, 'At least one category is required'),
+  category: z.number().min(1, { message: 'At least one category is required' }),
   price: z.number().min(1, { message: 'Price is required' }),
   discount: z.number().min(1, { message: 'Compare at price is required' }),
   costPerUnit: z.number().min(1, { message: 'Cost per item is required' }),

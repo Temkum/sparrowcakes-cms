@@ -1,6 +1,5 @@
 import axios from 'axios';
 import axiosInstance from './axiosInstance';
-import { getToken } from './auth.service';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -30,9 +29,10 @@ export const productService = {
   },
 
   // Create a new product
-  async createProduct(productData: FormData) {
+  async createProduct(productData: FormData, token: string) {
     console.log('creating...');
-    const token = getToken();
+    console.log('productData', JSON.stringify(productData));
+    console.log(token);
     try {
       const response = await axiosInstance.post(
         `${API_URL}/products`,

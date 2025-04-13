@@ -31,7 +31,8 @@ import { DynamicCategories } from '../categories/DynamicCategories';
 import { useNavigate } from 'react-router-dom';
 import { productFormSchema } from '@/form-schema/productFormSchema';
 import { ImageUpload } from './ImageUpload';
-import useProductStore from '@/store/product';
+import useProductStore from '@/store/product-store';
+import { useAuthStore } from '@/store/auth';
 
 interface Product {
   id: number;
@@ -43,7 +44,7 @@ interface Product {
   costPerUnit: number;
   isActive: boolean;
   availability: Date;
-  categories: number[];
+  category: number;
   images: string[];
 }
 
@@ -80,7 +81,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       costPerUnit: product?.costPerUnit || 0,
       isActive: product?.isActive ?? true,
       availability: product?.availability || new Date(),
-      categories: product?.categories || [],
+      category: undefined,
       images: product?.images || [],
     },
   });
@@ -139,11 +140,17 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       }
 
       let result;
+      // get token from zustand store
+      const { token } = useAuthStore.getState();
+      if (!token) {
+        toast.error('Token not found');
+        return;
+      }
       if (mode === 'create') {
-        result = await createProduct(formData);
+        result = await createProduct(formData, token);
         toast.success('Product created successfully');
       } else if (product) {
-        result = await updateProduct(product.id, formData);
+        result = await updateProduct(product.id, formData, token);
         toast.success('Product updated successfully');
       }
 
@@ -169,7 +176,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       costPerUnit: 0,
       isActive: true,
       availability: new Date(),
-      categories: [],
+      category: 0,
       images: [],
     });
     toast.success('Ready to create another product');
@@ -299,20 +306,17 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                           name="images"
                           render={({ field }) => (
                             <FormItem>
+                              <FormLabel>Product Images</FormLabel>
                               <FormControl>
                                 <ImageUpload
-                                  value={
-                                    Array.isArray(field.value)
-                                      ? field.value.filter(
-                                          (item): item is string =>
-                                            typeof item === 'string'
-                                        )
-                                      : []
-                                  }
-                                  onChange={(urls) => {
-                                    field.onChange(urls);
-                                    form.trigger('images'); // Trigger validation
+                                  value={field.value || []}
+                                  onChange={(images) => {
+                                    field.onChange(images);
+                                    form.trigger('images');
                                   }}
+                                  maxFiles={10}
+                                  isEditMode={mode === 'edit'}
+                                  disabled={submitting}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -538,7 +542,11 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  <DynamicCategories name="categories" label="Categories" />
+                  <DynamicCategories
+                    name="category"
+                    label="Category"
+                    isRequired
+                  />
                 </CardContent>
               </Card>
             </div>
