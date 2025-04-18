@@ -31,7 +31,7 @@ export const productService = {
   // Create a new product
   async createProduct(productData: FormData, token: string) {
     console.log('creating...');
-    console.log('productData', JSON.stringify(productData));
+    console.log('Service data', productData);
     console.log(token);
     try {
       const response = await axiosInstance.post(
@@ -52,11 +52,18 @@ export const productService = {
   },
 
   // Update an existing product
-  async updateProduct(id: number, productData: FormData) {
+  // In product.service.ts, fix the updateProduct method:
+  async updateProduct(id: number, productData: FormData, token: string) {
     try {
-      const response = await axios.put(
+      const response = await axiosInstance.put(
         `${API_URL}/products/${id}`,
-        productData
+        productData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
       return response.data;
     } catch (error) {
@@ -64,7 +71,6 @@ export const productService = {
       throw error;
     }
   },
-
   // Delete a product
   async deleteProduct(id: number) {
     try {

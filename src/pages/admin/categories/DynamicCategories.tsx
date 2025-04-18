@@ -52,10 +52,13 @@ export function DynamicCategories({
   }, []);
 
   const handleChange = (
-    selectedOption: Option | null,
-    field: { onChange: (value: number | null) => void }
+    selectedOption: readonly Option[] | null,
+    field: { onChange: (value: number[] | null) => void }
   ) => {
-    field.onChange(selectedOption ? selectedOption.value : null);
+    const selectedValues = selectedOption
+      ? selectedOption.map((option) => option.value)
+      : null;
+    field.onChange(selectedValues);
   };
 
   const getSelectOptions = (categories: Category[]) => {
@@ -77,11 +80,15 @@ export function DynamicCategories({
               {isRequired && <span className="text-red-500">*</span>}
             </label>
             <Select
-              options={getSelectOptions(categories)}
+              isMulti
+              options={categories.map((category) => ({
+                value: category.id,
+                label: category.name,
+              }))}
               isLoading={isLoading}
-              placeholder="Select a category..."
-              onChange={(selectedOption) =>
-                handleChange(selectedOption as Option | null, field)
+              placeholder="Select categories..."
+              onChange={(selectedOptions) =>
+                handleChange(selectedOptions, field)
               }
               value={getSelectOptions(categories).find(
                 (option) => option.value === field.value

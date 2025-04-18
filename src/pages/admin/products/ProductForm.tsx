@@ -44,8 +44,9 @@ interface Product {
   costPerUnit: number;
   isActive: boolean;
   availability: Date;
-  category: number;
+  categories: number[];
   images: string[];
+  quantity: number;
 }
 
 interface ProductFormProps {
@@ -81,8 +82,9 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       costPerUnit: product?.costPerUnit || 0,
       isActive: product?.isActive ?? true,
       availability: product?.availability || new Date(),
-      category: undefined,
+      categories: product?.categories || [],
       images: product?.images || [],
+      quantity: product?.quantity || 0,
     },
   });
 
@@ -94,74 +96,206 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       .replace(/(^-|-$)+/g, '');
   };
 
-  // Handle form submission
+  // In your ProductForm component, ensure proper FormData construction:
+  const onSubmit0 = async (
+    values: z.infer<ReturnType<typeof productFormSchema>>
+  ) => {
+    clearValidationErrors();
+    const formData = new FormData();
+    const { token } = useAuthStore.getState();
+
+    // Append all non-file fields
+    Object.entries(values).forEach(([key, value]) => {
+      if (key !== 'images') {
+        if (value instanceof Date) {
+          formData.append(key, value.toISOString());
+        } else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
+      }
+    });
+
+    // Handle images differently for create vs edit
+    if (mode === 'create') {
+      (values.images as File[]).forEach((file) => {
+        formData.append('images', file);
+      });
+    } else {
+      // For edit mode, separate existing and new images
+      const existingImages = (values.images as (string | File)[]).filter(
+        (img) => typeof img === 'string'
+      );
+      const newImages = (values.images as (string | File)[]).filter(
+        (img) => img instanceof File
+      ) as File[];
+
+      formData.append('existingImages', JSON.stringify(existingImages));
+      newImages.forEach((file) => {
+        formData.append('newImages', file);
+      });
+    }
+
+    // Debug: Log FormData contents
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
+
+    try {
+      if (mode === 'create') {
+        await createProduct(formData, token);
+      } else if (mode === 'edit' && product) {
+        await updateProduct(product.id, formData, token);
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+    }
+  };
+
   const onSubmit = async (
     values: z.infer<ReturnType<typeof productFormSchema>>
   ) => {
     clearValidationErrors();
+    const formData = new FormData();
+    const { token } = useAuthStore.getState();
+
+    // Explicitly append all fields including slug
+    formData.append('name', values.name);
+    formData.append('slug', values.slug); // Make sure this is included
+    formData.append('description', values.description ?? '');
+    formData.append('price', values.price.toString());
+    formData.append('discount', values.discount.toString());
+    formData.append('costPerUnit', values.costPerUnit.toString());
+    formData.append('quantity', values.quantity.toString());
+    formData.append('isActive', values.isActive.toString());
+    formData.append('availability', values.availability.toISOString());
+
+    // Handle categories
+    formData.append('categories', JSON.stringify(values.categories));
+
+    // Handle images
+    if (mode === 'create') {
+      (values.images as File[]).forEach((file) => {
+        formData.append('images', file);
+      });
+    } else {
+      const existingImages = (values.images as (string | File)[]).filter(
+        (img) => typeof img === 'string'
+      );
+      const newImages = (values.images as (string | File)[]).filter(
+        (img) => img instanceof File
+      ) as File[];
+
+      formData.append('existingImages', JSON.stringify(existingImages));
+      newImages.forEach((file) => {
+        formData.append('newImages', file);
+      });
+    }
+
+    // Debug: Verify all fields are included
+    for (const [key, value] of formData.entries()) {
+      console.log(
+        `${key}:`,
+        value instanceof File ? `File(${value.name})` : value
+      );
+    }
 
     try {
-      const formData = new FormData();
-
-      // Append all non-file fields
-      Object.entries(values).forEach(([key, value]) => {
-        if (key !== 'images') {
-          if (
-            typeof value === 'object' &&
-            !(value instanceof File) &&
-            !(value instanceof Date)
-          ) {
-            formData.append(key, JSON.stringify(value));
-          } else if (value instanceof Date) {
-            formData.append(key, value.toISOString());
-          } else {
-            formData.append(key, String(value));
-          }
-        }
-      });
-
-      // Handle images
       if (mode === 'create') {
-        (values.images as File[]).forEach((file) => {
-          formData.append('images', file);
-        });
-      } else {
-        const existingUrls = (values.images as (string | File)[]).filter(
-          (img) => typeof img === 'string'
-        );
-        const newFiles = (values.images as (string | File)[]).filter(
-          (img) => img instanceof File
-        ) as File[];
-
-        formData.append('existingImages', JSON.stringify(existingUrls));
-        newFiles.forEach((file) => {
-          formData.append('newImages', file);
-        });
-      }
-
-      let result;
-      // get token from zustand store
-      const { token } = useAuthStore.getState();
-      if (!token) {
-        toast.error('Token not found');
-        return;
-      }
-      if (mode === 'create') {
-        result = await createProduct(formData, token);
+        await createProduct(formData, token);
         toast.success('Product created successfully');
       } else if (product) {
-        result = await updateProduct(product.id, formData, token);
+        await updateProduct(product.id, formData, token);
         toast.success('Product updated successfully');
-      }
-
-      if (result && onSuccess) {
-        onSuccess();
-      } else if (result) {
-        navigate('/products');
       }
     } catch (error) {
       console.error('Submission error:', error);
       toast.error('Failed to save product');
+    }
+  };
+
+  const onSubmit1 = async (
+    values: z.infer<ReturnType<typeof productFormSchema>>
+  ) => {
+    clearValidationErrors();
+    const formData = new FormData();
+    const { token } = useAuthStore.getState();
+
+    const slug = values.slug || generateSlug(values.name);
+    console.log('Using slug:', slug); // Debug log
+
+    // Basic fields
+    formData.append('name', values.name);
+    formData.append('slug', slug); // Ensure slug is never empty
+    formData.append('description', values.description ?? '');
+    formData.append('price', String(values.price));
+    formData.append('discount', String(values.discount));
+    formData.append('costPerUnit', String(values.costPerUnit));
+    formData.append('quantity', String(values.quantity));
+    formData.append('is_active', String(values.isActive)); // Note: backend uses snake_case
+    formData.append('availability', values.availability.toISOString());
+
+    // Handle categories - convert to array of IDs
+    const categoryIds = values.categories.map((cat) =>
+      typeof cat === 'object' && cat.id ? cat.id : Number(cat)
+    );
+    formData.append('categories', JSON.stringify(categoryIds));
+
+    // Handle images
+    if (mode === 'create') {
+      // For new products, append each file directly as 'images'
+      if (Array.isArray(values.images)) {
+        values.images.forEach((value: string | File) => {
+          if (value instanceof File) {
+            formData.append('images', value);
+          }
+        });
+      }
+    } else {
+      // For editing, handle both existing URLs and new files
+      const existingImages = values.images.filter(
+        (img): img is string => typeof img === 'string'
+      );
+      const newImages = values.images.filter(
+        (img): img is File => img instanceof File
+      );
+
+      // Send existing image URLs as a JSON string
+      formData.append('image_urls', JSON.stringify(existingImages));
+
+      // Send new files as 'images'
+      newImages.forEach((file) => {
+        formData.append('images', file);
+      });
+    }
+
+    // Debug: Log FormData contents
+    console.log('Submitting form data:');
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}: File (${value.name}, ${value.size} bytes)`);
+      } else {
+        console.log(`${key}: ${value}`);
+      }
+    }
+
+    try {
+      let result;
+      if (mode === 'create') {
+        result = await createProduct(formData, token);
+      } else if (mode === 'edit' && product) {
+        result = await updateProduct(product.id, formData, token);
+      }
+
+      if (result) {
+        toast.success(
+          `Product ${mode === 'create' ? 'created' : 'updated'} successfully`
+        );
+        if (onSuccess) onSuccess();
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
     }
   };
 
@@ -176,7 +310,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       costPerUnit: 0,
       isActive: true,
       availability: new Date(),
-      category: 0,
+      categories: [],
       images: [],
     });
     toast.success('Ready to create another product');
@@ -263,9 +397,9 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                           name="slug"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Slug</FormLabel>
+                              <FormLabel>Slugs</FormLabel>
                               <FormControl>
-                                <Input {...field} readOnly />
+                                <Input {...field} disabled />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -386,29 +520,50 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                             />
                           </div>
 
-                          <FormField
-                            control={form.control}
-                            name="costPerUnit"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Cost per item</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                                <p className="text-sm text-muted-foreground">
-                                  Customers won't see this price.
-                                </p>
-                              </FormItem>
-                            )}
-                          />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="costPerUnit"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Cost per item</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      type="number"
+                                      onChange={(e) =>
+                                        field.onChange(Number(e.target.value))
+                                      }
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                  <p className="text-sm text-muted-foreground">
+                                    Customers won't see this price.
+                                  </p>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="quantity"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Quantity</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      type="number"
+                                      onChange={(e) =>
+                                        field.onChange(Number(e.target.value))
+                                      }
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -543,7 +698,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
                   <DynamicCategories
-                    name="category"
+                    name="categories"
                     label="Category"
                     isRequired
                   />

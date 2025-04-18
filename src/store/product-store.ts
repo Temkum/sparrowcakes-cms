@@ -139,35 +139,40 @@ const useProductStore = create<ProductState>((set, get) => ({
 
   // Create new product
   createProduct: async (formData: FormData, token: string) => {
-    set({
-      submitting: true,
-      validationErrors: [],
-    });
+    set({ submitting: true, validationErrors: [] });
 
     try {
+      // Debug output
+      console.log('Submitting form with:');
       for (const [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
+        console.log(
+          key,
+          value instanceof Blob ? `File(${value.size} bytes)` : value
+        );
       }
-      const response = await productService.createProduct(formData, token);
 
+      const response = await productService.createProduct(formData, token);
       set({ submitting: false });
+      toast.success('Product created successfully');
       return response.data;
     } catch (error: any) {
       set({ submitting: false });
 
-      // Handle validation errors
       if (error.response?.data?.errors) {
-        const formattedErrors = error.response.data.errors.map((e: string) => {
-          const [field, message] = e.split(':');
-          return { field: field.trim(), message: message.trim() };
-        });
-
-        set({ validationErrors: formattedErrors });
+        const errors = error.response.data.errors;
+        if (Array.isArray(errors)) {
+          const formattedErrors = errors.map((e: any) => ({
+            field: e.field || e.path || 'unknown',
+            message: e.message || 'Validation error',
+          }));
+          set({ validationErrors: formattedErrors });
+        }
+        toast.error('Validation errors occurred');
       } else {
-        toast.error('Failed to create product');
+        toast.error(
+          error.response?.data?.message || 'Failed to create product'
+        );
       }
-
-      console.error('Error creating product:', error);
       return null;
     }
   },
@@ -180,7 +185,7 @@ const useProductStore = create<ProductState>((set, get) => ({
     });
 
     try {
-      const response = await productService.updateProduct(id, formData);
+      const response = await productService.updateProduct(id, formData, '');
 
       set({
         currentProduct: response.data,

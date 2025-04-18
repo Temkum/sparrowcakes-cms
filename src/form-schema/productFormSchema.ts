@@ -57,15 +57,50 @@ const imageFileValidator = z.custom<File>((file) => {
 // Base schema without images
 const baseProductSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  slug: z.string().optional(),
-  description: z.string(),
+  slug: z.string(),
+  description: z.string().optional(),
   isActive: z.boolean().default(true),
   availability: z.date(),
-  category: z.number().min(1, { message: 'At least one category is required' }),
+  categories: z
+    .array(z.number())
+    .min(1, { message: 'At least one category is required' }),
   price: z.number().min(1, { message: 'Price is required' }),
   discount: z.number().min(1, { message: 'Compare at price is required' }),
   costPerUnit: z.number().min(1, { message: 'Cost per item is required' }),
+  quantity: z.coerce
+    .number()
+    .min(1, { message: 'Quantity is required' })
+    .default(1),
 });
+
+export const productFormSchema0 = (mode: 'create' | 'edit') =>
+  z.object({
+    name: z.string().min(1, 'Name is required'),
+    slug: z.string().min(1, 'Slug is required'),
+    description: z.string().optional(),
+    price: z.number().min(0, 'Price must be a positive number'),
+    discount: z.number().min(0, 'Discount must be a positive number'),
+    costPerUnit: z.number().min(0, 'Cost per unit must be a positive number'),
+    quantity: z.number().min(0, 'Quantity must be a positive number'),
+    isActive: z.boolean().default(true),
+    availability: z.date(),
+    categories: z
+      .array(
+        z.union([
+          z.number(), // For ID values
+          z.object({
+            // For category objects
+            id: z.number(),
+            name: z.string().optional(),
+          }),
+        ])
+      )
+      .min(1, 'At least one category is required'),
+    images:
+      mode === 'create'
+        ? z.array(z.instanceof(File)).min(1, 'At least one image is required')
+        : z.array(z.union([z.string(), z.instanceof(File)])),
+  });
 
 // CREATE schema - only accepts Files
 const createProductSchema = baseProductSchema.extend({
