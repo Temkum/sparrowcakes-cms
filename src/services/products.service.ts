@@ -30,9 +30,6 @@ export const productService = {
 
   // Create a new product
   async createProduct(productData: FormData, token: string) {
-    console.log('creating...');
-    console.log('Service data', productData);
-    console.log(token);
     try {
       const response = await axiosInstance.post(
         `${API_URL}/products`,
@@ -44,15 +41,32 @@ export const productService = {
           },
         }
       );
-      return response.data;
+      return response;
     } catch (error) {
-      console.error('Error creating product:', error);
-      throw error;
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data;
+
+        // Handle specific error cases
+        if (errorData?.code === 'DUPLICATE_SLUG') {
+          throw new Error(
+            `Slug "${errorData.slug}" already exists. Please try a different one.`
+          );
+        }
+
+        // Handle validation errors
+        if (errorData?.errors) {
+          throw new Error(JSON.stringify(errorData.errors));
+        }
+
+        // Handle generic error message
+        if (errorData?.message) {
+          throw new Error(errorData.message);
+        }
+      }
+      throw new Error('Failed to create product. Please try again.');
     }
   },
 
-  // Update an existing product
-  // In product.service.ts, fix the updateProduct method:
   async updateProduct(id: number, productData: FormData, token: string) {
     try {
       const response = await axiosInstance.put(
@@ -71,7 +85,7 @@ export const productService = {
       throw error;
     }
   },
-  // Delete a product
+
   async deleteProduct(id: number) {
     try {
       const response = await axios.delete(`${API_URL}/products/${id}`);

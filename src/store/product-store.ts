@@ -142,37 +142,43 @@ const useProductStore = create<ProductState>((set, get) => ({
     set({ submitting: true, validationErrors: [] });
 
     try {
-      // Debug output
-      console.log('Submitting form with:');
-      for (const [key, value] of formData.entries()) {
-        console.log(
-          key,
-          value instanceof Blob ? `File(${value.size} bytes)` : value
-        );
-      }
-
       const response = await productService.createProduct(formData, token);
       set({ submitting: false });
       toast.success('Product created successfully');
-      return response.data;
+      return response.data as Product;
     } catch (error: any) {
       set({ submitting: false });
 
-      if (error.response?.data?.errors) {
-        const errors = error.response.data.errors;
-        if (Array.isArray(errors)) {
+      // Handle structured validation errors
+      if (error.message.startsWith('[')) {
+        try {
+          const errors = JSON.parse(error.message);
           const formattedErrors = errors.map((e: any) => ({
             field: e.field || e.path || 'unknown',
             message: e.message || 'Validation error',
           }));
           set({ validationErrors: formattedErrors });
+        } catch {
+          // If parsing fails, treat as regular error
+          toast.error(error.message);
         }
-        toast.error('Validation errors occurred');
-      } else {
-        toast.error(
-          error.response?.data?.message || 'Failed to create product'
-        );
       }
+      // Handle specific slug error
+      else if (error.message.includes('Slug')) {
+        set({
+          validationErrors: [
+            {
+              field: 'slug',
+              message: error.message,
+            },
+          ],
+        });
+      }
+      // Handle other errors
+      else {
+        toast.error(error.message || 'Failed to create product');
+      }
+
       return null;
     }
   },

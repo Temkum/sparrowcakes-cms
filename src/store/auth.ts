@@ -90,6 +90,7 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
         toast.success('Logged out successfully!', {
           position: 'bottom-center',
         });
+        window.location.href = '/login';
       },
 
       checkAuth: async () => {

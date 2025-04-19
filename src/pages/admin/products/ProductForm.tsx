@@ -96,63 +96,6 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       .replace(/(^-|-$)+/g, '');
   };
 
-  // In your ProductForm component, ensure proper FormData construction:
-  const onSubmit0 = async (
-    values: z.infer<ReturnType<typeof productFormSchema>>
-  ) => {
-    clearValidationErrors();
-    const formData = new FormData();
-    const { token } = useAuthStore.getState();
-
-    // Append all non-file fields
-    Object.entries(values).forEach(([key, value]) => {
-      if (key !== 'images') {
-        if (value instanceof Date) {
-          formData.append(key, value.toISOString());
-        } else if (typeof value === 'boolean') {
-          formData.append(key, value.toString());
-        } else if (value !== undefined && value !== null) {
-          formData.append(key, String(value));
-        }
-      }
-    });
-
-    // Handle images differently for create vs edit
-    if (mode === 'create') {
-      (values.images as File[]).forEach((file) => {
-        formData.append('images', file);
-      });
-    } else {
-      // For edit mode, separate existing and new images
-      const existingImages = (values.images as (string | File)[]).filter(
-        (img) => typeof img === 'string'
-      );
-      const newImages = (values.images as (string | File)[]).filter(
-        (img) => img instanceof File
-      ) as File[];
-
-      formData.append('existingImages', JSON.stringify(existingImages));
-      newImages.forEach((file) => {
-        formData.append('newImages', file);
-      });
-    }
-
-    // Debug: Log FormData contents
-    for (const [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
-
-    try {
-      if (mode === 'create') {
-        await createProduct(formData, token);
-      } else if (mode === 'edit' && product) {
-        await updateProduct(product.id, formData, token);
-      }
-    } catch (error) {
-      console.error('Submission error:', error);
-    }
-  };
-
   const onSubmit = async (
     values: z.infer<ReturnType<typeof productFormSchema>>
   ) => {
@@ -160,18 +103,16 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     const formData = new FormData();
     const { token } = useAuthStore.getState();
 
-    // Explicitly append all fields including slug
+    // Format form data
     formData.append('name', values.name);
-    formData.append('slug', values.slug); // Make sure this is included
+    formData.append('slug', values.slug);
     formData.append('description', values.description ?? '');
-    formData.append('price', values.price.toString());
-    formData.append('discount', values.discount.toString());
-    formData.append('costPerUnit', values.costPerUnit.toString());
-    formData.append('quantity', values.quantity.toString());
-    formData.append('isActive', values.isActive.toString());
+    formData.append('price', String(values.price));
+    formData.append('discount', String(values.discount));
+    formData.append('costPerUnit', String(values.costPerUnit));
+    formData.append('quantity', String(values.quantity));
+    formData.append('isActive', String(values.isActive));
     formData.append('availability', values.availability.toISOString());
-
-    // Handle categories
     formData.append('categories', JSON.stringify(values.categories));
 
     // Handle images
@@ -193,93 +134,6 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       });
     }
 
-    // Debug: Verify all fields are included
-    for (const [key, value] of formData.entries()) {
-      console.log(
-        `${key}:`,
-        value instanceof File ? `File(${value.name})` : value
-      );
-    }
-
-    try {
-      if (mode === 'create') {
-        await createProduct(formData, token);
-        toast.success('Product created successfully');
-      } else if (product) {
-        await updateProduct(product.id, formData, token);
-        toast.success('Product updated successfully');
-      }
-    } catch (error) {
-      console.error('Submission error:', error);
-      toast.error('Failed to save product');
-    }
-  };
-
-  const onSubmit1 = async (
-    values: z.infer<ReturnType<typeof productFormSchema>>
-  ) => {
-    clearValidationErrors();
-    const formData = new FormData();
-    const { token } = useAuthStore.getState();
-
-    const slug = values.slug || generateSlug(values.name);
-    console.log('Using slug:', slug); // Debug log
-
-    // Basic fields
-    formData.append('name', values.name);
-    formData.append('slug', slug); // Ensure slug is never empty
-    formData.append('description', values.description ?? '');
-    formData.append('price', String(values.price));
-    formData.append('discount', String(values.discount));
-    formData.append('costPerUnit', String(values.costPerUnit));
-    formData.append('quantity', String(values.quantity));
-    formData.append('is_active', String(values.isActive)); // Note: backend uses snake_case
-    formData.append('availability', values.availability.toISOString());
-
-    // Handle categories - convert to array of IDs
-    const categoryIds = values.categories.map((cat) =>
-      typeof cat === 'object' && cat.id ? cat.id : Number(cat)
-    );
-    formData.append('categories', JSON.stringify(categoryIds));
-
-    // Handle images
-    if (mode === 'create') {
-      // For new products, append each file directly as 'images'
-      if (Array.isArray(values.images)) {
-        values.images.forEach((value: string | File) => {
-          if (value instanceof File) {
-            formData.append('images', value);
-          }
-        });
-      }
-    } else {
-      // For editing, handle both existing URLs and new files
-      const existingImages = values.images.filter(
-        (img): img is string => typeof img === 'string'
-      );
-      const newImages = values.images.filter(
-        (img): img is File => img instanceof File
-      );
-
-      // Send existing image URLs as a JSON string
-      formData.append('image_urls', JSON.stringify(existingImages));
-
-      // Send new files as 'images'
-      newImages.forEach((file) => {
-        formData.append('images', file);
-      });
-    }
-
-    // Debug: Log FormData contents
-    console.log('Submitting form data:');
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`${key}: File (${value.name}, ${value.size} bytes)`);
-      } else {
-        console.log(`${key}: ${value}`);
-      }
-    }
-
     try {
       let result;
       if (mode === 'create') {
@@ -292,10 +146,28 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
         toast.success(
           `Product ${mode === 'create' ? 'created' : 'updated'} successfully`
         );
-        if (onSuccess) onSuccess();
+
+        if (onSuccess) {
+          onSuccess();
+        }
+
+        // Navigate after a short delay
+        setTimeout(() => {
+          navigate('/admin/products');
+        }, 1500);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Submission error:', error);
+
+      // Handle validation errors from the store
+      if (validationErrors.length > 0) {
+        validationErrors.forEach((error) => {
+          form.setError(error.field as any, {
+            type: 'server',
+            message: error.message,
+          });
+        });
+      }
     }
   };
 
@@ -328,7 +200,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
         if (onSuccess) {
           onSuccess();
         } else {
-          navigate('/products');
+          navigate('/admin/products');
         }
       }
     } catch (error) {
@@ -415,7 +287,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                             <FormLabel>Description</FormLabel>
                             <FormControl>
                               <Editor
-                                value={field.value}
+                                value={field.value || ''}
                                 onChange={field.onChange}
                               />
                             </FormControl>

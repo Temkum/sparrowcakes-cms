@@ -20,40 +20,6 @@ const imageFileValidator = z.custom<File>((file) => {
   );
 }, 'Please upload a valid image file (JPEG, PNG, GIF, WEBP, BMP, SVG, TIFF, or JPG)');
 
-// export const productFormSchema = z.object({
-//   name: z.string().min(2, {
-//     message: 'Name must be at least 2 characters.',
-//   }),
-//   slug: z.string().optional(),
-//   description: z.string(),
-//   isActive: z.boolean().default(true),
-//   availability: z.date(),
-//   categories: z
-//     .array(z.number())
-//     .min(1, { message: 'At least one category is required' }),
-//   images: z
-//     .union([
-//       z
-//         .array(z.instanceof(File))
-//         .refine((files) => files.length > 0, 'At least one image is required'),
-//       z
-//         .array(z.string().url())
-//         .refine((urls) => urls.length > 0, 'At least one image is required'),
-//     ])
-//     .refine(
-//       (value) => {
-//         if (Array.isArray(value)) {
-//           return value.length > 0;
-//         }
-//         return false;
-//       },
-//       { message: 'At least one image is required' }
-//     ),
-//   price: z.number().min(1, { message: 'Price is required' }),
-//   discount: z.number().min(1, { message: 'Compare at price is required' }),
-//   costPerUnit: z.number().min(1, { message: 'Cost per item is required' }),
-// });
-
 // Base schema without images
 const baseProductSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),

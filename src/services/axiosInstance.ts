@@ -32,6 +32,8 @@ const errorMessages: Record<number, string> = {
   500: 'Server error. Please try again later.',
   503: 'Service unavailable.',
   504: 'Gateway timeout.',
+  '23505': 'This value already exists. Please choose a different one.',
+  '23503': 'Related record not found.',
 };
 
 // Response interceptor
@@ -40,8 +42,23 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response) {
       const status = error.response.status;
-      const message = errorMessages[status] || 'An unexpected error occurred';
+      const errorData = error.response.data;
 
+      // Handle specific error messages from the server
+      if (errorData?.message) {
+        toast.error(errorData.message, { position: 'bottom-center' });
+        return Promise.reject(new Error(errorData.message));
+      }
+
+      // Handle validation errors array
+      if (Array.isArray(errorData?.errors)) {
+        const messages = errorData.errors.map((e: any) => e.message).join(', ');
+        toast.error(messages, { position: 'bottom-center' });
+        return Promise.reject(new Error(messages));
+      }
+
+      // Fallback to default error messages
+      const message = errorMessages[status] || 'An unexpected error occurred';
       toast.error(message, { position: 'bottom-center' });
 
       if (status === 401) {
