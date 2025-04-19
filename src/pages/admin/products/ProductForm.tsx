@@ -59,7 +59,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
   const navigate = useNavigate();
   const [isImagesOpen, setIsImagesOpen] = useState(true);
   const [isPricingOpen, setIsPricingOpen] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCreateAnother, setIsCreateAnother] = useState(false);
 
   // Zustand store
   const {
@@ -67,7 +67,6 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     validationErrors,
     createProduct,
     updateProduct,
-    deleteProduct,
     clearValidationErrors,
   } = useProductStore();
 
@@ -96,7 +95,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       .replace(/(^-|-$)+/g, '');
   };
 
-  const onSubmit = async (
+  const onSubmit0 = async (
     values: z.infer<ReturnType<typeof productFormSchema>>
   ) => {
     clearValidationErrors();
@@ -144,17 +143,20 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
 
       if (result) {
         toast.success(
-          `Product ${mode === 'create' ? 'created' : 'updated'} successfully`
+          `Product ${mode === 'create' ? 'created' : 'updated'} successfully`,
+          {
+            duration: 2000, // Show toast for 2 seconds
+          }
         );
 
         if (onSuccess) {
           onSuccess();
         }
 
-        // Navigate after a short delay
+        // Ensure navigation happens after the toast
         setTimeout(() => {
-          navigate('/admin/products');
-        }, 1500);
+          navigate('/admin/products', { replace: true });
+        }, 1000); // 1-second delay to allow the toast to display
       }
     } catch (error: any) {
       console.error('Submission error:', error);
@@ -171,43 +173,68 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     }
   };
 
-  // Handle creating another product
-  function handleCreateAnother() {
-    form.reset({
-      name: '',
-      slug: '',
-      description: '',
-      price: 0,
-      discount: 0,
-      costPerUnit: 0,
-      isActive: true,
-      availability: new Date(),
-      categories: [],
-      images: [],
-    });
-    toast.success('Ready to create another product');
-  }
+  const onSubmit = async (
+    values: z.infer<ReturnType<typeof productFormSchema>>
+  ) => {
+    clearValidationErrors();
+    const formData = new FormData();
+    const { token } = useAuthStore.getState();
 
-  // Handle product deletion
-  const handleDelete = async () => {
-    if (!product) return;
+    // Format form data
+    formData.append('name', values.name);
+    formData.append('slug', values.slug);
+    formData.append('description', values.description ?? '');
+    formData.append('price', String(values.price));
+    formData.append('discount', String(values.discount));
+    formData.append('costPerUnit', String(values.costPerUnit));
+    formData.append('quantity', String(values.quantity));
+    formData.append('isActive', String(values.isActive));
+    formData.append('availability', values.availability.toISOString());
+    formData.append('categories', JSON.stringify(values.categories));
 
-    setIsDeleting(true);
+    // Handle images
+    if (mode === 'create') {
+      (values.images as File[]).forEach((file) => {
+        formData.append('images', file);
+      });
+    } else {
+      const existingImages = (values.images as (string | File)[]).filter(
+        (img) => typeof img === 'string'
+      );
+      const newImages = (values.images as (string | File)[]).filter(
+        (img) => img instanceof File
+      ) as File[];
+
+      formData.append('existingImages', JSON.stringify(existingImages));
+      newImages.forEach((file) => {
+        formData.append('newImages', file);
+      });
+    }
+
     try {
-      const result = await deleteProduct(product.id);
+      const result = await createProduct(formData, token);
+
       if (result) {
         toast.success('Product deleted successfully');
         if (onSuccess) {
-          onSuccess();
+          onSuccess?.();
         } else {
-          navigate('/admin/products');
+          setTimeout(() => {
+            navigate('/admin/products', { replace: true });
+          }, 1000);
         }
       }
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      toast.error('Failed to delete product');
-    } finally {
-      setIsDeleting(false);
+    } catch (error: any) {
+      console.error('Submission error:', error);
+
+      if (validationErrors.length > 0) {
+        validationErrors.forEach((error) => {
+          form.setError(error.field as any, {
+            type: 'server',
+            message: error.message,
+          });
+        });
+      }
     }
   };
 
@@ -453,29 +480,27 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                           )}
                           {mode === 'create' ? 'Create' : 'Update'}
                         </Button>
-                        {mode === 'edit' && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                          >
-                            {isDeleting ? 'Deleting...' : 'Delete'}
-                          </Button>
-                        )}
                         {mode === 'create' && (
                           <Button
                             type="button"
                             variant="outline"
-                            className="bg-secondary-500
-                            text-dark-100 hover:bg-orange-600 hover:text-white"
-                            onClick={handleCreateAnother}
+                            className="bg-secondary-500 text-dark-100 hover:bg-orange-600 hover:text-white"
+                            onClick={() => {
+                              setIsCreateAnother(true); // Set state for "Create Another"
+                              form.handleSubmit(onSubmit)();
+                            }}
+                            disabled={submitting}
                           >
+                            {submitting && (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            )}
                             Create and Create Another
                           </Button>
                         )}
                         <Button
                           type="button"
+                          variant="outline"
+                          className="bg-secondary-500 text-dark-100 hover:bg-gray-600 hover:text-white"
                           onClick={() => window.history.back()}
                         >
                           Cancel
