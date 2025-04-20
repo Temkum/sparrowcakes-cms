@@ -17,10 +17,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Eye, Trash2, Edit } from 'lucide-react';
+import {
+  MoreVertical,
+  Eye,
+  Trash2,
+  Edit,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import useProductStore from '@/store/product-store';
 import toast from 'react-hot-toast';
@@ -36,6 +42,7 @@ interface ProductTableProps {
   onEdit: (productId: number) => void;
   onView: (productId: number) => void;
 }
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
   const {
@@ -100,7 +107,7 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedProducts(products.map((product) => product.id));
+      setSelectedProducts(products?.map((product) => product.id!));
     } else {
       setSelectedProducts([]);
     }
@@ -151,10 +158,10 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
               </TableHead>
               <TableHead>Image</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Active</TableHead>
+              <TableHead>Created at</TableHead>
+              <TableHead>Last updated</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -183,22 +190,22 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                 <TableRow key={product.id} className="hover:bg-gray-50">
                   <TableCell>
                     <Checkbox
-                      checked={selectedProducts.includes(product.id)}
+                      checked={selectedProducts.includes(product.id!)}
                       onCheckedChange={(checked) =>
-                        toggleSelectProduct(product.id, checked as boolean)
+                        toggleSelectProduct(product.id!, checked as boolean)
                       }
                     />
                   </TableCell>
                   <TableCell>
-                    {product.images?.length > 0 ? (
+                    {product.image_urls && product.image_urls.length > 0 ? (
                       <img
-                        src={
-                          typeof product.images[0] === 'string'
-                            ? product.images[0]
-                            : URL.createObjectURL(product.images[0])
-                        }
+                        src={product.image_urls[0]}
                         alt={product.name}
                         className="w-10 h-10 rounded object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-image.png';
+                        }}
                       />
                     ) : (
                       <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center">
@@ -210,31 +217,26 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                     <Link
                       to={`/admin/products/${product.id}`}
                       className="font-medium hover:underline"
-                      onClick={() => onView(product.id)}
+                      onClick={() => onView(product.id!)}
                     >
                       {product.name}
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={product.isActive ? 'default' : 'secondary'}
-                      className={
-                        product.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }
-                    >
-                      {product.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
+                    {product.is_active ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    )}
                   </TableCell>
                   <TableCell>
-                    {product.createdAt
-                      ? format(new Date(product.createdAt), 'MMM dd, yyyy')
+                    {product.created_at
+                      ? format(new Date(product.created_at), 'MMM dd, yyyy')
                       : '-'}
                   </TableCell>
                   <TableCell>
-                    {product.updatedAt
-                      ? format(new Date(product.updatedAt), 'MMM dd, yyyy')
+                    {product.updated_at
+                      ? format(new Date(product.updated_at), 'MMM dd, yyyy')
                       : '-'}
                   </TableCell>
                   <TableCell>
@@ -245,17 +247,17 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onView(product.id)}>
+                        <DropdownMenuItem onClick={() => onView(product.id!)}>
                           <Eye className="mr-2 h-4 w-4" />
                           View
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(product.id)}>
+                        <DropdownMenuItem onClick={() => onEdit(product.id!)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600"
-                          onClick={() => handleDelete(product.id)}
+                          onClick={() => handleDelete(product.id!)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete

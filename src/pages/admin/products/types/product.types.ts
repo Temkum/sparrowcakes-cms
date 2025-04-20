@@ -24,7 +24,7 @@ export interface ProductResponse {
   isActive: boolean;
   availability: string; // ISO date string
   categories: number[];
-  images: string[]; // URLs of images
+  image_urls: string[]; // URLs of images
   price: number;
   discount: number;
   costPerUnit: number;
