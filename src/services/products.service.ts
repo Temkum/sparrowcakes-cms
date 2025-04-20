@@ -5,14 +5,52 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const productService = {
   // Get all products with optional pagination
-  async getProducts(page = 1, limit = 10) {
+  async getProducts(
+    page: number = 1,
+    limit: number = 10,
+    searchTerm: string = '',
+    sortBy: string = 'updatedAt',
+    sortDirection: 'asc' | 'desc' = 'desc'
+  ) {
     try {
-      const response = await axios.get(`${API_URL}/products`, {
-        params: { page, limit },
+      // Convert frontend's lowercase sort direction to uppercase for backend
+      const backendSortDirection = sortDirection.toUpperCase() as
+        | 'ASC'
+        | 'DESC';
+
+      const response = await axiosInstance.get(`${API_URL}/products`, {
+        params: {
+          page: Number(page),
+          limit: Number(limit),
+          searchTerm,
+          sortBy,
+          sortDirection: backendSortDirection,
+        },
+        paramsSerializer: (params) => {
+          return Object.entries(params)
+            .filter(
+              ([_, value]) =>
+                value !== undefined && value !== null && value !== ''
+            )
+            .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+            .join('&');
+        },
       });
-      return response.data;
+      console.log('Products response:', response);
+
+      return response;
     } catch (error) {
       console.error('Error fetching products:', error);
+      throw error;
+    }
+  },
+
+  async getProductStats() {
+    try {
+      const response = await axiosInstance.get(`${API_URL}/products/stats`);
+      return response;
+    } catch (error) {
+      console.error('Error fetching product stats:', error);
       throw error;
     }
   },
@@ -20,7 +58,7 @@ export const productService = {
   // Get a single product by ID
   async getProductById(id: number) {
     try {
-      const response = await axios.get(`${API_URL}/products/${id}`);
+      const response = await axiosInstance.get(`${API_URL}/products/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
@@ -88,7 +126,7 @@ export const productService = {
 
   async deleteProduct(id: number) {
     try {
-      const response = await axios.delete(`${API_URL}/products/${id}`);
+      const response = await axiosInstance.delete(`${API_URL}/products/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error deleting product with ID ${id}:`, error);
@@ -99,9 +137,12 @@ export const productService = {
   // Bulk delete products
   async bulkDeleteProducts(ids: string[]) {
     try {
-      const response = await axios.post(`${API_URL}/products/bulk-delete`, {
-        ids,
-      });
+      const response = await axiosInstance.post(
+        `${API_URL}/products/bulk-delete`,
+        {
+          ids,
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('Error bulk deleting products:', error);

@@ -54,6 +54,14 @@ interface Product {
   display: boolean;
   description: string;
   discount: number;
+  costPerUnit?: number;
+  slug?: string;
+  isActive?: boolean;
+  availability?: Date;
+  categories?: { id: number; name: string }[];
+  images: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface ProductGridProps {

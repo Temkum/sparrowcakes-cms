@@ -215,10 +215,40 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       const result = await createProduct(formData, token);
 
       if (result) {
-        toast.success('Product deleted successfully');
-        if (onSuccess) {
-          onSuccess?.();
+        toast.success('Product created successfully', {
+          duration: 2000,
+        });
+
+        if (isCreateAnother) {
+          // Reset all form fields to their initial values
+          form.reset({
+            name: '',
+            slug: '',
+            description: '',
+            price: 0,
+            discount: 0,
+            costPerUnit: 0,
+            quantity: 0,
+            isActive: true,
+            availability: new Date(),
+            categories: [],
+            images: [],
+          });
+
+          // Scroll to top of form
+          window.scrollTo(0, 0);
+
+          // Reset isCreateAnother flag
+          setIsCreateAnother(false);
+
+          // Show success message
+          toast.success('Ready to create another product', {
+            duration: 2000,
+          });
         } else {
+          if (onSuccess) {
+            onSuccess();
+          }
           setTimeout(() => {
             navigate('/admin/products', { replace: true });
           }, 1000);

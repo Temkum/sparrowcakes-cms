@@ -25,7 +25,7 @@ export default function AddProduct() {
         <div className="w-full p-8">
           <h1 className="text-3xl font-bold mt-4 mb-8">Create Product</h1>
 
-          <ProductForm mode="create" onSuccess={handleSuccess} />
+          <ProductForm mode="create" onSuccess={() => handleSuccess()} />
         </div>
       </div>
     </>

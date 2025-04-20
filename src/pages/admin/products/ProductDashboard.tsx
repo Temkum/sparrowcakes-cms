@@ -1,40 +1,11 @@
-import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import {
-  CheckCircle,
-  XCircle,
-  MoreVertical,
-  TagIcon,
-  Cake,
-  BadgeDollarSign,
-} from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { products } from '@/utilities/data';
-import { Link } from 'react-router-dom';
+import { TagIcon, Cake, BadgeDollarSign } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
-
-const initialStats: ProductStats = {
-  totalProducts: 50,
-  productInventory: 272,
-  averagePrice: 247.07,
-};
+import ProductsTable from './ProductsTable';
+import useProductStore from '@/store/product-store';
 
 const breadcrumbItems = [
   {
@@ -45,9 +16,25 @@ const breadcrumbItems = [
 ];
 
 const ProductDashboard = () => {
-  // const [products, setProducts] = React.useState<Product[]>([]);
-  const [stats, setStats] = React.useState<ProductStats>(initialStats);
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const { stats, loadProducts, loadStats } = useProductStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Load both products and stats when component mounts
+    const loadData = async () => {
+      await loadProducts();
+      await loadStats();
+    };
+    loadData();
+  }, [loadProducts, loadStats]);
+
+  const handleEdit = (productId: number) => {
+    navigate(`/admin/products/edit/${productId}`);
+  };
+
+  const handleView = (productId: number) => {
+    navigate(`/admin/products/${productId}`);
+  };
 
   return (
     <>
@@ -88,11 +75,11 @@ const ProductDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Total Products</h3>
-              <p className="text-2xl font-bold">{products.length}</p>
+              <p className="text-2xl font-bold">{stats.totalProducts}</p>
             </Card>
             <Card className="p-4">
-              <h3 className="text-sm text-gray-500">Product Inventory</h3>
-              <p className="text-2xl font-bold">{stats.productInventory}</p>
+              <h3 className="text-sm text-gray-500">Active Products</h3>
+              <p className="text-2xl font-bold">{stats.activeProducts}</p>
             </Card>
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Average price</h3>
@@ -102,17 +89,8 @@ const ProductDashboard = () => {
             </Card>
           </div>
 
-          {/* Search and Filter */}
-          <div className="flex gap-4 mb-6 justify-end">
-            <Input
-              className="w-full md:w-1/3"
-              placeholder="Search"
-              type="search"
-            />
-          </div>
-
           {/* Products Table */}
-          <Card>
+          {/* <Card>
             <Table className="h-full">
               <TableHeader>
                 <TableRow>
@@ -183,7 +161,6 @@ const ProductDashboard = () => {
               </TableBody>
             </Table>
 
-            {/* Pagination */}
             <div className="flex justify-between items-center p-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">Per page</span>
@@ -200,7 +177,9 @@ const ProductDashboard = () => {
               </div>
               <Button>Next</Button>
             </div>
-          </Card>
+          </Card> */}
+
+          <ProductsTable onEdit={handleEdit} onView={handleView} />
         </div>
       </div>
     </>

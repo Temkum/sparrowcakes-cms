@@ -1,20 +1,13 @@
 import { productService } from '../services/products.service';
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
+import { Product } from '@/pages/admin/products/types/product.types';
+import { useAuthStore } from './auth';
 
-// Define your types
-interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  discount: number;
-  costPerUnit: number;
-  isActive: boolean;
-  availability: Date;
-  categories: { id: number; name: string }[];
-  images: string[];
+interface ProductStats {
+  totalProducts: number;
+  activeProducts: number;
+  averagePrice: number;
 }
 
 interface ValidationError {
@@ -25,6 +18,7 @@ interface ValidationError {
 interface ProductState {
   products: Product[];
   currentProduct: Product | null;
+  stats: ProductStats;
   loading: boolean;
   submitting: boolean;
   totalCount: number;
@@ -39,13 +33,11 @@ interface ProductState {
   resetFilter: () => void;
   loadProducts: () => Promise<void>;
   loadProduct: (id: number) => Promise<Product | null>;
-  createProduct: (formData: FormData, token: string) => Promise<Product | null>;
-  updateProduct: (
-    id: number,
-    formData: FormData,
-    token: string
-  ) => Promise<Product | null>;
+  loadStats: () => Promise<void>;
+  createProduct: (formData: FormData) => Promise<Product | null>;
+  updateProduct: (id: number, formData: FormData) => Promise<Product | null>;
   deleteProduct: (id: number) => Promise<boolean>;
+  bulkDeleteProducts: (ids: string[]) => Promise<boolean>;
   clearCurrentProduct: () => void;
   clearValidationErrors: () => void;
 }
@@ -62,6 +54,11 @@ interface ProductFilter {
 const useProductStore = create<ProductState>((set, get) => ({
   products: [],
   currentProduct: null,
+  stats: {
+    totalProducts: 0,
+    activeProducts: 0,
+    averagePrice: 0,
+  },
   loading: false,
   submitting: false,
   totalCount: 0,
@@ -73,6 +70,7 @@ const useProductStore = create<ProductState>((set, get) => ({
     pageSize: 10,
     sortBy: 'updatedAt',
     sortDirection: 'desc',
+    searchTerm: '',
   },
   validationErrors: [],
 
@@ -81,7 +79,6 @@ const useProductStore = create<ProductState>((set, get) => ({
     set((state) => ({
       filter: { ...state.filter, ...filter },
     }));
-    get().loadProducts();
   },
 
   // Reset filter to defaults
@@ -92,23 +89,40 @@ const useProductStore = create<ProductState>((set, get) => ({
         pageSize: 10,
         sortBy: 'updatedAt',
         sortDirection: 'desc',
+        searchTerm: '',
       },
     });
     get().loadProducts();
   },
 
-  // Load all products with filter
+  // Load product stats
+  loadStats: async () => {
+    try {
+      const response = await productService.getProductStats();
+      set({ stats: response });
+    } catch (error) {
+      console.error('Error loading product stats:', error);
+    }
+  },
+  // Load products with pagination and filtering
   loadProducts: async () => {
     set({ loading: true });
     try {
-      const response = await productService.getProducts();
+      const { filter } = get();
+      const response = await productService.getProducts(
+        Number(filter.page),
+        Number(filter.pageSize),
+        filter.searchTerm,
+        filter.sortBy,
+        filter.sortDirection || 'desc'
+      );
 
       set({
-        products: response.data.items,
-        totalCount: response.data.totalCount,
-        currentPage: response.data.currentPage,
-        pageSize: response.data.pageSize,
-        totalPages: response.data.totalPages,
+        products: response.items,
+        totalCount: response.totalCount,
+        currentPage: response.currentPage,
+        pageSize: response.pageSize,
+        totalPages: response.totalPages,
         loading: false,
       });
     } catch (error) {
@@ -123,7 +137,6 @@ const useProductStore = create<ProductState>((set, get) => ({
     set({ loading: true });
     try {
       const response = await productService.getProductById(id);
-
       set({
         currentProduct: response.data,
         loading: false,
@@ -138,11 +151,14 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   // Create new product
-  createProduct: async (formData: FormData, token: string) => {
+  createProduct: async (formData: FormData) => {
     set({ submitting: true, validationErrors: [] });
 
     try {
-      const response = await productService.createProduct(formData, token);
+      const response = await productService.createProduct(
+        formData,
+        useAuthStore.getState().token
+      );
       set({ submitting: false });
       toast.success('Product created successfully');
       return response.data as Product;
@@ -235,6 +251,25 @@ const useProductStore = create<ProductState>((set, get) => ({
     } catch (error) {
       toast.error('Failed to delete product');
       console.error('Error deleting product:', error);
+      return false;
+    }
+  },
+
+  bulkDeleteProducts: async (ids: string[]) => {
+    try {
+      set({ loading: true });
+      await productService.bulkDeleteProducts(ids);
+
+      // Refresh products after deletion
+      await get().loadProducts();
+      await get().loadStats();
+
+      set({ loading: false });
+      return true;
+    } catch (error) {
+      set({ loading: false });
+      toast.error('Failed to delete selected products');
+      console.error('Error bulk deleting products:', error);
       return false;
     }
   },
