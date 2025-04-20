@@ -32,6 +32,23 @@ export interface ProductResponse {
   updatedAt: string;
 }
 
+export interface ProductAPIResponse {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  cost_per_unit: number;
+  discount: number;
+  quantity: number;
+  image_urls: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  availability: string;
+  categories: Category[];
+}
+
 // For API requests
 export interface CreateProductRequest {
   name: string;

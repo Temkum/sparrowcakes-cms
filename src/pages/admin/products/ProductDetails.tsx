@@ -25,8 +25,8 @@ export const ProductDetails = () => {
   }, [id, loadProduct]);
 
   useEffect(() => {
-    if (currentProduct && currentProduct?.images?.length > 0) {
-      setActiveImage(currentProduct.images[0]);
+    if (currentProduct && currentProduct?.image_urls?.length > 0) {
+      setActiveImage(currentProduct.image_urls[0]);
     }
   }, [currentProduct]);
 
@@ -97,9 +97,9 @@ export const ProductDetails = () => {
               )}
             </div>
 
-            {currentProduct.images?.length > 1 && (
+            {currentProduct.image_urls?.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {currentProduct.images.map((image, index) => (
+                {currentProduct.image_urls.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveImage(image)}
@@ -123,14 +123,14 @@ export const ProductDetails = () => {
             <div className="flex justify-between items-start mb-4">
               <h1 className="text-3xl font-bold">{currentProduct.name}</h1>
               <Badge
-                variant={currentProduct.isActive ? 'default' : 'secondary'}
+                variant={currentProduct.is_active ? 'default' : 'secondary'}
                 className={
-                  currentProduct.isActive
+                  currentProduct.is_active
                     ? 'bg-green-100 text-green-800'
                     : 'bg-gray-100 text-gray-800'
                 }
               >
-                {currentProduct.isActive ? 'Active' : 'Inactive'}
+                {currentProduct.is_active ? 'Active' : 'Inactive'}
               </Badge>
             </div>
 
@@ -141,9 +141,7 @@ export const ProductDetails = () => {
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <h3 className="text-sm text-gray-500">Price</h3>
-                <p className="text-xl font-semibold">
-                  ${currentProduct.price.toFixed(2)}
-                </p>
+                <p className="text-xl font-semibold">${currentProduct.price}</p>
               </div>
               <div>
                 <h3 className="text-sm text-gray-500">Discount</h3>
@@ -154,7 +152,7 @@ export const ProductDetails = () => {
               <div>
                 <h3 className="text-sm text-gray-500">Cost Per Unit</h3>
                 <p className="text-xl font-semibold">
-                  ${currentProduct.costPerUnit.toFixed(2)}
+                  ${currentProduct.cost_per_unit.toFixed(2)}
                 </p>
               </div>
               <div>
@@ -192,16 +190,22 @@ export const ProductDetails = () => {
               <div className="flex items-center">
                 <span className="text-sm text-gray-500 w-32">Created:</span>
                 <span>
-                  {currentProduct.createdAt
-                    ? format(new Date(currentProduct.createdAt), 'MMM dd, yyyy')
+                  {currentProduct.created_at
+                    ? format(
+                        new Date(currentProduct.created_at),
+                        'MMM dd, yyyy'
+                      )
                     : '-'}
                 </span>
               </div>
               <div className="flex items-center">
                 <span className="text-sm text-gray-500 w-32">Updated:</span>
                 <span>
-                  {currentProduct.updatedAt
-                    ? format(new Date(currentProduct.updatedAt), 'MMM dd, yyyy')
+                  {currentProduct.updated_at
+                    ? format(
+                        new Date(currentProduct.updated_at),
+                        'MMM dd, yyyy'
+                      )
                     : '-'}
                 </span>
               </div>

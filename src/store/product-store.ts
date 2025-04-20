@@ -1,7 +1,10 @@
 import { productService } from '../services/products.service';
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
-import { Product } from '@/pages/admin/products/types/product.types';
+import {
+  Product,
+  ProductAPIResponse,
+} from '@/pages/admin/products/types/product.types';
 import { useAuthStore } from './auth';
 
 interface ProductStats {
@@ -17,7 +20,7 @@ interface ValidationError {
 
 interface ProductState {
   products: Product[];
-  currentProduct: Product | null;
+  currentProduct: ProductAPIResponse | null | undefined;
   stats: ProductStats;
   loading: boolean;
   submitting: boolean;
@@ -32,12 +35,12 @@ interface ProductState {
   setFilter: (filter: Partial<ProductFilter>) => void;
   resetFilter: () => void;
   loadProducts: () => Promise<void>;
-  loadProduct: (id: number) => Promise<Product | null>;
+  loadProduct: (id: number) => Promise<ProductAPIResponse | null>;
   loadStats: () => Promise<void>;
   createProduct: (formData: FormData) => Promise<Product | null>;
   updateProduct: (id: number, formData: FormData) => Promise<Product | null>;
   deleteProduct: (id: number) => Promise<boolean>;
-  bulkDeleteProducts: (ids: string[]) => Promise<boolean>;
+  bulkDeleteProducts: (ids: number[]) => Promise<boolean>;
   clearCurrentProduct: () => void;
   clearValidationErrors: () => void;
 }
@@ -133,19 +136,58 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   // Load single product by ID
-  loadProduct: async (id: number) => {
+  loadProduct: async (id: number): Promise<ProductAPIResponse | null> => {
     set({ loading: true });
+
     try {
       const response = await productService.getProductById(id);
+
+      // Check if response exists and has the expected structure
+      if (!response || !response.id) {
+        set({ loading: false });
+        toast.error('Product not found or invalid data received');
+
+        return null;
+      }
+
+      // Transform dates to ensure they're valid
+      const product = {
+        ...response,
+        created_at: new Date(response.created_at).toISOString(),
+        updated_at: new Date(response.updated_at).toISOString(),
+        availability: new Date(response.availability).toISOString(),
+        // Ensure other fields match the Product type
+        image_urls: Array.isArray(response.image_urls)
+          ? response.image_urls
+          : [],
+        categories: Array.isArray(response.categories)
+          ? response.categories
+          : [],
+        is_active: Boolean(response.is_active),
+        price: Number(response.price),
+        cost_per_unit: Number(response.cost_per_unit),
+        discount: Number(response.discount),
+        quantity: Number(response.quantity),
+      };
+
       set({
-        currentProduct: response.data,
+        currentProduct: product,
         loading: false,
       });
-      return response.data;
-    } catch (error) {
+
+      return product;
+    } catch (error: any) {
       set({ loading: false });
-      toast.error('Failed to load product details');
-      console.error('Error loading product:', error);
+      console.error('Error loading product:', {
+        error,
+        message: error.message,
+        stack: error.stack,
+        response: error.response?.data,
+      });
+
+      toast.error(
+        error.response?.data?.message || 'Failed to load product details'
+      );
       return null;
     }
   },
@@ -255,7 +297,7 @@ const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  bulkDeleteProducts: async (ids: string[]) => {
+  bulkDeleteProducts: async (ids: number[]) => {
     try {
       set({ loading: true });
       await productService.bulkDeleteProducts(ids);

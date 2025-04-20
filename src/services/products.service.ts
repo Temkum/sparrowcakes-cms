@@ -36,7 +36,6 @@ export const productService = {
             .join('&');
         },
       });
-      console.log('Products response:', response);
 
       return response;
     } catch (error) {
@@ -59,7 +58,8 @@ export const productService = {
   async getProductById(id: number) {
     try {
       const response = await axiosInstance.get(`${API_URL}/products/${id}`);
-      return response.data;
+      console.log('Product details service:', response);
+      return response;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
       throw error;
@@ -117,7 +117,7 @@ export const productService = {
           },
         }
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error updating product with ID ${id}:`, error);
       throw error;
@@ -143,7 +143,7 @@ export const productService = {
           ids,
         }
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error bulk deleting products:', error);
       throw error;
