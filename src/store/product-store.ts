@@ -195,15 +195,25 @@ const useProductStore = create<ProductState>((set, get) => ({
   // Create new product
   createProduct: async (formData: FormData) => {
     set({ submitting: true, validationErrors: [] });
+    const { token } = useAuthStore.getState();
+
+    if (!token) {
+      set({ submitting: false });
+      toast.error('Authentication token is missing');
+      window.location.href = '/login';
+      return;
+    }
 
     try {
-      const response = await productService.createProduct(
-        formData,
-        useAuthStore.getState().token
-      );
+      const response = await productService.createProduct(formData, token);
       set({ submitting: false });
       toast.success('Product created successfully');
-      return response.data as Product;
+
+      // Refresh product list after creation
+      await get().loadProducts();
+      await get().loadStats();
+
+      return response;
     } catch (error: any) {
       set({ submitting: false });
 
@@ -220,9 +230,8 @@ const useProductStore = create<ProductState>((set, get) => ({
           // If parsing fails, treat as regular error
           toast.error(error.message);
         }
-      }
-      // Handle specific slug error
-      else if (error.message.includes('Slug')) {
+      } else if (error.message.includes('Slug')) {
+        // Handle specific slug error
         set({
           validationErrors: [
             {
@@ -231,9 +240,8 @@ const useProductStore = create<ProductState>((set, get) => ({
             },
           ],
         });
-      }
-      // Handle other errors
-      else {
+      } else {
+        // Handle other errors
         toast.error(error.message || 'Failed to create product');
       }
 
@@ -243,20 +251,33 @@ const useProductStore = create<ProductState>((set, get) => ({
 
   // Update existing product
   updateProduct: async (id: number, formData: FormData) => {
+    console.log('id', id);
+    console.log('edit data', formData);
+    set({ submitting: true, validationErrors: [] });
+    const { token } = useAuthStore.getState();
+    console.log('edit token', token);
+
     set({
       submitting: true,
       validationErrors: [],
     });
 
     try {
-      const response = await productService.updateProduct(id, formData, '');
+      const response = await productService.updateProduct(id, formData, token);
+      console.log('Update product response:', response);
 
-      set({
-        currentProduct: response.data,
-        submitting: false,
-      });
+      if (response) {
+        set({
+          currentProduct: response,
+          submitting: false,
+        });
+      }
 
-      return response.data;
+      // refresh product list after update
+      await get().loadStats();
+      await get().loadProducts();
+
+      return response;
     } catch (error: any) {
       set({ submitting: false });
 
@@ -269,7 +290,7 @@ const useProductStore = create<ProductState>((set, get) => ({
 
         set({ validationErrors: formattedErrors });
       } else {
-        toast.error('Failed to update product');
+        toast.error(error.message || 'Failed to update product');
       }
 
       console.error('Error updating product:', error);

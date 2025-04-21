@@ -15,6 +15,7 @@ import CreateOrder from '@/pages/admin/orders/CreateOrder';
 import ProtectedRoute from './ProtectedRoute';
 import AddProduct from '@/pages/admin/products/AddProduct';
 import { ProductDetails } from '@/pages/admin/products/ProductDetails';
+import ProductEdit from '@/pages/admin/products/ProductEdit';
 const Root = createBrowserRouter([
   {
     path: '/',
@@ -64,7 +65,7 @@ const Root = createBrowserRouter([
       },
       {
         path: '/admin/products/edit/:id',
-        element: <ProductDetails />,
+        element: <ProductEdit />,
       },
       {
         path: '/admin/orders',

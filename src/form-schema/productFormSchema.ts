@@ -39,35 +39,6 @@ const baseProductSchema = z.object({
     .default(1),
 });
 
-export const productFormSchema0 = (mode: 'create' | 'edit') =>
-  z.object({
-    name: z.string().min(1, 'Name is required'),
-    slug: z.string().min(1, 'Slug is required'),
-    description: z.string().optional(),
-    price: z.number().min(0, 'Price must be a positive number'),
-    discount: z.number().min(0, 'Discount must be a positive number'),
-    costPerUnit: z.number().min(0, 'Cost per unit must be a positive number'),
-    quantity: z.number().min(0, 'Quantity must be a positive number'),
-    isActive: z.boolean().default(true),
-    availability: z.date(),
-    categories: z
-      .array(
-        z.union([
-          z.number(), // For ID values
-          z.object({
-            // For category objects
-            id: z.number(),
-            name: z.string().optional(),
-          }),
-        ])
-      )
-      .min(1, 'At least one category is required'),
-    images:
-      mode === 'create'
-        ? z.array(z.instanceof(File)).min(1, 'At least one image is required')
-        : z.array(z.union([z.string(), z.instanceof(File)])),
-  });
-
 // CREATE schema - only accepts Files
 const createProductSchema = baseProductSchema.extend({
   images: z.array(z.instanceof(File)).min(1, 'At least one image is required'),
@@ -82,6 +53,10 @@ const editProductSchema = baseProductSchema.extend({
       z.array(z.union([z.instanceof(File), z.string().url()])).min(1),
     ])
     .refine((val) => val.length > 0, 'At least one image is required'),
+  slug: z.string().optional(),
+  availability: z
+    .date()
+    .refine((date) => date > new Date(), 'Availability must be in the future'),
 });
 
 // Use the appropriate schema based on mode

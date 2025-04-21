@@ -106,6 +106,7 @@ export const productService = {
   },
 
   async updateProduct(id: number, productData: FormData, token: string) {
+    console.log('Product data:', productData);
     try {
       const response = await axiosInstance.put(
         `${API_URL}/products/${id}`,
@@ -119,6 +120,21 @@ export const productService = {
       );
       return response;
     } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data;
+
+        if (errorData?.code === 'DUPLICATE_SLUG') {
+          throw new Error(`Slug "${errorData.slug}" already exists.`);
+        }
+
+        if (errorData?.errors) {
+          throw new Error(JSON.stringify(errorData.errors));
+        }
+
+        if (errorData?.message) {
+          throw new Error(errorData.message);
+        }
+      }
       console.error(`Error updating product with ID ${id}:`, error);
       throw error;
     }
@@ -127,7 +143,7 @@ export const productService = {
   async deleteProduct(id: number) {
     try {
       const response = await axiosInstance.delete(`${API_URL}/products/${id}`);
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error deleting product with ID ${id}:`, error);
       throw error;
@@ -135,7 +151,7 @@ export const productService = {
   },
 
   // Bulk delete products
-  async bulkDeleteProducts(ids: string[]) {
+  async bulkDeleteProducts(ids: number[]) {
     try {
       const response = await axiosInstance.post(
         `${API_URL}/products/bulk-delete`,

@@ -56,7 +56,6 @@ interface ProductFormProps {
 }
 
 const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
-  const navigate = useNavigate();
   const [isImagesOpen, setIsImagesOpen] = useState(true);
   const [isPricingOpen, setIsPricingOpen] = useState(true);
   const [isCreateAnother, setIsCreateAnother] = useState(false);
@@ -95,84 +94,6 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       .replace(/(^-|-$)+/g, '');
   };
 
-  const onSubmit0 = async (
-    values: z.infer<ReturnType<typeof productFormSchema>>
-  ) => {
-    clearValidationErrors();
-    const formData = new FormData();
-    const { token } = useAuthStore.getState();
-
-    // Format form data
-    formData.append('name', values.name);
-    formData.append('slug', values.slug);
-    formData.append('description', values.description ?? '');
-    formData.append('price', String(values.price));
-    formData.append('discount', String(values.discount));
-    formData.append('costPerUnit', String(values.costPerUnit));
-    formData.append('quantity', String(values.quantity));
-    formData.append('isActive', String(values.isActive));
-    formData.append('availability', values.availability.toISOString());
-    formData.append('categories', JSON.stringify(values.categories));
-
-    // Handle images
-    if (mode === 'create') {
-      (values.images as File[]).forEach((file) => {
-        formData.append('images', file);
-      });
-    } else {
-      const existingImages = (values.images as (string | File)[]).filter(
-        (img) => typeof img === 'string'
-      );
-      const newImages = (values.images as (string | File)[]).filter(
-        (img) => img instanceof File
-      ) as File[];
-
-      formData.append('existingImages', JSON.stringify(existingImages));
-      newImages.forEach((file) => {
-        formData.append('newImages', file);
-      });
-    }
-
-    try {
-      let result;
-      if (mode === 'create') {
-        result = await createProduct(formData, token);
-      } else if (mode === 'edit' && product) {
-        result = await updateProduct(product.id, formData, token);
-      }
-
-      if (result) {
-        toast.success(
-          `Product ${mode === 'create' ? 'created' : 'updated'} successfully`,
-          {
-            duration: 2000, // Show toast for 2 seconds
-          }
-        );
-
-        if (onSuccess) {
-          onSuccess();
-        }
-
-        // Ensure navigation happens after the toast
-        setTimeout(() => {
-          navigate('/admin/products', { replace: true });
-        }, 1000); // 1-second delay to allow the toast to display
-      }
-    } catch (error: any) {
-      console.error('Submission error:', error);
-
-      // Handle validation errors from the store
-      if (validationErrors.length > 0) {
-        validationErrors.forEach((error) => {
-          form.setError(error.field as any, {
-            type: 'server',
-            message: error.message,
-          });
-        });
-      }
-    }
-  };
-
   const onSubmit = async (
     values: z.infer<ReturnType<typeof productFormSchema>>
   ) => {
@@ -182,7 +103,6 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
 
     // Format form data
     formData.append('name', values.name);
-    formData.append('slug', values.slug);
     formData.append('description', values.description ?? '');
     formData.append('price', String(values.price));
     formData.append('discount', String(values.discount));
@@ -192,35 +112,57 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     formData.append('availability', values.availability.toISOString());
     formData.append('categories', JSON.stringify(values.categories));
 
-    // Handle images
-    if (mode === 'create') {
-      (values.images as File[]).forEach((file) => {
-        formData.append('images', file);
-      });
-    } else {
-      const existingImages = (values.images as (string | File)[]).filter(
-        (img) => typeof img === 'string'
-      );
-      const newImages = (values.images as (string | File)[]).filter(
-        (img) => img instanceof File
-      ) as File[];
-
-      formData.append('existingImages', JSON.stringify(existingImages));
-      newImages.forEach((file) => {
-        formData.append('newImages', file);
-      });
-    }
-
     try {
-      const result = await createProduct(formData, token);
+      let result;
 
-      if (result) {
-        toast.success('Product created successfully', {
-          duration: 2000,
+      if (mode === 'create') {
+        // Handle create mode
+        formData.append('slug', values.slug);
+        (values.images as File[]).forEach((file) => {
+          formData.append('images', file);
+        });
+        result = await createProduct(formData, token);
+      } else {
+        // Handle edit mode
+        if (!product?.id) throw new Error('Product ID is required for updates');
+
+        // Handle images for update
+        const existingImages = (values.images as (string | File)[]).filter(
+          (img) => typeof img === 'string'
+        );
+        const newImages = (values.images as (string | File)[]).filter(
+          (img) => img instanceof File
+        );
+
+        // Add existing images that weren't removed
+        formData.append('existingImages', JSON.stringify(existingImages));
+
+        // Add new images if any
+        newImages.forEach((file) => {
+          formData.append('newImages', file);
         });
 
-        if (isCreateAnother) {
-          // Reset all form fields to their initial values
+        // Calculate removed images
+        const removedImages = product.images.filter(
+          (img) => !existingImages.includes(img)
+        );
+        if (removedImages.length > 0) {
+          formData.append('removedImages', JSON.stringify(removedImages));
+        }
+
+        result = await updateProduct(product.id, formData);
+      }
+
+      if (result) {
+        toast.success(
+          mode === 'create'
+            ? 'Product created successfully'
+            : 'Product updated successfully',
+          { duration: 2000 }
+        );
+
+        if (mode === 'create' && isCreateAnother) {
+          // Reset form for create another
           form.reset({
             name: '',
             slug: '',
@@ -234,37 +176,16 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
             categories: [],
             images: [],
           });
-
-          // Scroll to top of form
-          window.scrollTo(0, 0);
-
-          // Reset isCreateAnother flag
           setIsCreateAnother(false);
-
-          // Show success message
-          toast.success('Ready to create another product', {
-            duration: 2000,
-          });
         } else {
           if (onSuccess) {
             onSuccess();
           }
-          setTimeout(() => {
-            navigate('/admin/products', { replace: true });
-          }, 1000);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Submission error:', error);
-
-      if (validationErrors.length > 0) {
-        validationErrors.forEach((error) => {
-          form.setError(error.field as any, {
-            type: 'server',
-            message: error.message,
-          });
-        });
-      }
+      toast('Oops, something went wrong. Try again later!');
     }
   };
 

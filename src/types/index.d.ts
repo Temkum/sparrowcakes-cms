@@ -42,7 +42,7 @@ interface ProductCardProps {
   onQuickView?: () => void;
 }
 
-interface Product {
+interface UIProduct {
   id: number;
   title: string;
   category: string;
@@ -65,7 +65,7 @@ interface Product {
 }
 
 interface ProductGridProps {
-  products: Product[];
+  products: UIProduct[];
   onAddToCart?: (productId: string) => void;
   onAddToWishlist?: (productId: string) => void;
   onQuickView?: (productId: string) => void;
@@ -87,7 +87,7 @@ interface BannerProps {
 }
 
 interface PopularProductsProps {
-  products: Product[];
+  products: UIProduct[];
   onAddToCart?: (productId: number) => void;
 }
 
