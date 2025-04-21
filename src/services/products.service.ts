@@ -58,7 +58,6 @@ export const productService = {
   async getProductById(id: number) {
     try {
       const response = await axiosInstance.get(`${API_URL}/products/${id}`);
-      console.log('Product details service:', response);
       return response;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
@@ -106,7 +105,6 @@ export const productService = {
   },
 
   async updateProduct(id: number, productData: FormData, token: string) {
-    console.log('Product data:', productData);
     try {
       const response = await axiosInstance.put(
         `${API_URL}/products/${id}`,

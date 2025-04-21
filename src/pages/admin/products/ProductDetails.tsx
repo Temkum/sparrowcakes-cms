@@ -10,6 +10,7 @@ import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { Skeleton } from '@/components/ui/skeleton';
 import useProductStore from '@/store/product-store';
 import toast from 'react-hot-toast';
+import DOMPurify from 'dompurify';
 
 export const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -126,7 +127,7 @@ export const ProductDetails = () => {
                 variant={currentProduct.is_active ? 'default' : 'secondary'}
                 className={
                   currentProduct.is_active
-                    ? 'bg-green-100 text-green-800'
+                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
                     : 'bg-gray-100 text-gray-800'
                 }
               >
@@ -135,7 +136,14 @@ export const ProductDetails = () => {
             </div>
 
             <div className="mb-6">
-              <p className="text-gray-700">{currentProduct.description}</p>
+              <div
+                className="whitespace-pre-line"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(
+                    currentProduct.description || 'No description'
+                  ),
+                }}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -146,7 +154,7 @@ export const ProductDetails = () => {
               <div>
                 <h3 className="text-sm text-gray-500">Discount</h3>
                 <p className="text-xl font-semibold">
-                  {currentProduct.discount}%
+                  {currentProduct.discount}
                 </p>
               </div>
               <div>
