@@ -6,6 +6,8 @@ import {
   ProductAPIResponse,
 } from '@/pages/admin/products/types/product.types';
 import { useAuthStore } from './auth';
+import axiosInstance from '@/services/axiosInstance';
+import axios from 'axios';
 
 interface ProductStats {
   totalProducts: number;
@@ -207,7 +209,6 @@ const useProductStore = create<ProductState>((set, get) => ({
     try {
       const response = await productService.createProduct(formData, token);
       set({ submitting: false });
-      toast.success('Product created successfully');
 
       // Refresh product list after creation
       await get().loadProducts();
@@ -301,15 +302,29 @@ const useProductStore = create<ProductState>((set, get) => ({
   // Delete product
   deleteProduct: async (id: number) => {
     try {
-      // const { token } = useAuthStore.getState();
-      await productService.deleteProduct(id);
+      const { token } = useAuthStore.getState();
 
-      // Update product list by filtering out the deleted product
+      if (!token) {
+        toast.error('Authentication token is missing');
+        return false;
+      }
+
+      await productService.deleteProduct(id, token);
+
+      // Update local state after successful deletion
+      const updatedProducts = get().products.filter(
+        (product) => product.id !== id
+      );
       set((state) => ({
-        products: state.products.filter((product) => product.id !== id),
+        products: updatedProducts,
         totalCount: state.totalCount - 1,
       }));
 
+      // Refresh the products list and stats
+      await get().loadProducts();
+      await get().loadStats();
+
+      toast.success('Product deleted successfully');
       return true;
     } catch (error) {
       toast.error('Failed to delete product');
@@ -318,12 +333,38 @@ const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  bulkDeleteProducts: async (ids: number[]) => {
+  bulkDeleteProducts1: async (ids: number[]) => {
     try {
       set({ loading: true });
-      await productService.bulkDeleteProducts(ids);
 
-      // Refresh products after deletion
+      const { token } = useAuthStore.getState();
+      if (!token) {
+        set({ loading: false });
+        toast.error('Authentication token is missing');
+        return false;
+      }
+
+      // Validate ids
+      if (!Array.isArray(ids) || ids.length === 0) {
+        set({ loading: false });
+        toast.error('No products selected for deletion');
+        return false;
+      }
+
+      // Ensure all IDs are numbers
+      const validatedIds = ids.map((id) => Number(id));
+
+      await productService.bulkDeleteProducts(validatedIds, token);
+
+      // Update local state after successful deletion
+      set((state) => ({
+        products: state.products.filter(
+          (product) => !validatedIds.includes(product.id!)
+        ),
+        totalCount: state.totalCount - validatedIds.length,
+      }));
+
+      // Refresh data
       await get().loadProducts();
       await get().loadStats();
 
@@ -331,12 +372,122 @@ const useProductStore = create<ProductState>((set, get) => ({
       return true;
     } catch (error) {
       set({ loading: false });
-      toast.error('Failed to delete selected products');
       console.error('Error bulk deleting products:', error);
+
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message || 'Failed to delete selected products';
+        toast.error(errorMessage);
+      } else {
+        toast.error('Failed to delete selected products');
+      }
+
       return false;
     }
   },
 
+  bulkDeleteProducts: async (ids: number[]) => {
+    try {
+      set({ loading: true });
+
+      const { token } = useAuthStore.getState();
+      if (!token) {
+        set({ loading: false });
+        toast.error('Authentication token is missing');
+        return false;
+      }
+
+      // Validate ids
+      if (!Array.isArray(ids) || ids.length === 0) {
+        set({ loading: false });
+        toast.error('No products selected for deletion');
+        return false;
+      }
+
+      try {
+        // First attempt: standard bulk delete
+        await productService.bulkDeleteProducts(ids, token);
+
+        // Update UI on success
+        toast.success(`Successfully deleted ${ids.length} product(s)`);
+
+        // Refresh product list
+        await get().loadStats();
+        await get().loadProducts();
+
+        set({ loading: false });
+        return true;
+      } catch (bulkError) {
+        console.error('Bulk delete failed:', bulkError);
+
+        // Extract any useful error information
+        let errorMessage = 'Database error occurred during bulk deletion';
+        if (bulkError instanceof Error) {
+          errorMessage = bulkError.message;
+        }
+
+        // If there's a specific database constraint error, show it
+        if (
+          errorMessage.includes('constraint') ||
+          errorMessage.includes('reference')
+        ) {
+          toast.error(
+            'Some products cannot be deleted because they are referenced by other items'
+          );
+          set({ loading: false });
+          return false;
+        }
+
+        // Plan B: Try fallback to individual deletes if bulk fails
+        console.log('Attempting individual deletes as fallback...');
+        let successCount = 0;
+        let failureCount = 0;
+
+        for (const id of ids) {
+          try {
+            await productService.deleteProduct(id, token);
+            successCount++;
+          } catch (singleError) {
+            console.error(`Failed to delete product ${id}:`, singleError);
+            failureCount++;
+          }
+        }
+
+        // Report results of individual deletes
+        if (successCount > 0 && failureCount > 0) {
+          toast.error(
+            `Partially succeeded: Deleted ${successCount} out of ${ids.length} products`
+          );
+        } else if (successCount > 0) {
+          toast.success(`Successfully deleted ${successCount} product(s)`);
+        } else {
+          toast.error('Failed to delete any products');
+          set({ loading: false });
+          return false;
+        }
+
+        // Refresh data
+        await get().loadProducts();
+
+        set({ loading: false });
+        return successCount > 0;
+      }
+    } catch (error) {
+      set({ loading: false });
+      console.error('Error in bulkDeleteProducts store method:', error);
+
+      let errorMessage = 'Failed to delete selected products';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (axios.isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
+      return false;
+    }
+  },
   // Clear current product from state
   clearCurrentProduct: () => {
     set({ currentProduct: null });

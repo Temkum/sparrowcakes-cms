@@ -16,7 +16,7 @@ const breadcrumbItems = [
 ];
 
 const ProductDashboard = () => {
-  const { stats, loadProducts, loadStats } = useProductStore();
+  const { stats, loadProducts, loadStats, loading } = useProductStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,7 +45,10 @@ const ProductDashboard = () => {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Products</h1>
             <Link to="/admin/products/new">
-              <Button className="bg-orange-500 hover:bg-orange-600">
+              <Button
+                className="bg-orange-500 hover:bg-orange-600"
+                disabled={loading}
+              >
                 New product
               </Button>
             </Link>
@@ -84,100 +87,10 @@ const ProductDashboard = () => {
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Average price</h3>
               <p className="text-2xl font-bold">
-                ${stats.averagePrice.toFixed(2)}
+                ${Number(stats.averagePrice || 0).toFixed(2)}
               </p>
             </Card>
           </div>
-
-          {/* Products Table */}
-          {/* <Card>
-            <Table className="h-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedProducts.length === products.length}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedProducts(
-                            products.map((product) => product.id)
-                          );
-                        } else {
-                          setSelectedProducts([]);
-                        }
-                      }}
-                    />
-                  </TableHead>
-                  <TableHead>Image</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Visibility</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedProducts.includes(product.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedProducts([
-                              ...selectedProducts,
-                              product.id,
-                            ]);
-                          } else {
-                            setSelectedProducts(
-                              selectedProducts.filter((id) => id !== product.id)
-                            );
-                          }
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <img
-                        src={product.image}
-                        alt={product.title}
-                        className="w-10 h-10 rounded object-cover"
-                      />
-                    </TableCell>
-                    <TableCell>{product.title}</TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell>
-                      {product.display ? (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-red-500" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            <div className="flex justify-between items-center p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Per page</span>
-                <Select defaultValue="10">
-                  <SelectTrigger className="w-16">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button>Next</Button>
-            </div>
-          </Card> */}
 
           <ProductsTable onEdit={handleEdit} onView={handleView} />
         </div>

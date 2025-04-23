@@ -4,7 +4,10 @@ import toast from 'react-hot-toast';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
+  headers: {
+    Accept: 'application/json',
+  },
 });
 
 let authToken = '';

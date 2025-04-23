@@ -138,9 +138,13 @@ export const productService = {
     }
   },
 
-  async deleteProduct(id: number) {
+  async deleteProduct(id: number, token: string) {
     try {
-      const response = await axiosInstance.delete(`${API_URL}/products/${id}`);
+      const response = await axiosInstance.delete(`${API_URL}/products/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return response;
     } catch (error) {
       console.error(`Error deleting product with ID ${id}:`, error);
@@ -149,17 +153,57 @@ export const productService = {
   },
 
   // Bulk delete products
-  async bulkDeleteProducts(ids: number[]) {
+  async bulkDeleteProducts(ids: number[], token: string) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new Error('Invalid input: ids should be a non-empty array.');
+    }
+
     try {
-      const response = await axiosInstance.post(
+      // Make sure all IDs are valid numbers
+      const validatedIds = ids.map((id) => parseInt(String(id), 10));
+
+      // Check for invalid IDs after conversion
+      if (validatedIds.some((id) => isNaN(id) || id <= 0)) {
+        throw new Error('Invalid product IDs detected');
+      }
+
+      // Log the request for debugging
+      console.log('Bulk delete request payload:', { ids: validatedIds });
+
+      // Try the most common API format first
+      const response = await axiosInstance.delete(
         `${API_URL}/products/bulk-delete`,
         {
-          ids,
+          headers: { Authorization: `Bearer ${token}` },
+          data: { ids },
         }
       );
+      console.log('RESPONSE:', response);
+
       return response;
     } catch (error) {
-      console.error('Error bulk deleting products:', error);
+      console.error('Error in bulkDeleteProducts service:', error);
+
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const responseData = error.response?.data;
+
+        console.error('API Response:', status, responseData);
+
+        // Enrich error with more context
+        const enhancedError = new Error(
+          responseData?.message ||
+            responseData?.error ||
+            'A database error occurred during bulk deletion'
+        );
+
+        // Add original response data to the error
+        (enhancedError as any).responseData = responseData;
+        (enhancedError as any).status = status;
+
+        throw enhancedError;
+      }
+
       throw error;
     }
   },
