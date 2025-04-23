@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/Temkum/sparrowcakes-cms/compare/v1.4.0...v1.5.0) (2025-04-23)
+
+
+### Features
+
+* Add category and product form schemas using Zod for validation ([8e5d223](https://github.com/Temkum/sparrowcakes-cms/commit/8e5d2230be30a1eecd81d0e6006b91181c6d317f))
+* enhance axios instance with token management and improved error handling ([ffe9bfa](https://github.com/Temkum/sparrowcakes-cms/commit/ffe9bfab16389c695c71e61ccc316db80e62110b))
+* Enhance product deletion functionality; add token authorization for delete requests, improve error handling, and implement bulk delete with fallback to individual deletes ([de5fff3](https://github.com/Temkum/sparrowcakes-cms/commit/de5fff323808be2860b074562cb94d86d0356482))
+* Enhance product details display; sanitize description HTML and improve button hover state ([d73dbf6](https://github.com/Temkum/sparrowcakes-cms/commit/d73dbf6184d0c187977ff0c8a68c05525132ce83))
+* Enhance product form and service error handling; improve validation error management and user feedback ([956893a](https://github.com/Temkum/sparrowcakes-cms/commit/956893a4dd4b5813fb53151c9f4c18242ead4708))
+* Enhance product management features; implement product details view, improve product form handling, and update product service for better data fetching ([29d5a13](https://github.com/Temkum/sparrowcakes-cms/commit/29d5a13603f82735bacc8057a7dd895b09c38c05))
+* Implement DynamicCategories and Editor components; enhance ImageUpload and ProductForm with Zustand store integration ([7bac025](https://github.com/Temkum/sparrowcakes-cms/commit/7bac0252c8973fe0cb630e0786d61f90b711c3ae))
+* Implement product editing functionality; add ProductEdit component, update routing, and enhance product form handling for editing existing products ([8d80aa0](https://github.com/Temkum/sparrowcakes-cms/commit/8d80aa0481b2db1c9f922bd4edf77ab88e0b333f))
+* refactor authentication logic to use Zustand store; replace axios with axiosInstance for API calls ([deecc49](https://github.com/Temkum/sparrowcakes-cms/commit/deecc4920416d4e400835bb920c29b254ddb84e9))
+* refactor Editor component to use forwardRef and enhance props; update imports in related files ([ac377fb](https://github.com/Temkum/sparrowcakes-cms/commit/ac377fbe6f6d787da8f78665e71b27d09e83da83))
+* Refactor product details handling; update image property names, enhance product API response structure, and improve error handling in product loading ([6dc0174](https://github.com/Temkum/sparrowcakes-cms/commit/6dc017422ee506be139fd063b5c7d4208b1206bb))
+* Refactor product form and dynamic categories; update image upload component with previews and disable state ([f3e410e](https://github.com/Temkum/sparrowcakes-cms/commit/f3e410ec2d2aa76fa7f58b2495a0b2934cd26358))
+* Update AddProduct and ProductForm components; implement success navigation and enhance form submission handling ([5124848](https://github.com/Temkum/sparrowcakes-cms/commit/51248489ecd9ea307bf06dbc27263d50e391d3e7))
+* update CategoriesTable to use axiosInstance for API calls and improve error handling ([578b5b7](https://github.com/Temkum/sparrowcakes-cms/commit/578b5b73265e32eb5bcc713d86312e0f83d63ea8))
+* Update product form and schema to support multiple categories and quantity; enhance dynamic category selection and form submission handling ([8a78d61](https://github.com/Temkum/sparrowcakes-cms/commit/8a78d61f7daa17f39b735cd279162145495819fa))
+* Update ProductsTable and product types; rename image property for consistency and enhance selection handling ([ebe4954](https://github.com/Temkum/sparrowcakes-cms/commit/ebe49546a1f24ba99ccd2c738fbd89977993d843))
+
 ## [1.4.0](https://github.com/Temkum/sparrowcakes-cms/compare/v1.3.0...v1.4.0) (2025-04-05)
 
 
