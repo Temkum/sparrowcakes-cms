@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import ProductForm from './ProductForm';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 
@@ -11,6 +12,12 @@ const breadcrumbItems = [
 ];
 
 export default function AddProduct() {
+  const navigate = useNavigate();
+  const handleSuccess = () => {
+    // Navigate to products list after successful creation
+    navigate('/admin/products');
+  };
+
   return (
     <>
       <BreadcrumbComponent items={breadcrumbItems} />
@@ -18,7 +25,7 @@ export default function AddProduct() {
         <div className="w-full p-8">
           <h1 className="text-3xl font-bold mt-4 mb-8">Create Product</h1>
 
-          <ProductForm />
+          <ProductForm mode="create" onSuccess={() => handleSuccess()} />
         </div>
       </div>
     </>

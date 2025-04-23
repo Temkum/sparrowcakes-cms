@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -19,49 +19,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Editor } from '../Editor';
-import axios from 'axios';
 import { useAuthStore } from '@/store/auth';
 import toast, { Toaster } from 'react-hot-toast';
 import { Loader2, Trash } from 'lucide-react';
-
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
-  }),
-  slug: z
-    .string()
-    .min(2, {
-      message: 'Slug must be at least 2 characters.',
-    })
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-      message: 'Slug must contain only lowercase letters, numbers, and hyphens',
-    }),
-  description: z.string().optional(),
-  isActive: z.boolean().default(true),
-  image: z
-    .any()
-    .refine(
-      (file) =>
-        !file || // Allow empty value
-        (file instanceof File &&
-          [
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'image/webp',
-            'image/bmp',
-            'image/svg+xml',
-            'image/tiff',
-            'image/jpg',
-          ].includes(file.type)),
-      {
-        message:
-          'Image must be a valid file with formats: JPEG, PNG, GIF, WEBP, BMP, SVG, TIFF, or JPG.',
-      }
-    )
-    .optional(),
-});
+import axiosInstance from '@/services/axiosInstance';
+import Editor from '../Editor';
+import ReactQuill from 'react-quill';
+import { formSchema } from '@/form-schema/categorySchema';
 
 interface CategoryFormModalProps {
   open: boolean;
@@ -70,6 +34,16 @@ interface CategoryFormModalProps {
   category?: Category | null; // Add this for edit mode
   mode?: 'create' | 'edit'; // Add mode prop
 }
+
+const QuillEditor = forwardRef<
+  ReactQuill,
+  {
+    value: string;
+    onChange: (value: string) => void;
+  }
+>(({ value, onChange }, ref) => (
+  <Editor ref={ref} value={value} onChange={onChange} />
+));
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -84,6 +58,7 @@ const CategoryFormModal = ({
   const { token } = useAuthStore();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isImageRemoved, setIsImageRemoved] = useState(false);
+  const editorRef = useRef<ReactQuill>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -189,9 +164,9 @@ const CategoryFormModal = ({
         formData.append('image', values.image);
       }
 
-      for (const [key, value] of formData.entries()) {
+      /* for (const [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
-      }
+      } */
 
       const url =
         mode === 'edit' && category
@@ -200,7 +175,7 @@ const CategoryFormModal = ({
 
       const method = mode === 'edit' ? 'patch' : 'post';
 
-      await axios[method](url, formData, {
+      await axiosInstance[method](url, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -324,7 +299,11 @@ const CategoryFormModal = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
-                  <Editor value={field.value || ''} onChange={field.onChange} />
+                  <QuillEditor
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    ref={editorRef}
+                  />
                   <FormMessage />
                 </FormItem>
               )}

@@ -31,7 +31,7 @@ interface BlogCardProps {
 }
 
 interface ProductCardProps {
-  title: string;
+  title: number;
   category: string;
   price: number;
   originalPrice: number;
@@ -42,8 +42,8 @@ interface ProductCardProps {
   onQuickView?: () => void;
 }
 
-interface Product {
-  id: string;
+interface UIProduct {
+  id: number;
   title: string;
   category: string;
   quantity: number;
@@ -52,10 +52,20 @@ interface Product {
   rating: number;
   image: string;
   display: boolean;
+  description: string;
+  discount: number;
+  costPerUnit?: number;
+  slug?: string;
+  isActive?: boolean;
+  availability?: Date;
+  categories?: { id: number; name: string }[];
+  images: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface ProductGridProps {
-  products: Product[];
+  products: UIProduct[];
   onAddToCart?: (productId: string) => void;
   onAddToWishlist?: (productId: string) => void;
   onQuickView?: (productId: string) => void;
@@ -77,8 +87,8 @@ interface BannerProps {
 }
 
 interface PopularProductsProps {
-  products: Product[];
-  onAddToCart?: (productId: string) => void;
+  products: UIProduct[];
+  onAddToCart?: (productId: number) => void;
 }
 
 interface ProductStats {
@@ -217,4 +227,13 @@ interface PasswordResetResponse {
   error?: {
     message: string;
   };
+}
+
+interface AxiosResponse<T = unknown, D = unknown> {
+  data: T;
+  status: number;
+  statusText: string;
+  headers: unknown;
+  config: AxiosRequestConfig<D>;
+  request?: unknown;
 }

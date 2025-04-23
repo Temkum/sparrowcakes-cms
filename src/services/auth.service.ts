@@ -12,7 +12,6 @@ export const login = async (data: { email: string; password: string }) => {
   });
 
   console.log('Login successful:', response.data);
-  localStorage.setItem('token', response.data.token);
 
   return response.data;
 };
@@ -42,13 +41,12 @@ export const googleLogin = () => {
 
 export const logout = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('auth-storage');
   window.location.href = `${BASE_URL}/login`;
 };
 
-export const isAuthenticated = () => {
-  return localStorage.getItem('token') !== null;
-};
-
 export const getToken = () => {
-  return localStorage.getItem('token');
+  const token = localStorage.getItem('auth-storage');
+  console.log('token', token);
+  return token;
 };

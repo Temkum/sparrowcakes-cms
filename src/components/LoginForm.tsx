@@ -15,8 +15,8 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import axios from 'axios';
-import { login } from '@/services/auth.service';
 import { toast } from 'react-hot-toast';
+import { useAuthStore } from '@/store/auth';
 
 const LoginForm = ({
   className,
@@ -35,13 +35,14 @@ const LoginForm = ({
 
   const navigate = useNavigate();
 
+  const { loginUser, loading } = useAuthStore();
+
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Make the login request
-      await login(data);
+      await loginUser(data.email, data.password);
       navigate('/admin/dashboard');
     } catch (err) {
       // Handle errors
@@ -52,7 +53,7 @@ const LoginForm = ({
         toast.error('Failed to login. \nAn unexpected error occurred.');
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(loading);
     }
   };
 
