@@ -27,7 +27,6 @@ export const customerService = {
           sortDirection: sortDirection.toUpperCase(),
         },
       });
-      console.log('Fetched customers:', response);
       return response;
     } catch (error) {
       console.error('Error fetching customers:', error);

@@ -17,13 +17,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Filter, Search, Loader2 } from 'lucide-react';
+import { Filter, Search, Loader2, Download } from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { Link } from 'react-router-dom';
 import CreateCustomerModal from './CreateCustomerModal';
 import useCustomerStore from '@/store/customer-store';
 import { format } from 'date-fns';
 import { Customer } from '@/types/customer';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function Customers() {
   const { customers, loading, filter, setFilter, loadCustomers, totalCount } =
@@ -33,6 +34,7 @@ export default function Customers() {
     null
   );
   const [open, setOpen] = useState(false);
+  const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
 
   useEffect(() => {
     loadCustomers();
@@ -44,6 +46,54 @@ export default function Customers() {
   const handleEditCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     setOpen(true);
+  };
+
+  const handleSearch = (value: string) => {
+    setFilter({ searchTerm: value, page: 1 });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedCustomers(customers.map((c) => c.id));
+    } else {
+      setSelectedCustomers([]);
+    }
+  };
+
+  const handleSelectCustomer = (customerId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedCustomers([...selectedCustomers, customerId]);
+    } else {
+      setSelectedCustomers(selectedCustomers.filter((id) => id !== customerId));
+    }
+  };
+
+  const handleExport = () => {
+    const customersToExport = customers.filter((c) =>
+      selectedCustomers.includes(c.id)
+    );
+    const csvData = customersToExport.map((c) => ({
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      city: c.city,
+      created_at: format(new Date(c.created_at), 'PP'),
+    }));
+
+    const csvString = [
+      Object.keys(csvData[0]).join(';'),
+      ...csvData.map((row) => Object.values(row).join(';')),
+    ].join('\n');
+
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `customers-export-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   const breadcrumbItems = useMemo(
@@ -63,16 +113,31 @@ export default function Customers() {
           <h1 className="text-2xl font-bold">Customers</h1>
         </div>
 
-        {/* Global Search */}
+        {/* Global Search and Actions */}
         <div className="flex items-center gap-4 mb-6">
           <div className="relative w-[400px] bg-white">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input placeholder="Search" className="pl-10" />
+            <Input
+              placeholder="Search customers..."
+              className="pl-10"
+              value={filter.searchTerm || ''}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
           </div>
           <Button variant="outline" size="icon" className="shrink-0">
             <Filter className="h-4 w-4" />
             <span className="sr-only">Filter</span>
           </Button>
+          {selectedCustomers.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export ({selectedCustomers.length})
+            </Button>
+          )}
           <div className="ml-auto">
             <Link to="/admin/customers/new">
               <Button
@@ -95,8 +160,15 @@ export default function Customers() {
               <TableRow className="h-9 bg-slate-200">
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={false} // or implement a selectedCustomers array
-                    onCheckedChange={() => {}}
+                    checked={
+                      customers.length > 0 &&
+                      selectedCustomers.length === customers.length
+                    }
+                    indeterminate={
+                      selectedCustomers.length > 0 &&
+                      selectedCustomers.length < customers.length
+                    }
+                    onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
                 {/* Table Headers */}
@@ -124,6 +196,14 @@ export default function Customers() {
               ) : (
                 customers.map((customer) => (
                   <TableRow key={customer.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedCustomers.includes(customer.id)}
+                        onCheckedChange={(checked) =>
+                          handleSelectCustomer(customer.id, checked as boolean)
+                        }
+                      />
+                    </TableCell>
                     <TableCell>{customer.name}</TableCell>
                     <TableCell>{customer.email}</TableCell>
                     <TableCell>{customer.phone}</TableCell>
@@ -201,6 +281,8 @@ export default function Customers() {
           }}
         />
       </div>
+
+      <Toaster />
     </>
   );
 }
