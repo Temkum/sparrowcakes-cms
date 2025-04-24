@@ -17,7 +17,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Filter, Search, Loader2, Download } from 'lucide-react';
+import {
+  Filter,
+  Search,
+  Loader2,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { Link } from 'react-router-dom';
 import CreateCustomerModal from './CreateCustomerModal';
@@ -25,6 +34,7 @@ import useCustomerStore from '@/store/customer-store';
 import { format } from 'date-fns';
 import { Customer } from '@/types/customer';
 import { Toaster } from '@/components/ui/toaster';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export default function Customers() {
   const { customers, loading, filter, setFilter, loadCustomers, totalCount } =
@@ -36,12 +46,18 @@ export default function Customers() {
   const [open, setOpen] = useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
 
+  const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
+  const debouncedSearch = useDebounce(searchValue, 400);
+
+  useEffect(() => {
+    setFilter({ searchTerm: debouncedSearch, page: 1 });
+  }, [debouncedSearch, setFilter]);
+
   useEffect(() => {
     loadCustomers();
   }, [filter]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / filter.pageSize));
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   const handleEditCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -96,6 +112,10 @@ export default function Customers() {
     window.URL.revokeObjectURL(url);
   };
 
+  const handlePageChange = (newPage: number) => {
+    setFilter({ page: newPage });
+  };
+
   const breadcrumbItems = useMemo(
     () => [
       { label: 'Dashboard', href: '/admin/dashboard' },
@@ -120,8 +140,8 @@ export default function Customers() {
             <Input
               placeholder="Search customers..."
               className="pl-10"
-              value={filter.searchTerm || ''}
-              onChange={(e) => handleSearch(e.target.value)}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
             />
           </div>
           <Button variant="outline" size="icon" className="shrink-0">
@@ -161,8 +181,7 @@ export default function Customers() {
                 <TableHead className="w-12">
                   <Checkbox
                     checked={
-                      customers.length > 0 &&
-                      selectedCustomers.length === customers.length
+                      customers && selectedCustomers.length === customers.length
                     }
                     indeterminate={
                       selectedCustomers.length > 0 &&
@@ -227,44 +246,79 @@ export default function Customers() {
           </Table>
         </div>
 
-        {/* Show pagination only when we have customers */}
         {customers && customers.length > 0 && (
-          <div className="mt-4 flex items-center justify-end gap-4">
-            <div className="text-sm text-gray-500">
-              Showing {(filter.page - 1) * filter.pageSize + 1} to{' '}
-              {Math.min(filter.page * filter.pageSize, totalCount)} of{' '}
-              {totalCount} results
+          <div className="mt-4 flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-500">
+                Showing {(filter.page - 1) * filter.pageSize + 1} to{' '}
+                {Math.min(filter.page * filter.pageSize, totalCount)} of{' '}
+                {totalCount} results
+              </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm">Per page</span>
+
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm">Rows per page</p>
                 <Select
                   value={filter.pageSize.toString()}
-                  onValueChange={(value) =>
-                    setFilter({ pageSize: Number(value) })
-                  }
+                  onValueChange={(value) => {
+                    setFilter({ pageSize: Number(value), page: 1 });
+                  }}
                 >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue placeholder={filter.pageSize} />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
+                  <SelectContent side="top">
+                    {[10, 20, 30, 40, 50].map((pageSize) => (
+                      <SelectItem key={pageSize} value={pageSize.toString()}>
+                        {pageSize}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex gap-1">
-                {pages.map((page) => (
-                  <Button
-                    key={page}
-                    variant={filter.page === page ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilter({ page })}
-                  >
-                    {page}
-                  </Button>
-                ))}
+
+              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                Page {filter.page} of {totalPages}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  className="hidden h-8 w-8 p-0 lg:flex"
+                  onClick={() => handlePageChange(1)}
+                  disabled={filter.page === 1}
+                >
+                  <span className="sr-only">Go to first page</span>
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handlePageChange(filter.page - 1)}
+                  disabled={filter.page === 1}
+                >
+                  <span className="sr-only">Go to previous page</span>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handlePageChange(filter.page + 1)}
+                  disabled={filter.page >= totalPages}
+                >
+                  <span className="sr-only">Go to next page</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="hidden h-8 w-8 p-0 lg:flex"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={filter.page >= totalPages}
+                >
+                  <span className="sr-only">Go to last page</span>
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </div>

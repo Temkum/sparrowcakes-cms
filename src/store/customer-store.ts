@@ -40,29 +40,31 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
   },
 
   loadCustomers: async () => {
+    set({ loading: true });
     try {
-      set({ loading: true });
-      const filter = get().filter;
-      const response = await customerService.getCustomers(
-        filter.page,
-        filter.pageSize,
-        filter.searchTerm,
-        filter.sortBy,
-        filter.sortDirection
-      );
+      const { filter } = get();
+      const response = await customerService.getCustomers({
+        page: filter.page,
+        limit: filter.pageSize,
+        searchTerm: filter.searchTerm?.trim() || '',
+        sortBy: filter.sortBy,
+        sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+      });
 
-      if (response && response) {
-        set({
-          customers: response,
-          totalCount: response.total || 0,
-          loading: false,
-        });
-      } else {
-        set({ customers: [], totalCount: 0, loading: false });
-      }
+      set({
+        customers: response.items,
+        totalCount: response.total,
+        loading: false,
+      });
     } catch (error) {
-      console.error('Failed to load customers:', error);
-      set({ customers: [], totalCount: 0, loading: false });
+      set({
+        loading: false,
+        customers: [],
+        totalCount: 0,
+        error:
+          error instanceof Error ? error.message : 'Failed to load customers',
+      });
+      console.error('Error loading customers:', error);
     }
   },
 
@@ -79,8 +81,6 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
         customerData,
         token
       );
-
-      console.log('Created customer:', response);
 
       const createdCustomer: Customer = response;
 
@@ -130,11 +130,13 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
     }
   },
 
-  setFilter: (filter) => {
+  setFilter: (newFilter) =>
     set((state) => ({
-      filter: { ...state.filter, ...filter },
-    }));
-  },
+      filter: {
+        ...state.filter,
+        ...newFilter,
+      },
+    })),
 }));
 
 export default useCustomerStore;

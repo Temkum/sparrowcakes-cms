@@ -16,3 +16,25 @@ export interface CustomerFormProps {
   mode?: 'create' | 'edit';
   customer?: Customer | null;
 }
+
+export interface CustomerFilterProps {
+  page?: number;
+  limit?: number;
+  searchTerm?: string;
+  sortBy?: string;
+  sortDirection?: 'ASC' | 'DESC';
+}
+
+export interface PaginatedCustomersResponse {
+  items: Customer[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface CustomerStats {
+  totalCustomers: number;
+  activeCustomers: number;
+  newCustomersThisMonth: number;
+}
