@@ -33,7 +33,6 @@ import CreateCustomerModal from './CreateCustomerModal';
 import useCustomerStore from '@/store/customer-store';
 import { format } from 'date-fns';
 import { Customer } from '@/types/customer';
-import { Toaster } from '@/components/ui/toaster';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export default function Customers() {
@@ -62,10 +61,6 @@ export default function Customers() {
   const handleEditCustomer = (customer: Customer) => {
     setSelectedCustomer(customer);
     setOpen(true);
-  };
-
-  const handleSearch = (value: string) => {
-    setFilter({ searchTerm: value, page: 1 });
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -335,8 +330,6 @@ export default function Customers() {
           }}
         />
       </div>
-
-      <Toaster />
     </>
   );
 }

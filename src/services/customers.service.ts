@@ -51,8 +51,6 @@ export const customerService = {
         throw new Error('No data received from server');
       }
 
-      console.log('GET ALL', response);
-
       return response;
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -95,7 +93,6 @@ export const customerService = {
           },
         }
       );
-      console.log('Creating customer with data:', response);
       return response;
     } catch (error) {
       console.error('Error creating customer:', error);
