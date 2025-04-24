@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -17,116 +17,42 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Filter, Search, Edit, ArrowDownAZ } from 'lucide-react';
+import { Filter, Search, Loader2 } from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { Link } from 'react-router-dom';
 import CreateCustomerModal from './CreateCustomerModal';
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  town: string;
-  phone: string;
-  image?: string;
-}
-
-const customers: Customer[] = [
-  {
-    id: '1',
-    name: 'Ethan Sanford',
-    email: 'steuber.woodrow@example.net',
-    town: 'Madagascar',
-    phone: '986.381.4395',
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '2',
-    name: 'Prof. Nathan Kiehn Jr.',
-    email: 'mollie.huel@example.org',
-    town: 'Bonaire, Saint Eustatius and Saba',
-    phone: '276-594-4610',
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '3',
-    name: 'Kristina Wiegand',
-    email: 'natalie.hill@example.org',
-    town: 'Mozambique',
-    phone: '910-372-5087',
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '4',
-    name: 'Louisa McKenzie DVM',
-    email: 'schiller.brannon@example.net',
-    town: 'Nigeria',
-    phone: '754-524-7077',
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '5',
-    name: 'Providenci Smith',
-    email: 'crodriguez@example.com',
-    town: 'Turks and Caicos Islands',
-    phone: '(254) 435-1369',
-    image: 'https://via.placeholder.com/150',
-  },
-  // ... add more customers as needed
-];
-
-const columns = [
-  {
-    title: 'Name',
-    accessorKey: 'name',
-  },
-  {
-    title: 'Email',
-    accessorKey: 'email',
-  },
-  {
-    title: 'City',
-    accessorKey: 'city',
-  },
-  {
-    title: 'Phone',
-    accessorKey: 'phone',
-  },
-];
+import useCustomerStore from '@/store/customer-store';
+import { format } from 'date-fns';
+import { Customer } from '@/types/customer';
 
 export default function Customers() {
-  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [filters, setFilters] = useState({
-    name: '',
-    email: '',
-    town: '',
-    phone: '',
-  });
+  const { customers, loading, filter, setFilter, loadCustomers, totalCount } =
+    useCustomerStore();
+
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [open, setOpen] = useState(false);
 
-  const totalPages = Math.ceil(customers.length / itemsPerPage);
+  useEffect(() => {
+    loadCustomers();
+  }, [filter]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / filter.pageSize));
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
-  const filteredCustomers = customers.filter((customer) => {
-    return (
-      customer.name.toLowerCase().includes(filters.name.toLowerCase()) &&
-      customer.email.toLowerCase().includes(filters.email.toLowerCase()) &&
-      customer.town.toLowerCase().includes(filters.town.toLowerCase()) &&
-      customer.phone.toLowerCase().includes(filters.phone.toLowerCase())
-    );
-  });
+  const handleEditCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setOpen(true);
+  };
 
-  const paginatedCustomers = filteredCustomers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const breadcrumbItems = useMemo(
+    () => [
+      { label: 'Dashboard', href: '/admin/dashboard' },
+      { label: 'Customers', href: '#' },
+    ],
+    []
   );
-
-  const breadcrumbItems = [
-    { label: 'Dashboard', href: '/admin/dashboard' },
-    { label: 'Customers', href: '#' },
-  ];
 
   return (
     <>
@@ -151,7 +77,10 @@ export default function Customers() {
             <Link to="/admin/customers/new">
               <Button
                 className="bg-orange-500 hover:bg-orange-600"
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                  setSelectedCustomer(null);
+                  setOpen(true);
+                }}
               >
                 New customer
               </Button>
@@ -166,161 +95,109 @@ export default function Customers() {
               <TableRow className="h-9 bg-slate-200">
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={
-                      selectedCustomers.length === paginatedCustomers.length
-                    }
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedCustomers(
-                          paginatedCustomers.map((c) => c.id)
-                        );
-                      } else {
-                        setSelectedCustomers([]);
-                      }
-                    }}
+                    checked={false} // or implement a selectedCustomers array
+                    onCheckedChange={() => {}}
                   />
                 </TableHead>
                 {/* Table Headers */}
-                {columns.map((column) => (
-                  <TableHead key={column.accessorKey}>
-                    <div className="flex items-center">
-                      {column.title}
-                      {column.accessorKey !== 'phone' && (
-                        <ArrowDownAZ className="h-4 w-4 ml-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                ))}
-                <TableHead className="w-12"> </TableHead>
-              </TableRow>
-              <TableRow>
-                <TableHead className="w-12"> </TableHead>
-                <TableHead className="w-12">
-                  <Input
-                    placeholder="Search"
-                    className="my-2"
-                    value={filters.name}
-                    onChange={(e) =>
-                      setFilters({ ...filters, name: e.target.value })
-                    }
-                  />
-                </TableHead>
-                <TableHead className="w-12">
-                  <Input
-                    placeholder="Search"
-                    className="my-2"
-                    value={filters.email}
-                    onChange={(e) =>
-                      setFilters({ ...filters, email: e.target.value })
-                    }
-                  />
-                </TableHead>
-                <TableHead className="w-12">
-                  <Input
-                    placeholder="Search"
-                    className="my-2"
-                    value={filters.town}
-                    onChange={(e) =>
-                      setFilters({ ...filters, town: e.target.value })
-                    }
-                  />
-                </TableHead>
-                <TableHead className="w-12">
-                  <Input
-                    placeholder="Search"
-                    className="my-2"
-                    value={filters.phone}
-                    onChange={(e) =>
-                      setFilters({ ...filters, phone: e.target.value })
-                    }
-                  />
-                </TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>City</TableHead>
+                <TableHead>Created At</TableHead>
+                <TableHead> </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedCustomers.includes(customer.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedCustomers([
-                            ...selectedCustomers,
-                            customer.id,
-                          ]);
-                        } else {
-                          setSelectedCustomers(
-                            selectedCustomers.filter((id) => id !== customer.id)
-                          );
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>{customer.name}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.town}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-orange-500 hover:text-orange-600"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="ml-2">Edit</span>
-                    </Button>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : !customers || customers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    No customers found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                customers.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell>{customer.name}</TableCell>
+                    <TableCell>{customer.email}</TableCell>
+                    <TableCell>{customer.phone}</TableCell>
+                    <TableCell>{customer.city}</TableCell>
+                    <TableCell>
+                      {format(new Date(customer.created_at), 'PP')}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleEditCustomer(customer)}
+                        aria-label={`Edit ${customer.name}`}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-500">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-            {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} of{' '}
-            {filteredCustomers.length} results
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">Per page</span>
-              <Select
-                value={itemsPerPage.toString()}
-                onValueChange={(value) => setItemsPerPage(Number(value))}
-              >
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
+        {/* Show pagination only when we have customers */}
+        {customers && customers.length > 0 && (
+          <div className="mt-4 flex items-center justify-end gap-4">
+            <div className="text-sm text-gray-500">
+              Showing {(filter.page - 1) * filter.pageSize + 1} to{' '}
+              {Math.min(filter.page * filter.pageSize, totalCount)} of{' '}
+              {totalCount} results
             </div>
-            <div className="flex gap-1">
-              {pages.map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrentPage(page)}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">Per page</span>
+                <Select
+                  value={filter.pageSize.toString()}
+                  onValueChange={(value) =>
+                    setFilter({ pageSize: Number(value) })
+                  }
                 >
-                  {page}
-                </Button>
-              ))}
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-1">
+                {pages.map((page) => (
+                  <Button
+                    key={page}
+                    variant={filter.page === page ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilter({ page })}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <CreateCustomerModal
           open={open}
           onOpenChange={setOpen}
+          mode={selectedCustomer ? 'edit' : 'create'}
+          customer={selectedCustomer}
           onSuccess={() => {
-            setOpen(false);
+            loadCustomers();
+            setSelectedCustomer(null);
           }}
         />
       </div>

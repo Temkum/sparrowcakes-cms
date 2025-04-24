@@ -15,7 +15,8 @@ const customerFormSchema = z.object({
     .regex(emailRegex, {
       message: 'Please enter a valid email address (e.g., user@example.com).',
     })
-    .optional(),
+    .optional()
+    .or(z.literal('')), // This allows empty string as valid input
   phone: z.string().regex(cameroonPhoneRegex, {
     message:
       'Please enter a valid phone number (e.g., +237671234567 or 237681234567).',

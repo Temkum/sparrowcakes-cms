@@ -18,60 +18,70 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import axios from 'axios';
 import customerFormSchema from '@/form-schema/customerFormSchema';
+import useCustomerStore from '@/store/customer-store';
+import { Loader2 } from 'lucide-react';
+import { CustomerFormProps } from '@/types/customer';
+import toast from 'react-hot-toast';
 
 export function CreateCustomerModal({
   open,
   onOpenChange,
   onSuccess,
-}: CreateCustomerModalProps) {
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  mode = 'create',
+  customer,
+}: CustomerFormProps) {
+  const [keepOpen, setKeepOpen] = useState(false);
+  const { createCustomer, updateCustomer, submitting } = useCustomerStore();
 
   const form = useForm<z.infer<typeof customerFormSchema>>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
-      email: '',
-      city: '',
-      name: '',
-      phone: '',
-      occupation: '',
+      email: customer?.email || '',
+      city: customer?.city || '',
+      name: customer?.name || '',
+      phone: customer?.phone || '',
+      occupation: customer?.occupation || '',
     },
   });
 
+  const handleSubmit = async (keepModalOpen: boolean) => {
+    setKeepOpen(keepModalOpen);
+    await form.handleSubmit(onSubmit)();
+  };
+
   const onSubmit = async (values: z.infer<typeof customerFormSchema>) => {
-    console.log(values);
-
     try {
-      setIsSubmitting(true);
-      const response = await axios.post(
-        'http://localhost:5000/customers',
-        values
-      );
+      if (mode === 'edit' && customer) {
+        await updateCustomer(customer.id, values);
+        toast.success('Customer updated successfully');
+        onOpenChange(false);
+      } else {
+        await createCustomer(values);
+        toast.success('Customer created successfully');
 
-      if (!response.data.success) {
-        throw new Error(response.data.message);
+        if (keepOpen) {
+          // Reset form for "Create & create another"
+          form.reset({
+            email: '',
+            city: '',
+            name: '',
+            phone: '',
+            occupation: '',
+          });
+        } else {
+          // Close modal for normal "Create"
+          onOpenChange(false);
+        }
       }
 
-      toast({
-        title: 'Success',
-        description: 'Customer created successfully',
-      });
-
-      form.reset();
+      // Always call onSuccess to refresh the list
       onSuccess?.();
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to create customer',
-        variant: 'destructive',
-      });
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: any) {
+      console.error('Error creating/updating customer:', error);
+      toast.error(
+        `Failed to ${mode} customer: ${error.message || 'Unknown error'}`
+      );
     }
   };
 
@@ -84,7 +94,7 @@ export function CreateCustomerModal({
       >
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            Create customer
+            {mode === 'edit' ? 'Edit customer' : 'Create customer'}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -164,22 +174,35 @@ export function CreateCustomerModal({
             <div className="flex gap-4">
               <Button
                 type="submit"
+                onClick={() => handleSubmit(false)}
                 className="bg-orange-500 hover:bg-orange-600"
-                disabled={isSubmitting}
+                disabled={submitting}
               >
-                Create
+                {submitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {mode === 'edit' ? 'Update' : 'Create'}
               </Button>
+
+              {mode === 'create' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleSubmit(true)}
+                  disabled={submitting}
+                >
+                  {submitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Create & create another
+                </Button>
+              )}
+
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-              >
-                Create & create another
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
+                disabled={submitting}
               >
                 Cancel
               </Button>
