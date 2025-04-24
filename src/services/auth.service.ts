@@ -1,4 +1,5 @@
 import axios from 'axios';
+import axiosInstance from './axiosInstance';
 
 // import from .env file since I'm using vite
 const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -21,12 +22,32 @@ export const register = async (
   email: string,
   password: string
 ) => {
-  const response = await axios.post(`${API_URL}/auth/register`, {
-    name,
-    email,
-    password,
-  });
-  return response.data;
+  try {
+    const response = await axiosInstance.post(`${API_URL}/auth/register`, {
+      name,
+      email,
+      password,
+    });
+
+    if (!response) {
+      throw new Error('No response from server');
+    }
+
+    // Check if the response contains an error message
+    if (response.error) {
+      throw new Error(response.error);
+    }
+
+    return response;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Get the specific error message from the backend
+      const errorMessage =
+        error.response?.data?.message || 'Registration failed';
+      throw new Error(errorMessage);
+    }
+    throw error;
+  }
 };
 
 export const firebaseLogin = async (idToken: string) => {

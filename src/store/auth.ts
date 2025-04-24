@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { getToken, login, logout, register } from '../services/auth.service';
 import toast from 'react-hot-toast';
 import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 
 interface AuthStoreState {
   token: string | null;
@@ -46,21 +47,25 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
         set({ loading: true });
         try {
           const response = await register(name, email, password);
-          if (response.data) {
-            toast.success('Registration successful! Redirecting to login...');
+          console.log('reg response', response);
+          if (response?.data) {
             set({ loading: false });
             return true;
           }
-          set({ loading: false });
-          return false;
+          throw new Error('Registration failed');
         } catch (error) {
           set({ loading: false });
-          toast.error('Registration failed. Please try again.', {
-            position: 'bottom-center',
-          });
+          if (axios.isAxiosError(error)) {
+            const message =
+              error.response?.data?.message || 'Registration failed';
+            if (message.includes('duplicate')) {
+              throw new Error('This email is already registered');
+            } else if (message.includes('database')) {
+              throw new Error('Server error. Please try again later');
+            }
+            throw new Error(message);
+          }
           throw error;
-        } finally {
-          set({ loading: false });
         }
       },
 
@@ -70,13 +75,14 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
           const response = await login({ email, password });
           set({ token: response.token, isAuthenticated: true });
           return true;
-        } catch (error) {
+        } catch (error: any) {
           set({ loading: false });
-          console.error(error);
-          toast.error('Invalid Credentials. Please try again.', {
+          const errorMessage =
+            error.response?.data?.message || 'Invalid email or password';
+          toast.error(errorMessage, {
             position: 'bottom-center',
           });
-          throw new Error('Invalid Credentials!');
+          throw new Error(errorMessage);
         } finally {
           set({ loading: false });
         }

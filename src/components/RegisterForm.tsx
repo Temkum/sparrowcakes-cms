@@ -33,27 +33,37 @@ const RegisterForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const registerUser = useAuthStore((state) => state.registerUser);
+  const { registerUser } = useAuthStore();
   const navigate = useNavigate();
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError(null);
 
-    console.log(data);
-
     try {
-      const success = await registerUser(data.name, data.email, data.password);
+      const success = await registerUser?.(
+        data.name,
+        data.email,
+        data.password
+      );
       if (success) {
-        toast.success(`${data.name} registered successfully!`);
+        toast.success('Registration successful! Redirecting to login...');
+        navigate('/login', { replace: true });
       }
-      navigate('/login', { replace: true });
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Registration failed.');
+        const errorMessage = err.response?.data?.message;
+
+        // Handle specific error cases
+        if (errorMessage?.includes('duplicate')) {
+          setError('Email already exists. Please use a different email.');
+        } else if (errorMessage?.includes('database')) {
+          setError('Database error. Please try again later.');
+        } else {
+          setError(errorMessage || 'Registration failed. Please try again.');
+        }
       } else {
-        setError('Failed to register. An unexpected error occurred.');
-        toast.error('Failed to register.');
+        setError('An unexpected error occurred. Please try again.');
       }
     } finally {
       setIsLoading(false);
