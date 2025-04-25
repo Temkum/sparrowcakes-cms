@@ -124,6 +124,28 @@ export const customerService = {
     }
   },
 
+  // Delete multiple customers
+  async deleteCustomers(ids: number[], token: string) {
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new Error('Invalid customer IDs');
+    }
+    try {
+      const response = await axiosInstance.delete(`${API_URL}/customers`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: { ids },
+      });
+      return response;
+    } catch (error) {
+      console.error('Error deleting customers:', error);
+      throw error;
+    }
+  },
+
   // Get customer statistics
   async getCustomerStats(): Promise<CustomerStats> {
     try {

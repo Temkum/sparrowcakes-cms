@@ -35,6 +35,9 @@ import useCustomerStore from '@/store/customer-store';
 import { format } from 'date-fns';
 import { Customer } from '@/types/customer';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAuthStore } from '@/store/auth';
+import { customerService } from '@/services/customers.service';
+import toast from 'react-hot-toast';
 
 export default function Customers() {
   const { customers, loading, filter, setFilter, loadCustomers, totalCount } =
@@ -60,7 +63,6 @@ export default function Customers() {
   const totalPages = Math.max(1, Math.ceil(totalCount / filter.pageSize));
 
   const handleEditCustomer = (customer: Customer) => {
-    console.log('Edit customer:', customer);
     setSelectedCustomer(customer);
     setOpen(true);
   };
@@ -75,8 +77,6 @@ export default function Customers() {
 
   const handleSelectCustomer = (customerId: number, checked: boolean) => {
     if (checked) {
-      console.log('checked', customerId);
-      console.log('checked', selectedCustomers);
       setSelectedCustomers([...selectedCustomers, customerId]);
     } else {
       setSelectedCustomers(selectedCustomers.filter((id) => id !== customerId));
@@ -116,6 +116,25 @@ export default function Customers() {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleDeleteSelected = async () => {
+    if (selectedCustomers.length === 0) return;
+
+    try {
+      const { token } = useAuthStore.getState(); // Ensure token is available
+      await customerService.deleteCustomers(selectedCustomers, token);
+      toast.success(
+        `${selectedCustomers.length} ${
+          selectedCustomers.length > 1 ? 'customers' : 'customer'
+        } deleted successfully`
+      );
+      setSelectedCustomers([]);
+      loadCustomers(); // Refresh the customer list
+    } catch (error) {
+      console.error('Error deleting customers:', error);
+      toast.error('Failed to delete selected customers');
+    }
+  };
+
   const handlePageChange = (newPage: number) => {
     setFilter({ page: newPage });
   };
@@ -153,14 +172,23 @@ export default function Customers() {
             <span className="sr-only">Filter</span>
           </Button>
           {selectedCustomers.length > 0 && (
-            <Button
-              variant="outline"
-              onClick={handleExport}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Export ({selectedCustomers.length})
-            </Button>
+            <>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteSelected}
+                className="flex items-center gap-2"
+              >
+                <span>Delete Selected ({selectedCustomers.length})</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export ({selectedCustomers.length})
+              </Button>
+            </>
           )}
           <div className="ml-auto">
             <Link to="/admin/customers/new">
