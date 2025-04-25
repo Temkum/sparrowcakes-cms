@@ -107,7 +107,7 @@ export const customerService = {
     token: string
   ) {
     try {
-      const response = await axiosInstance.put(
+      const response = await axiosInstance.patch(
         `${API_URL}/customers/${id}`,
         customerData,
         {
@@ -116,6 +116,7 @@ export const customerService = {
           },
         }
       );
+      console.log('first', response);
       return response;
     } catch (error) {
       console.error(`Error updating customer with ID ${id}:`, error);

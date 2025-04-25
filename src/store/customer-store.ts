@@ -101,7 +101,7 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
     }
   },
 
-  updateCustomer: async (id, customerData) => {
+  updateCustomer: async (id, customerData): Promise<Customer> => {
     try {
       set({ submitting: true });
       const { token } = useAuthStore.getState();
@@ -115,12 +115,15 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
         customerData,
         token
       );
-      const updatedCustomer = response.data;
+      console.log('edit response', response);
+      const updatedCustomer = response;
+
       set((state) => ({
         customers: state.customers.map((c) =>
-          c.id === id ? updatedCustomer : c
+          c.id === id ? (updatedCustomer as unknown as Customer) : c
         ),
       }));
+
       return updatedCustomer;
     } catch (error) {
       console.error('Failed to update customer:', error);

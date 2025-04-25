@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,26 @@ export function CreateCustomerModal({
       occupation: customer?.occupation || '',
     },
   });
+
+  useEffect(() => {
+    if (customer && mode === 'edit') {
+      form.reset({
+        email: customer.email || '',
+        city: customer.city || '',
+        name: customer.name || '',
+        phone: customer.phone || '',
+        occupation: customer.occupation || '',
+      });
+    } else {
+      form.reset({
+        email: '',
+        city: '',
+        name: '',
+        phone: '',
+        occupation: '',
+      });
+    }
+  }, [customer, mode, form]);
 
   const handleSubmit = async (keepModalOpen: boolean) => {
     setKeepOpen(keepModalOpen);

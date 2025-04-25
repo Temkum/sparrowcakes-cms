@@ -26,6 +26,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Edit,
 } from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { Link } from 'react-router-dom';
@@ -59,12 +60,13 @@ export default function Customers() {
   const totalPages = Math.max(1, Math.ceil(totalCount / filter.pageSize));
 
   const handleEditCustomer = (customer: Customer) => {
+    console.log('Edit customer:', customer);
     setSelectedCustomer(customer);
     setOpen(true);
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
+    if (checked && customers) {
       setSelectedCustomers(customers.map((c) => c.id));
     } else {
       setSelectedCustomers([]);
@@ -73,6 +75,8 @@ export default function Customers() {
 
   const handleSelectCustomer = (customerId: number, checked: boolean) => {
     if (checked) {
+      console.log('checked', customerId);
+      console.log('checked', selectedCustomers);
       setSelectedCustomers([...selectedCustomers, customerId]);
     } else {
       setSelectedCustomers(selectedCustomers.filter((id) => id !== customerId));
@@ -80,9 +84,14 @@ export default function Customers() {
   };
 
   const handleExport = () => {
-    const customersToExport = customers.filter((c) =>
-      selectedCustomers.includes(c.id)
+    if (selectedCustomers.length === 0) return;
+
+    const customersToExport = customers.filter(
+      (c) => c && selectedCustomers.includes(c.id)
     );
+
+    if (customersToExport.length === 0) return;
+
     const csvData = customersToExport.map((c) => ({
       name: c.name,
       email: c.email,
@@ -208,7 +217,7 @@ export default function Customers() {
                   </TableCell>
                 </TableRow>
               ) : (
-                customers.map((customer) => (
+                (customers || []).map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell>
                       <Checkbox
@@ -230,8 +239,9 @@ export default function Customers() {
                         variant="ghost"
                         onClick={() => handleEditCustomer(customer)}
                         aria-label={`Edit ${customer.name}`}
+                        className="hover:bg-orange-300"
                       >
-                        Edit
+                        <Edit className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -264,7 +274,7 @@ export default function Customers() {
                     <SelectValue placeholder={filter.pageSize} />
                   </SelectTrigger>
                   <SelectContent side="top">
-                    {[10, 20, 30, 40, 50].map((pageSize) => (
+                    {[10, 20, 30, 50, 100].map((pageSize) => (
                       <SelectItem key={pageSize} value={pageSize.toString()}>
                         {pageSize}
                       </SelectItem>
