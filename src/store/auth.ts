@@ -71,8 +71,10 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
 
       loginUser: async (email, password) => {
         set({ loading: true });
+
         try {
           const response = await login({ email, password });
+
           set({ token: response.token, isAuthenticated: true });
           return true;
         } catch (error: any) {

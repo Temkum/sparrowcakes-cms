@@ -12,8 +12,6 @@ export const login = async (data: { email: string; password: string }) => {
     },
   });
 
-  console.log('Login successful:', response.data);
-
   return response.data;
 };
 
@@ -68,6 +66,5 @@ export const logout = () => {
 
 export const getToken = () => {
   const token = localStorage.getItem('auth-storage');
-  console.log('token', token);
   return token;
 };
