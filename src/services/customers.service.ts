@@ -116,7 +116,6 @@ export const customerService = {
           },
         }
       );
-      console.log('first', response);
       return response;
     } catch (error) {
       console.error(`Error updating customer with ID ${id}:`, error);

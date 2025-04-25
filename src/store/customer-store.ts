@@ -115,7 +115,6 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
         customerData,
         token
       );
-      console.log('edit response', response);
       const updatedCustomer = response;
 
       set((state) => ({

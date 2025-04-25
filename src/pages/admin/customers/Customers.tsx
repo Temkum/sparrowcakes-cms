@@ -58,7 +58,7 @@ export default function Customers() {
 
   useEffect(() => {
     loadCustomers();
-  }, [filter]);
+  }, [filter, loadCustomers]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / filter.pageSize));
 
@@ -94,9 +94,10 @@ export default function Customers() {
 
     const csvData = customersToExport.map((c) => ({
       name: c.name,
-      email: c.email,
       phone: c.phone,
+      occupation: c.occupation,
       city: c.city,
+      email: c.email,
       created_at: format(new Date(c.created_at), 'PP'),
     }));
 
@@ -215,19 +216,15 @@ export default function Customers() {
                     checked={
                       customers && selectedCustomers.length === customers.length
                     }
-                    indeterminate={
-                      selectedCustomers.length > 0 &&
-                      selectedCustomers.length < customers.length
-                    }
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
                 {/* Table Headers */}
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Occupation</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>City</TableHead>
-                <TableHead>Created At</TableHead>
+                <TableHead>Date Added</TableHead>
                 <TableHead> </TableHead>
               </TableRow>
             </TableHeader>
@@ -256,7 +253,7 @@ export default function Customers() {
                       />
                     </TableCell>
                     <TableCell>{customer.name}</TableCell>
-                    <TableCell>{customer.email}</TableCell>
+                    <TableCell>{customer.occupation}</TableCell>
                     <TableCell>{customer.phone}</TableCell>
                     <TableCell>{customer.city}</TableCell>
                     <TableCell>
