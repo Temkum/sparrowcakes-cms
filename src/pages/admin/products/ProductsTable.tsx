@@ -75,6 +75,9 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [selectedForDeleteId, setSelectedForDeleteId] = useState<number | null>(
+    null
+  );
 
   // Handle filter changes with debounce
   useEffect(() => {
@@ -113,6 +116,7 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
     } finally {
       setDeleteDialogOpen(false);
       setDeletingProductId(null);
+      setSelectedForDeleteId(null);
     }
   };
 
@@ -378,20 +382,23 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                             <AlertDialog
                               open={
                                 deleteDialogOpen &&
-                                deletingProductId === product.id
+                                selectedForDeleteId === product.id
                               }
                               onOpenChange={(open) => {
-                                if (!open) setDeleteDialogOpen(false);
+                                if (!open) {
+                                  setDeleteDialogOpen(false);
+                                  setSelectedForDeleteId(null);
+                                }
                               }}
                             >
                               <AlertDialogTrigger asChild>
                                 <button
                                   type="button"
-                                  className="text-red-600 cursor-pointer flex items-center ml-2 bg-transparent border-none p-2 w-full text-left hover:bg-gray-100 rounded-sm text-sm"
+                                  className="text-red-600 cursor-pointer flex items-center bg-transparent border-none p-2 w-full text-left hover:bg-gray-100 rounded-sm text-sm"
                                   disabled={isDeleting}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setDeletingProductId(product.id!);
+                                    setSelectedForDeleteId(product.id!);
                                     setDeleteDialogOpen(true);
                                   }}
                                 >
@@ -415,8 +422,9 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                                   <AlertDialogCancel
                                     onClick={() => {
                                       setDeleteDialogOpen(false);
-                                      setDeletingProductId(null);
+                                      setSelectedForDeleteId(null);
                                     }}
+                                    disabled={deletingProductId === product.id}
                                   >
                                     Cancel
                                   </AlertDialogCancel>
@@ -426,9 +434,9 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                                       e.preventDefault();
                                       handleDelete(product.id!);
                                     }}
-                                    disabled={isDeleting}
+                                    disabled={deletingProductId === product.id}
                                   >
-                                    {isDeleting ? (
+                                    {deletingProductId === product.id ? (
                                       <span className="flex items-center gap-2">
                                         <Loader2 className="animate-spin w-4 h-4" />
                                         Deleting...

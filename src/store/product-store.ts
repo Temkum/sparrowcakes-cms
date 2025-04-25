@@ -6,7 +6,6 @@ import {
   ProductAPIResponse,
 } from '@/pages/admin/products/types/product.types';
 import { useAuthStore } from './auth';
-import axiosInstance from '@/services/axiosInstance';
 import axios from 'axios';
 
 interface ProductStats {

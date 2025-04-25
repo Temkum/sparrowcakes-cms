@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/Temkum/sparrowcakes-cms/compare/v1.3.0...v1.6.0) (2025-04-25)
+
+
+### Features
+
+* add customer selection and export functionality in Customers component ([b0f6cfe](https://github.com/Temkum/sparrowcakes-cms/commit/b0f6cfef16ad7b05ce6938de5cf1dc54a78fa149))
+* add delete functionality for selected customers; implement deleteCustomers method in customerService and integrate it into Customers component with user feedback ([42c6afb](https://github.com/Temkum/sparrowcakes-cms/commit/42c6afb5fa0fccff6aa9d78aced3dd7e3b8a910c))
+* enhance customer form validation; add character limits for name, city, address, and occupation fields; improve phone number validation; integrate Toaster for notifications in CreateCustomerModal ([70ff98e](https://github.com/Temkum/sparrowcakes-cms/commit/70ff98e00d73b3882b25fcf48c5b27d5f5d53cfd))
+* enhance error handling in LoginForm and RegisterForm; improve user feedback on registration and login failures ([1252f1e](https://github.com/Temkum/sparrowcakes-cms/commit/1252f1e0d3014aab64cc961c1ef9b29dbb618523))
+* implement customer edit functionality; reset form fields based on mode and customer data in CreateCustomerModal; update customer service to use PATCH method for updates ([e9c1d69](https://github.com/Temkum/sparrowcakes-cms/commit/e9c1d695745562a2384648123e269a84f5cb8fbf))
+* implement customer management features; add customer service, store, and update form handling ([6db6738](https://github.com/Temkum/sparrowcakes-cms/commit/6db6738dde8a1295c1d0eb84e86ad4baeaa03fed))
+* implement useDebounce hook and integrate it into Customers component for improved search functionality; enhance customer service with pagination and filtering support ([ed40f9d](https://github.com/Temkum/sparrowcakes-cms/commit/ed40f9dcfed75464189254cf357833d142e7c743))
+* improve delete confirmation handling in ProductsTable; use selectedForDeleteId for dialog state ([3e7cb39](https://github.com/Temkum/sparrowcakes-cms/commit/3e7cb39f1d46d1e961c1dd6d850bfb80b96d3c9f))
+* improve login functionality; simplify email validation message in LoginSchema and remove console logs from auth service ([af2e2f7](https://github.com/Temkum/sparrowcakes-cms/commit/af2e2f7044f7aba625e77ecddb74e804b35c5db8))
+* update customer loading logic and enhance customer export data; include email and occupation in CSV export, and adjust useEffect dependencies for loading customers ([708831f](https://github.com/Temkum/sparrowcakes-cms/commit/708831fe6d5db952de2244ea2686ae77d848b18b))
+
 ## [1.5.0](https://github.com/Temkum/sparrowcakes-cms/compare/v1.4.0...v1.5.0) (2025-04-23)
 
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -17,116 +17,136 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Filter, Search, Edit, ArrowDownAZ } from 'lucide-react';
+import {
+  Filter,
+  Search,
+  Loader2,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Edit,
+} from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { Link } from 'react-router-dom';
 import CreateCustomerModal from './CreateCustomerModal';
-
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  town: string;
-  phone: string;
-  image?: string;
-}
-
-const customers: Customer[] = [
-  {
-    id: '1',
-    name: 'Ethan Sanford',
-    email: 'steuber.woodrow@example.net',
-    town: 'Madagascar',
-    phone: '986.381.4395',
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '2',
-    name: 'Prof. Nathan Kiehn Jr.',
-    email: 'mollie.huel@example.org',
-    town: 'Bonaire, Saint Eustatius and Saba',
-    phone: '276-594-4610',
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '3',
-    name: 'Kristina Wiegand',
-    email: 'natalie.hill@example.org',
-    town: 'Mozambique',
-    phone: '910-372-5087',
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '4',
-    name: 'Louisa McKenzie DVM',
-    email: 'schiller.brannon@example.net',
-    town: 'Nigeria',
-    phone: '754-524-7077',
-    image: 'https://via.placeholder.com/150',
-  },
-  {
-    id: '5',
-    name: 'Providenci Smith',
-    email: 'crodriguez@example.com',
-    town: 'Turks and Caicos Islands',
-    phone: '(254) 435-1369',
-    image: 'https://via.placeholder.com/150',
-  },
-  // ... add more customers as needed
-];
-
-const columns = [
-  {
-    title: 'Name',
-    accessorKey: 'name',
-  },
-  {
-    title: 'Email',
-    accessorKey: 'email',
-  },
-  {
-    title: 'City',
-    accessorKey: 'city',
-  },
-  {
-    title: 'Phone',
-    accessorKey: 'phone',
-  },
-];
+import useCustomerStore from '@/store/customer-store';
+import { format } from 'date-fns';
+import { Customer } from '@/types/customer';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useAuthStore } from '@/store/auth';
+import { customerService } from '@/services/customers.service';
+import toast from 'react-hot-toast';
 
 export default function Customers() {
-  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [filters, setFilters] = useState({
-    name: '',
-    email: '',
-    town: '',
-    phone: '',
-  });
-  const [open, setOpen] = useState(false);
+  const { customers, loading, filter, setFilter, loadCustomers, totalCount } =
+    useCustomerStore();
 
-  const totalPages = Math.ceil(customers.length / itemsPerPage);
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-
-  const filteredCustomers = customers.filter((customer) => {
-    return (
-      customer.name.toLowerCase().includes(filters.name.toLowerCase()) &&
-      customer.email.toLowerCase().includes(filters.email.toLowerCase()) &&
-      customer.town.toLowerCase().includes(filters.town.toLowerCase()) &&
-      customer.phone.toLowerCase().includes(filters.phone.toLowerCase())
-    );
-  });
-
-  const paginatedCustomers = filteredCustomers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
   );
+  const [open, setOpen] = useState(false);
+  const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
 
-  const breadcrumbItems = [
-    { label: 'Dashboard', href: '/admin/dashboard' },
-    { label: 'Customers', href: '#' },
-  ];
+  const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
+  const debouncedSearch = useDebounce(searchValue, 400);
+
+  useEffect(() => {
+    setFilter({ searchTerm: debouncedSearch, page: 1 });
+  }, [debouncedSearch, setFilter]);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [filter, loadCustomers]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / filter.pageSize));
+
+  const handleEditCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setOpen(true);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && customers) {
+      setSelectedCustomers(customers.map((c) => c.id));
+    } else {
+      setSelectedCustomers([]);
+    }
+  };
+
+  const handleSelectCustomer = (customerId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedCustomers([...selectedCustomers, customerId]);
+    } else {
+      setSelectedCustomers(selectedCustomers.filter((id) => id !== customerId));
+    }
+  };
+
+  const handleExport = () => {
+    if (selectedCustomers.length === 0) return;
+
+    const customersToExport = customers.filter(
+      (c) => c && selectedCustomers.includes(c.id)
+    );
+
+    if (customersToExport.length === 0) return;
+
+    const csvData = customersToExport.map((c) => ({
+      name: c.name,
+      phone: c.phone,
+      occupation: c.occupation,
+      city: c.city,
+      email: c.email,
+      created_at: format(new Date(c.created_at), 'PP'),
+    }));
+
+    const csvString = [
+      Object.keys(csvData[0]).join(';'),
+      ...csvData.map((row) => Object.values(row).join(';')),
+    ].join('\n');
+
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `customers-export-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedCustomers.length === 0) return;
+
+    try {
+      const { token } = useAuthStore.getState(); // Ensure token is available
+      await customerService.deleteCustomers(selectedCustomers, token);
+      toast.success(
+        `${selectedCustomers.length} ${
+          selectedCustomers.length > 1 ? 'customers' : 'customer'
+        } deleted successfully`
+      );
+      setSelectedCustomers([]);
+      loadCustomers(); // Refresh the customer list
+    } catch (error) {
+      console.error('Error deleting customers:', error);
+      toast.error('Failed to delete selected customers');
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setFilter({ page: newPage });
+  };
+
+  const breadcrumbItems = useMemo(
+    () => [
+      { label: 'Dashboard', href: '/admin/dashboard' },
+      { label: 'Customers', href: '#' },
+    ],
+    []
+  );
 
   return (
     <>
@@ -137,21 +157,48 @@ export default function Customers() {
           <h1 className="text-2xl font-bold">Customers</h1>
         </div>
 
-        {/* Global Search */}
+        {/* Global Search and Actions */}
         <div className="flex items-center gap-4 mb-6">
           <div className="relative w-[400px] bg-white">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input placeholder="Search" className="pl-10" />
+            <Input
+              placeholder="Search customers..."
+              className="pl-10"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+            />
           </div>
           <Button variant="outline" size="icon" className="shrink-0">
             <Filter className="h-4 w-4" />
             <span className="sr-only">Filter</span>
           </Button>
+          {selectedCustomers.length > 0 && (
+            <>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteSelected}
+                className="flex items-center gap-2"
+              >
+                <span>Delete Selected ({selectedCustomers.length})</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export ({selectedCustomers.length})
+              </Button>
+            </>
+          )}
           <div className="ml-auto">
             <Link to="/admin/customers/new">
               <Button
                 className="bg-orange-500 hover:bg-orange-600"
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                  setSelectedCustomer(null);
+                  setOpen(true);
+                }}
               >
                 New customer
               </Button>
@@ -167,160 +214,154 @@ export default function Customers() {
                 <TableHead className="w-12">
                   <Checkbox
                     checked={
-                      selectedCustomers.length === paginatedCustomers.length
+                      customers && selectedCustomers.length === customers.length
                     }
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedCustomers(
-                          paginatedCustomers.map((c) => c.id)
-                        );
-                      } else {
-                        setSelectedCustomers([]);
-                      }
-                    }}
+                    onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
                 {/* Table Headers */}
-                {columns.map((column) => (
-                  <TableHead key={column.accessorKey}>
-                    <div className="flex items-center">
-                      {column.title}
-                      {column.accessorKey !== 'phone' && (
-                        <ArrowDownAZ className="h-4 w-4 ml-4" />
-                      )}
-                    </div>
-                  </TableHead>
-                ))}
-                <TableHead className="w-12"> </TableHead>
-              </TableRow>
-              <TableRow>
-                <TableHead className="w-12"> </TableHead>
-                <TableHead className="w-12">
-                  <Input
-                    placeholder="Search"
-                    className="my-2"
-                    value={filters.name}
-                    onChange={(e) =>
-                      setFilters({ ...filters, name: e.target.value })
-                    }
-                  />
-                </TableHead>
-                <TableHead className="w-12">
-                  <Input
-                    placeholder="Search"
-                    className="my-2"
-                    value={filters.email}
-                    onChange={(e) =>
-                      setFilters({ ...filters, email: e.target.value })
-                    }
-                  />
-                </TableHead>
-                <TableHead className="w-12">
-                  <Input
-                    placeholder="Search"
-                    className="my-2"
-                    value={filters.town}
-                    onChange={(e) =>
-                      setFilters({ ...filters, town: e.target.value })
-                    }
-                  />
-                </TableHead>
-                <TableHead className="w-12">
-                  <Input
-                    placeholder="Search"
-                    className="my-2"
-                    value={filters.phone}
-                    onChange={(e) =>
-                      setFilters({ ...filters, phone: e.target.value })
-                    }
-                  />
-                </TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Occupation</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>City</TableHead>
+                <TableHead>Date Added</TableHead>
+                <TableHead> </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedCustomers.includes(customer.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedCustomers([
-                            ...selectedCustomers,
-                            customer.id,
-                          ]);
-                        } else {
-                          setSelectedCustomers(
-                            selectedCustomers.filter((id) => id !== customer.id)
-                          );
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>{customer.name}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.town}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-orange-500 hover:text-orange-600"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="ml-2">Edit</span>
-                    </Button>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : !customers || customers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    No customers found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                (customers || []).map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedCustomers.includes(customer.id)}
+                        onCheckedChange={(checked) =>
+                          handleSelectCustomer(customer.id, checked as boolean)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>{customer.name}</TableCell>
+                    <TableCell>{customer.occupation}</TableCell>
+                    <TableCell>{customer.phone}</TableCell>
+                    <TableCell>{customer.city}</TableCell>
+                    <TableCell>
+                      {format(new Date(customer.created_at), 'PP')}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleEditCustomer(customer)}
+                        aria-label={`Edit ${customer.name}`}
+                        className="hover:bg-orange-300"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-500">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-            {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} of{' '}
-            {filteredCustomers.length} results
-          </div>
-          <div className="flex items-center gap-4">
+        {customers && customers.length > 0 && (
+          <div className="mt-4 flex items-center justify-between px-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm">Per page</span>
-              <Select
-                value={itemsPerPage.toString()}
-                onValueChange={(value) => setItemsPerPage(Number(value))}
-              >
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
+              <p className="text-sm text-gray-500">
+                Showing {(filter.page - 1) * filter.pageSize + 1} to{' '}
+                {Math.min(filter.page * filter.pageSize, totalCount)} of{' '}
+                {totalCount} results
+              </p>
             </div>
-            <div className="flex gap-1">
-              {pages.map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setCurrentPage(page)}
+
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm">Rows per page</p>
+                <Select
+                  value={filter.pageSize.toString()}
+                  onValueChange={(value) => {
+                    setFilter({ pageSize: Number(value), page: 1 });
+                  }}
                 >
-                  {page}
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue placeholder={filter.pageSize} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 20, 30, 50, 100].map((pageSize) => (
+                      <SelectItem key={pageSize} value={pageSize.toString()}>
+                        {pageSize}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                Page {filter.page} of {totalPages}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  className="hidden h-8 w-8 p-0 lg:flex"
+                  onClick={() => handlePageChange(1)}
+                  disabled={filter.page === 1}
+                >
+                  <span className="sr-only">Go to first page</span>
+                  <ChevronsLeft className="h-4 w-4" />
                 </Button>
-              ))}
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handlePageChange(filter.page - 1)}
+                  disabled={filter.page === 1}
+                >
+                  <span className="sr-only">Go to previous page</span>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handlePageChange(filter.page + 1)}
+                  disabled={filter.page >= totalPages}
+                >
+                  <span className="sr-only">Go to next page</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="hidden h-8 w-8 p-0 lg:flex"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={filter.page >= totalPages}
+                >
+                  <span className="sr-only">Go to last page</span>
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <CreateCustomerModal
           open={open}
           onOpenChange={setOpen}
+          mode={selectedCustomer ? 'edit' : 'create'}
+          customer={selectedCustomer}
           onSuccess={() => {
-            setOpen(false);
+            loadCustomers();
+            setSelectedCustomer(null);
           }}
         />
       </div>

@@ -45,15 +45,9 @@ const LoginForm = ({
       await loginUser(data.email, data.password);
       navigate('/admin/dashboard');
     } catch (err) {
-      // Handle errors
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message);
-        toast.error('An error occurred during login.');
-      } else {
-        toast.error('Failed to login. \nAn unexpected error occurred.');
-      }
+      setError(err instanceof Error ? err.message : 'Failed to login');
     } finally {
-      setIsLoading(loading);
+      setIsLoading(false);
     }
   };
 
@@ -63,7 +57,13 @@ const LoginForm = ({
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Login to your account to continue</CardDescription>
+            <CardDescription>
+              {error ? (
+                <p className="text-sm text-red-500 font-medium">{error}</p>
+              ) : (
+                'Login to your account to continue'
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)}>
