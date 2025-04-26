@@ -25,6 +25,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { useAuthStore } from '@/store/auth';
 
 // This is sample data.
 const data = {
@@ -161,6 +162,21 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const user = useAuthStore().user;
+
+  // fallback if user is not loaded yet
+  const sidebarUser = user
+    ? {
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar || '/assets/profiles/poupe.png',
+      }
+    : {
+        name: 'Loading...',
+        email: '',
+        avatar: '/assets/profiles/poupe.png',
+      };
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -171,7 +187,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavShop projects={data.content} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={sidebarUser} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

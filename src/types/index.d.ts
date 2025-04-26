@@ -237,3 +237,35 @@ interface AxiosResponse<T = unknown, D = unknown> {
   config: AxiosRequestConfig<D>;
   request?: unknown;
 }
+
+interface User {
+  id: string | number;
+  name: string;
+  email: string;
+  isActive?: boolean;
+  avatar?: string;
+  role?: string;
+}
+
+interface Team {
+  name: string;
+  logo: React.ComponentType;
+  plan: string;
+}
+
+interface NavItem {
+  title: string;
+  url: string;
+  icon?: React.ComponentType;
+  isActive?: boolean;
+  items?: Array<{
+    title: string;
+    url: string;
+  }>;
+}
+
+interface ContentItem {
+  name: string;
+  url: string;
+  icon: React.ComponentType;
+}
