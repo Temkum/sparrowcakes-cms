@@ -3,6 +3,7 @@
 import * as React from 'react';
 import {
   AudioWaveform,
+  BadgeDollarSign,
   BookOpen,
   Bot,
   Command,
@@ -11,7 +12,9 @@ import {
   Map,
   PieChart,
   Settings2,
+  ShoppingBag,
   SquareTerminal,
+  Users,
 } from 'lucide-react';
 
 import { NavMain } from '@/components/NavMain';
@@ -53,28 +56,25 @@ const data = {
   ],
   navMain: [
     {
-      title: 'Shop',
-      url: '/shop',
+      title: 'Categories',
+      url: '/admin/categories',
       icon: SquareTerminal,
       isActive: true,
-      items: [
-        {
-          title: 'Categories',
-          url: '/admin/categories',
-        },
-        {
-          title: 'Products',
-          url: '/admin/products',
-        },
-        {
-          title: 'Orders',
-          url: '/admin/orders',
-        },
-        {
-          title: 'Customers',
-          url: '/admin/customers',
-        },
-      ],
+    },
+    {
+      title: 'Products',
+      url: '/admin/products',
+      icon: ShoppingBag,
+    },
+    {
+      title: 'Orders',
+      url: '/admin/orders',
+      icon: BadgeDollarSign,
+    },
+    {
+      title: 'Customers',
+      url: '/admin/customers',
+      icon: Users,
     },
     {
       title: 'Site Content',
