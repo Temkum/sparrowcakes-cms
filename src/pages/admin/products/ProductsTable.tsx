@@ -252,8 +252,8 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Active</TableHead>
-                <TableHead>Created at</TableHead>
-                <TableHead>Last updated</TableHead>
+                <TableHead>Date added</TableHead>
+                <TableHead>Price</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -340,9 +340,7 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {product.updated_at
-                          ? format(new Date(product.updated_at), 'MMM dd, yyyy')
-                          : '-'}
+                        {product.price ? `$${product.price}` : '-'}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

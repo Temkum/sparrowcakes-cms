@@ -11,7 +11,13 @@ const orderFormSchema = z.object({
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'State is required'),
   notes: z.string().optional(),
-  items: z.array(productItemSchema).min(1, 'At least one product is required'),
+  items: z.array(
+    z.object({
+      product: z.string(),
+      quantity: z.number().min(1, 'Quantity must be at least 1'),
+      unitPrice: z.number().min(0, 'Price must be greater than or equal to 0'),
+    })
+  ),
 });
 
 type OrderFormValues = z.infer<typeof orderFormSchema>;

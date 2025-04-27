@@ -1,6 +1,10 @@
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast, Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
+import useProductStore from '@/store/product-store';
+import { Loader2 } from 'lucide-react';
+import useCustomerStore from '@/store/customer-store';
 
 import {
   orderFormSchema,
@@ -26,12 +30,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ProductSelector } from '../products/productSelector';
 
-const products = [
-  { id: '1', name: 'Product A', price: 10 },
-  { id: '2', name: 'Product B', price: 20 },
-  { id: '3', name: 'Product C', price: 30 },
-];
-
 const generateOrderNumber = () => {
   const timestamp = Date.now();
   const random = Math.floor(Math.random() * 1000);
@@ -39,6 +37,22 @@ const generateOrderNumber = () => {
 };
 
 export function OrderForm() {
+  const {
+    products,
+    loading: productsLoading,
+    loadProducts,
+  } = useProductStore();
+  const {
+    customers,
+    loading: customersLoading,
+    fetchCustomers,
+  } = useCustomerStore();
+
+  useEffect(() => {
+    loadProducts();
+    fetchCustomers();
+  }, [loadProducts, fetchCustomers]);
+
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
@@ -65,6 +79,28 @@ export function OrderForm() {
     console.log('Form data:', data);
     toast.success('Order created successfully!');
   };
+
+  if (productsLoading || customersLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Transform products for selector component
+  const formattedProducts = products.map((product) => ({
+    id: product.id, // Keep as number
+    name: product.name,
+    price: Number(product.price), // Ensure price is number
+  }));
+
+  // Format customers for dropdown
+  const formattedCustomers = customers.map((customer) => ({
+    id: String(customer.id),
+    name: customer.name,
+    phone: customer.phone,
+  }));
 
   return (
     <>
@@ -134,16 +170,15 @@ export function OrderForm() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select an option" />
+                              <SelectValue placeholder="Select a customer" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Customer 1">
-                              Customer 1
-                            </SelectItem>
-                            <SelectItem value="Customer 2">
-                              Customer 2
-                            </SelectItem>
+                            {formattedCustomers.map((customer) => (
+                              <SelectItem key={customer.id} value={customer.id}>
+                                {customer.name} ({customer.phone})
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -255,7 +290,7 @@ export function OrderForm() {
 
               {/* Items */}
               <h2 className="text-lg font-semibold">Products</h2>
-              <ProductSelector name="items" products={products} />
+              <ProductSelector name="items" products={formattedProducts} />
 
               {/* Notes */}
               <FormField

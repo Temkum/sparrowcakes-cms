@@ -21,14 +21,14 @@ import { Trash2 } from 'lucide-react';
 
 interface ProductSelectorProps {
   name: string;
-  products: { id: string; name: string; price: number }[];
+  products: { id: number; name: string; price: number }[];
 }
 
 export function ProductSelector({ name, products }: ProductSelectorProps) {
   const { control, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
-    name: name,
+    name,
   });
 
   // Initialize with one product field
@@ -43,7 +43,7 @@ export function ProductSelector({ name, products }: ProductSelectorProps) {
   };
 
   const handleProductChange = (index: number, productId: string) => {
-    const selectedProduct = products.find((p) => p.id === productId);
+    const selectedProduct = products.find((p) => p.id === Number(productId));
     if (selectedProduct) {
       setValue(`${name}.${index}.unitPrice`, selectedProduct.price);
     }
@@ -75,7 +75,7 @@ export function ProductSelector({ name, products }: ProductSelectorProps) {
                     </FormControl>
                     <SelectContent>
                       {products.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
+                        <SelectItem key={product.id} value={String(product.id)}>
                           {product.name}
                         </SelectItem>
                       ))}
