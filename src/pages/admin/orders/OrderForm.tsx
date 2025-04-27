@@ -5,6 +5,8 @@ import { useEffect } from 'react';
 import useProductStore from '@/store/product-store';
 import { Loader2 } from 'lucide-react';
 import useCustomerStore from '@/store/customer-store';
+import useOrderStore from '@/store/order-store';
+import { useNavigate } from 'react-router-dom';
 
 import {
   orderFormSchema,
@@ -37,6 +39,8 @@ const generateOrderNumber = () => {
 };
 
 export function OrderForm() {
+  const navigate = useNavigate();
+  const { createOrder, submitting } = useOrderStore();
   const {
     products,
     loading: productsLoading,
@@ -72,15 +76,41 @@ export function OrderForm() {
           unitPrice: 0,
         },
       ],
+      shippingCost: 0,
     },
   });
 
-  const onSubmit: SubmitHandler<OrderFormValues> = (data) => {
-    console.log('Form data:', data);
-    toast.success('Order created successfully!');
+  const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
+    try {
+      const orderData = {
+        order_number: data.orderNumber,
+        customer_id: data.customer,
+        status: data.status,
+        currency: data.currency,
+        country: data.country,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        notes: data.notes,
+        shipping_cost: data.shippingCost,
+        items: data.items.map((item) => ({
+          product_id: item.product,
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          total: item.quantity * item.unitPrice,
+        })),
+      };
+
+      await createOrder(orderData);
+      toast.success('Order created successfully!');
+      navigate('/admin/orders');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error('Failed to create order. Please try again.');
+    }
   };
 
-  if (productsLoading || customersLoading) {
+  if (productsLoading || customersLoading || submitting) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -89,11 +119,16 @@ export function OrderForm() {
   }
 
   // Transform products for selector component
-  const formattedProducts = products.map((product) => ({
-    id: product.id, // Keep as number
-    name: product.name,
-    price: Number(product.price), // Ensure price is number
-  }));
+  const formattedProducts = products
+    .filter(
+      (product): product is typeof product & { id: number } =>
+        product.id !== undefined
+    )
+    .map((product) => ({
+      id: product.id,
+      name: product.name,
+      price: Number(product.price),
+    }));
 
   // Format customers for dropdown
   const formattedCustomers = customers.map((customer) => ({
@@ -198,7 +233,7 @@ export function OrderForm() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select an option" />
+                              <SelectValue placeholder="Select currency" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -231,12 +266,13 @@ export function OrderForm() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select an option" />
+                              <SelectValue placeholder="Select country" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="CM">Cameroon</SelectItem>
                             <SelectItem value="USA">USA</SelectItem>
-                            <SelectItem value="Germany">Germany</SelectItem>
+                            <SelectItem value="DE">Germany</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -249,7 +285,7 @@ export function OrderForm() {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Street Address</FormLabel>
+                        <FormLabel>Street Address*</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Ex: 123 Main Street" />
                         </FormControl>
@@ -263,7 +299,7 @@ export function OrderForm() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
+                        <FormLabel>City*</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Ex: Buea" />
                         </FormControl>
@@ -277,7 +313,7 @@ export function OrderForm() {
                     name="state"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>State / Region</FormLabel>
+                        <FormLabel>State / Region*</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Ex: Southwest" />
                         </FormControl>
@@ -291,6 +327,29 @@ export function OrderForm() {
               {/* Items */}
               <h2 className="text-lg font-semibold">Products</h2>
               <ProductSelector name="items" products={formattedProducts} />
+
+              {/* Shipping Cost */}
+              <h2 className="text-lg font-semibold">
+                Shipping Cost | Delivery Fee
+              </h2>
+              <FormField
+                control={form.control}
+                name="shippingCost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Shipping Cost</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        min={0}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {/* Notes */}
               <FormField
@@ -311,8 +370,16 @@ export function OrderForm() {
               <Button
                 type="submit"
                 className="bg-orange-500 hover:bg-orange-600"
+                disabled={submitting}
               >
-                Create Order
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Order'
+                )}
               </Button>
             </form>
           </Card>

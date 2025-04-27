@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import productItemSchema from './productItemSchema';
 
 const orderFormSchema = z.object({
   orderNumber: z.string().min(1, 'Order number is required'),
@@ -18,6 +17,9 @@ const orderFormSchema = z.object({
       unitPrice: z.number().min(0, 'Price must be greater than or equal to 0'),
     })
   ),
+  shippingCost: z
+    .number()
+    .min(0, 'Shipping cost must be greater than or equal to 0'),
 });
 
 type OrderFormValues = z.infer<typeof orderFormSchema>;

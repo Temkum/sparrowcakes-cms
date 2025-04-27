@@ -16,27 +16,120 @@ import {
 } from '@/components/ui/select';
 import { Filter, Columns3, CircleCheck } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ordersData } from '@/utilities/data';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
+import useOrderStore from '@/store/order-store';
+import { OrderStatus } from '@/types/order';
+import { useNavigate } from 'react-router-dom';
 
 const OrdersTable = () => {
+  const navigate = useNavigate();
+  const {
+    orders,
+    loading,
+    filter,
+    totalCount,
+    setFilter,
+    loadOrders,
+    deleteOrders,
+  } = useOrderStore();
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [currentStatus, setCurrentStatus] = useState<OrderStatus | 'all'>(
+    'all'
+  );
+
+  useEffect(() => {
+    loadOrders();
+  }, [filter, loadOrders]);
+
+  const handleStatusFilter = (status: OrderStatus | 'all') => {
+    setCurrentStatus(status);
+    setFilter({
+      ...filter,
+      status: status === 'all' ? undefined : status,
+      page: 1,
+    });
+  };
+
+  const handleSearch = (searchTerm: string) => {
+    setFilter({ ...filter, searchTerm, page: 1 });
+  };
+
+  const handleEdit = (orderId: string) => {
+    navigate(`/admin/orders/${orderId}/edit`);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedOrders(checked ? orders.map((order) => order.id) : []);
+  };
+
+  const handleSelectOrder = (orderId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedOrders((prev) => [...prev, orderId]);
+    } else {
+      setSelectedOrders((prev) => prev.filter((id) => id !== orderId));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedOrders.length === 0) return;
+
+    try {
+      await deleteOrders(selectedOrders);
+      setSelectedOrders([]);
+    } catch (error) {
+      console.error('Failed to delete orders:', error);
+    }
+  };
 
   return (
     <>
       {/* Status Filters */}
-      <div className="flex gap-2 mb-6 justify-center ">
+      <div className="flex gap-2 mb-6 justify-center">
         <div className="border rounded-md text-gray-500">
-          <Button variant="ghost" className="text-orange-500">
+          <Button
+            variant="ghost"
+            className={currentStatus === 'all' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('all')}
+          >
             All
           </Button>
-          <Button variant="ghost">New</Button>
-          <Button variant="ghost">Processing</Button>
-          <Button variant="ghost">Shipped</Button>
-          <Button variant="ghost">Delivered</Button>
-          <Button variant="ghost">Cancelled</Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'New' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('New')}
+          >
+            New
+          </Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'Processing' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('Processing')}
+          >
+            Processing
+          </Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'Shipped' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('Shipped')}
+          >
+            Shipped
+          </Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'Delivered' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('Delivered')}
+          >
+            Delivered
+          </Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'Cancelled' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('Cancelled')}
+          >
+            Cancelled
+          </Button>
         </div>
       </div>
 
@@ -44,182 +137,144 @@ const OrdersTable = () => {
       <Card>
         <div className="flex justify-between items-center mb-4 p-3">
           {/* Table Controls */}
-          <Select defaultValue="default">
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Group by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Group by</SelectItem>
-              <SelectItem value="status">Status</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center gap-1">
-            <Input placeholder="Search" className="w-[200px]" />
+          <div className="flex items-center gap-2">
+            {selectedOrders.length > 0 && (
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                className="mr-2"
+              >
+                Delete Selected ({selectedOrders.length})
+              </Button>
+            )}
+            <Input
+              placeholder="Search orders..."
+              className="w-[300px]"
+              onChange={(e) => handleSearch(e.target.value)}
+              value={filter.searchTerm}
+            />
             <Button variant="ghost" size="icon">
-              <Filter className="h-4 w-4" fill="gray" color="gray" />
+              <Filter className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon">
-              <Columns3 className="h-4 w-4" color="gray" />
+              <Columns3 className="h-4 w-4" />
             </Button>
           </div>
+
+          <Select
+            value={String(filter.pageSize)}
+            onValueChange={(value) =>
+              setFilter({ ...filter, pageSize: Number(value) })
+            }
+          >
+            <SelectTrigger className="w-[70px]">
+              <SelectValue placeholder="Per page" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
         <Table>
           <TableHeader>
             <TableRow className="font-bold text-black-600 bg-gray-200">
               <TableHead className="w-[30px]">
                 <Checkbox
-                  checked={selectedOrders.length === ordersData.length}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedOrders(ordersData.map((order) => order.id));
-                    } else {
-                      setSelectedOrders([]);
-                    }
-                  }}
+                  checked={selectedOrders.length === orders.length}
+                  onCheckedChange={handleSelectAll}
                 />
               </TableHead>
               <TableHead>Number</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Currency</TableHead>
-              <TableHead>Total price</TableHead>
-              <TableHead>Shipping cost</TableHead>
-              <TableHead>Order Date</TableHead>
+              <TableHead>Total Amount</TableHead>
+              <TableHead>Shipping Cost</TableHead>
+              <TableHead>Date</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {ordersData.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedOrders.includes(order.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedOrders([...selectedOrders, order.id]);
-                      } else {
-                        setSelectedOrders(
-                          selectedOrders.filter((id) => id !== order.id)
-                        );
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{order.number}</TableCell>
-                <TableCell>{order.customer}</TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium
-                      ${
-                        order.status === 'Processing'
-                          ? 'bg-yellow-100 text-orange-600'
-                          : order.status === 'Delivered' && (
-                              <CircleCheck className="h-4 w-4" />
-                            )
-                          ? 'bg-green-100 text-green-600'
-                          : order.status === 'Shipped'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                  >
-                    {order.status === 'Processing' && '⌛'}
-                    {order.status === 'Delivered' && (
-                      <CircleCheck
-                        className="h-4 w-4 mr-1"
-                        color="white"
-                        fill="green"
-                      />
-                    )}
-                    {order.status === 'Shipped' && '🚚'} {order.status}
-                  </span>
-                </TableCell>
-                <TableCell>{order.currency}</TableCell>
-                <TableCell>{order.totalPrice.toFixed(2)}</TableCell>
-                <TableCell>{order.shippingCost.toFixed(2)}</TableCell>
-                <TableCell>{order.orderDate}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    className="text-orange-500 hover:text-orange-600"
-                  >
-                    Edit
-                  </Button>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-8">
+                  Loading orders...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : orders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-8">
+                  No orders found
+                </TableCell>
+              </TableRow>
+            ) : (
+              orders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedOrders.includes(order.id)}
+                      onCheckedChange={(checked) =>
+                        handleSelectOrder(order.id, checked as boolean)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {order.order_number}
+                  </TableCell>
+                  <TableCell>{order.customer_id}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium
+                        ${
+                          order.status === 'Processing'
+                            ? 'bg-yellow-100 text-orange-600'
+                            : order.status === 'Delivered'
+                            ? 'bg-green-100 text-green-600'
+                            : order.status === 'Shipped'
+                            ? 'bg-blue-100 text-blue-800'
+                            : order.status === 'Cancelled'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                    >
+                      {order.status === 'Processing' && '⌛'}
+                      {order.status === 'Delivered' && (
+                        <CircleCheck className="h-4 w-4 mr-1" color="green" />
+                      )}
+                      {order.status === 'Shipped' && '🚚'} {order.status}
+                    </span>
+                  </TableCell>
+                  <TableCell>{order.currency}</TableCell>
+                  <TableCell>{order.total_amount.toFixed(2)}</TableCell>
+                  <TableCell>{order.shipping_cost.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {new Date(order.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      className="text-orange-500 hover:text-orange-600"
+                      onClick={() => handleEdit(order.id)}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
 
-        {/* Summary Section */}
-        <div className="p-4 border-t">
-          <div className="space-y-4">
-            <div className="font-medium">Summary</div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-2">This page</div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Total price</div>
-                    <div>Sum</div>
-                    <div className="text-gray-600">$10,267.38</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Shipping cost</div>
-                    <div>Sum</div>
-                    <div className="text-gray-600">$2,627.24</div>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-2">All orders</div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Total price</div>
-                    <div>Sum</div>
-                    <div className="text-gray-600">$1,024,185.96</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Shipping cost</div>
-                    <div>Sum</div>
-                    <div className="text-gray-600">$291,223.85</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Pagination */}
+        {/* Pagination Controls */}
         <div className="flex justify-between items-center p-4 border-t">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">
-              Showing 1 to 10 of 998 results
-            </span>
-            <Select defaultValue="10">
-              <SelectTrigger className="w-[70px]">
-                <SelectValue placeholder="Per page" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="text-sm text-gray-500">
+            Showing {orders.length} of {totalCount} orders
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" className="text-orange-500">
-              1
-            </Button>
-            <Button variant="ghost">2</Button>
-            <Button variant="ghost">3</Button>
-            <Button variant="ghost">4</Button>
-            <span>...</span>
-            <Button variant="ghost">99</Button>
-            <Button variant="ghost">100</Button>
-            <Button variant="ghost">→</Button>
-          </div>
+          {/* Add pagination buttons here */}
         </div>
       </Card>
     </>

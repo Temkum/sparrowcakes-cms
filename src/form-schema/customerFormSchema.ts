@@ -1,3 +1,4 @@
+import { count } from 'console';
 import { z } from 'zod';
 // Combined regex for MTN, Orange, and Camtel phone numbers in Cameroon
 const cameroonPhoneRegex =
@@ -39,6 +40,11 @@ const customerFormSchema = z.object({
     .string()
     .max(100, { message: 'Occupation cannot exceed 100 characters.' })
     .optional(),
+  country: z
+    .string()
+    .refine((value) => ['US', 'CA', 'CM', 'FR', 'DE'].includes(value), {
+      message: 'Please select a valid country from the dropdown.',
+    }),
 });
 
 export default customerFormSchema;
