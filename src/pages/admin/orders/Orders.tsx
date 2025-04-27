@@ -25,17 +25,21 @@ const OrdersPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card className="p-4">
             <p className="text-sm text-gray-500 mb-1">Orders</p>
             <p className="text-2xl font-semibold">998</p>
           </Card>
           <Card className="p-4">
-            <p className="text-sm text-gray-500 mb-1">Open orders</p>
+            <p className="text-sm text-gray-500 mb-1">Active orders</p>
             <p className="text-2xl font-semibold">211</p>
           </Card>
           <Card className="p-4">
-            <p className="text-sm text-gray-500 mb-1">Average price</p>
+            <p className="text-sm text-gray-500 mb-1">Monthly Sales</p>
+            <p className="text-2xl font-semibold">1,026.24</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-sm text-gray-500 mb-1">Total Sales</p>
             <p className="text-2xl font-semibold">1,026.24</p>
           </Card>
         </div>

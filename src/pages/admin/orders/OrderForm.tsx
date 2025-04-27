@@ -47,10 +47,9 @@ export function OrderForm() {
       customer: '',
       currency: '',
       country: '',
-      streetAddress: '',
+      address: '',
       city: '',
       state: '',
-      zipCode: '',
       notes: '',
       items: [
         {
@@ -168,6 +167,7 @@ export function OrderForm() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="CFA">CFA</SelectItem>
                             <SelectItem value="USD">USD</SelectItem>
                             <SelectItem value="EUR">EUR</SelectItem>
                           </SelectContent>
@@ -211,7 +211,7 @@ export function OrderForm() {
 
                   <FormField
                     control={form.control}
-                    name="streetAddress"
+                    name="address"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Street Address</FormLabel>
@@ -250,24 +250,11 @@ export function OrderForm() {
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="zipCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Zip / Postal Code</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Ex: 00237" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
               </div>
 
               {/* Items */}
+              <h2 className="text-lg font-semibold">Products</h2>
               <ProductSelector name="items" products={products} />
 
               {/* Notes */}
