@@ -34,17 +34,18 @@ export function ProductSelector({ name, products }: ProductSelectorProps) {
   // Initialize with one product field
   useEffect(() => {
     if (fields.length === 0) {
-      append({ product: '', quantity: 1, unitPrice: 0 });
+      append({ productId: 0, quantity: 1, unitPrice: 0 });
     }
   }, [append, fields.length]);
 
   const handleAddProduct = () => {
-    append({ product: '', quantity: 1, unitPrice: 0 });
+    append({ productId: 0, quantity: 1, unitPrice: 0 });
   };
 
   const handleProductChange = (index: number, productId: string) => {
     const selectedProduct = products.find((p) => p.id === Number(productId));
     if (selectedProduct) {
+      setValue(`${name}.${index}.productId`, Number(productId));
       setValue(`${name}.${index}.unitPrice`, selectedProduct.price);
     }
   };
@@ -57,16 +58,15 @@ export function ProductSelector({ name, products }: ProductSelectorProps) {
             {/* Product Selection */}
             <FormField
               control={control}
-              name={`${name}.${index}.product`}
+              name={`${name}.${index}.productId`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Product*</FormLabel>
                   <Select
                     onValueChange={(value) => {
-                      field.onChange(value); // Update the product field
-                      handleProductChange(index, value); // Update the unit price
+                      handleProductChange(index, value);
                     }}
-                    value={field.value}
+                    value={field.value ? String(field.value) : undefined}
                   >
                     <FormControl>
                       <SelectTrigger>

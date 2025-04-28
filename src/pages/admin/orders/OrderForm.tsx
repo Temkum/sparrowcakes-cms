@@ -62,7 +62,7 @@ export function OrderForm() {
     defaultValues: {
       orderNumber: generateOrderNumber(),
       status: 'New',
-      customer: '',
+      customer: 0,
       currency: '',
       country: '',
       address: '',
@@ -71,7 +71,7 @@ export function OrderForm() {
       notes: '',
       items: [
         {
-          product: '',
+          productId: 0,
           quantity: 1,
           unitPrice: 0,
         },
@@ -94,7 +94,7 @@ export function OrderForm() {
         notes: data.notes,
         shipping_cost: data.shippingCost,
         items: data.items.map((item) => ({
-          product_id: item.product,
+          product_id: item.productId,
           quantity: item.quantity,
           unit_price: item.unitPrice,
           total: item.quantity * item.unitPrice,
@@ -129,13 +129,6 @@ export function OrderForm() {
       name: product.name,
       price: Number(product.price),
     }));
-
-  // Format customers for dropdown
-  const formattedCustomers = customers.map((customer) => ({
-    id: String(customer.id),
-    name: customer.name,
-    phone: customer.phone,
-  }));
 
   return (
     <>
@@ -200,8 +193,10 @@ export function OrderForm() {
                       <FormItem>
                         <FormLabel>Customer*</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          onValueChange={(value) =>
+                            field.onChange(Number(value))
+                          }
+                          defaultValue={field.value?.toString()}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -209,8 +204,11 @@ export function OrderForm() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {formattedCustomers.map((customer) => (
-                              <SelectItem key={customer.id} value={customer.id}>
+                            {customers.map((customer) => (
+                              <SelectItem
+                                key={customer.id}
+                                value={customer.id.toString()}
+                              >
                                 {customer.name} ({customer.phone})
                               </SelectItem>
                             ))}

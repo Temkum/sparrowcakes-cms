@@ -16,7 +16,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   order_number: string;
-  customer_id: string;
+  customer_id: number;
   status: OrderStatus;
   currency: string;
   country: string;
