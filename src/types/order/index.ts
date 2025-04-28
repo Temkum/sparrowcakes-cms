@@ -5,18 +5,33 @@ export type OrderStatus =
   | 'Delivered'
   | 'Cancelled';
 
+export interface OrderCustomer {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string | null;
+  city: string;
+  occupation: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  is_deleted: boolean;
+}
+
 export interface OrderItem {
   id?: string;
-  product_id: string;
+  product_id: string | number;
   quantity: number;
   unit_price: number;
   total: number;
 }
 
 export interface Order {
-  id: string;
+  id: string | number;
   order_number: string;
   customer_id: number;
+  customer?: OrderCustomer;
   status: OrderStatus;
   currency: string;
   country: string;
@@ -25,8 +40,8 @@ export interface Order {
   state: string;
   notes?: string;
   items: OrderItem[];
-  shipping_cost: number;
-  total_amount: number;
+  shipping_cost: number | string;
+  total_amount?: number;
   created_at: string;
   updated_at: string;
 }

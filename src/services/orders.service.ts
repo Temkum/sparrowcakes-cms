@@ -5,14 +5,17 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const orderService = {
   // Get all orders with pagination and filtering
-  async getOrders({
-    page = 1,
-    limit = 10,
-    searchTerm = '',
-    sortBy = 'created_at',
-    sortDirection = 'DESC',
-    status,
-  }: OrderFilterProps) {
+  async getOrders(
+    {
+      page = 1,
+      limit = 10,
+      searchTerm = '',
+      sortBy = 'created_at',
+      sortDirection = 'DESC',
+      status,
+    }: OrderFilterProps,
+    token: string
+  ) {
     try {
       const params = {
         page,
@@ -25,9 +28,15 @@ export const orderService = {
 
       const response = await axiosInstance.get<{ items: Order[] }>(
         `${API_URL}/orders`,
-        { params }
+        {
+          params,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      return response.data.items;
+      console.log('Fetched orders:', response);
+      return response;
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;

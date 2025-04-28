@@ -14,14 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Filter, Columns3, CircleCheck } from 'lucide-react';
+import { Filter, Columns3, CircleCheck, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import useOrderStore from '@/store/order-store';
-import { OrderStatus } from '@/types/order';
+import { OrderStatus, Order } from '@/types/order';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 const OrdersTable = () => {
   const navigate = useNavigate();
@@ -38,6 +39,16 @@ const OrdersTable = () => {
   const [currentStatus, setCurrentStatus] = useState<OrderStatus | 'all'>(
     'all'
   );
+
+  // Calculate total amount for an order
+  const calculateOrderTotal = (order: Order) => {
+    const itemsTotal = order.items.reduce((sum, item) => sum + item.total, 0);
+    const shippingCost =
+      typeof order.shipping_cost === 'string'
+        ? parseFloat(order.shipping_cost)
+        : order.shipping_cost;
+    return itemsTotal + shippingCost;
+  };
 
   useEffect(() => {
     loadOrders();
@@ -61,7 +72,8 @@ const OrdersTable = () => {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedOrders(checked ? orders.map((order) => order.id) : []);
+    if (!orders) return;
+    setSelectedOrders(checked ? orders.map((order) => String(order.id)) : []);
   };
 
   const handleSelectOrder = (orderId: string, checked: boolean) => {
@@ -82,6 +94,29 @@ const OrdersTable = () => {
       console.error('Failed to delete orders:', error);
     }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          Loading orders...
+        </div>
+      </Card>
+    );
+  }
+
+  // Show empty state
+  if (!orders || orders.length === 0) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center py-8">
+          No orders found
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <>
@@ -199,33 +234,24 @@ const OrdersTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
-                  Loading orders...
-                </TableCell>
-              </TableRow>
-            ) : orders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
-                  No orders found
-                </TableCell>
-              </TableRow>
-            ) : (
-              orders.map((order) => (
+            {orders.map((order) => {
+              const totalAmount = calculateOrderTotal(order);
+              return (
                 <TableRow key={order.id}>
                   <TableCell>
                     <Checkbox
-                      checked={selectedOrders.includes(order.id)}
+                      checked={selectedOrders.includes(String(order.id))}
                       onCheckedChange={(checked) =>
-                        handleSelectOrder(order.id, checked as boolean)
+                        handleSelectOrder(String(order.id), checked as boolean)
                       }
                     />
                   </TableCell>
                   <TableCell className="font-medium">
                     {order.order_number}
                   </TableCell>
-                  <TableCell>{order.customer_id}</TableCell>
+                  <TableCell>
+                    {order.customer?.name || `Customer ${order.customer_id}`}
+                  </TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium
@@ -249,23 +275,41 @@ const OrdersTable = () => {
                     </span>
                   </TableCell>
                   <TableCell>{order.currency}</TableCell>
-                  <TableCell>{order.total_amount.toFixed(2)}</TableCell>
-                  <TableCell>{order.shipping_cost.toFixed(2)}</TableCell>
                   <TableCell>
-                    {new Date(order.created_at).toLocaleDateString()}
+                    {totalAmount.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </TableCell>
+                  <TableCell>
+                    {typeof order.shipping_cost === 'string'
+                      ? parseFloat(order.shipping_cost).toLocaleString(
+                          'en-US',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )
+                      : order.shipping_cost.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(order.created_at), 'MMM dd, yyyy')}
                   </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
                       className="text-orange-500 hover:text-orange-600"
-                      onClick={() => handleEdit(order.id)}
+                      onClick={() => handleEdit(String(order.id))}
                     >
                       Edit
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
+              );
+            })}
           </TableBody>
         </Table>
 
@@ -274,7 +318,6 @@ const OrdersTable = () => {
           <div className="text-sm text-gray-500">
             Showing {orders.length} of {totalCount} orders
           </div>
-          {/* Add pagination buttons here */}
         </div>
       </Card>
     </>

@@ -62,14 +62,24 @@ const useOrderStore = create<OrderState>((set, get) => {
       set({ loading: true });
       try {
         const { filter } = get();
-        const response = await orderService.getOrders({
-          page: filter.page,
-          limit: filter.pageSize,
-          searchTerm: filter.searchTerm,
-          sortBy: filter.sortBy,
-          sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
-          status: filter.status,
-        });
+        const token = getAuthToken();
+
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await orderService.getOrders(
+          {
+            page: filter.page,
+            limit: filter.pageSize,
+            searchTerm: filter.searchTerm,
+            sortBy: filter.sortBy,
+            sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+            status: filter.status,
+          },
+          token
+        );
+        console.log('Fetched orders STORE:', response);
 
         set({
           orders: response,
@@ -80,6 +90,13 @@ const useOrderStore = create<OrderState>((set, get) => {
         console.error('Error loading orders:', error);
         toast.error('Failed to load orders');
         set({ loading: false });
+
+        if (
+          error instanceof Error &&
+          error.message === 'No authentication token found'
+        ) {
+          window.location.href = '/login';
+        }
       }
     },
 
