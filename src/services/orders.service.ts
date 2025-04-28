@@ -123,6 +123,7 @@ export const orderService = {
           },
         }
       );
+      console.log('Fetched order stats:', response);
       return response.data;
     } catch (error) {
       console.error('Error fetching order stats:', error);

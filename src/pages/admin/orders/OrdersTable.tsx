@@ -23,6 +23,8 @@ import useOrderStore from '@/store/order-store';
 import { OrderStatus, Order } from '@/types/order';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { useDebounce } from '@/hooks/useDebounce';
+import { toast } from 'react-hot-toast';
 
 const OrdersTable = () => {
   const navigate = useNavigate();
@@ -35,20 +37,18 @@ const OrdersTable = () => {
     loadOrders,
     deleteOrders,
   } = useOrderStore();
+
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [currentStatus, setCurrentStatus] = useState<OrderStatus | 'all'>(
     'all'
   );
+  const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
+  const debouncedSearch = useDebounce(searchValue, 400);
 
-  // Calculate total amount for an order
-  const calculateOrderTotal = (order: Order) => {
-    const itemsTotal = order.items.reduce((sum, item) => sum + item.total, 0);
-    const shippingCost =
-      typeof order.shipping_cost === 'string'
-        ? parseFloat(order.shipping_cost)
-        : order.shipping_cost;
-    return itemsTotal + shippingCost;
-  };
+  // Effect for debounced search
+  useEffect(() => {
+    setFilter({ searchTerm: debouncedSearch, page: 1 });
+  }, [debouncedSearch, setFilter]);
 
   useEffect(() => {
     loadOrders();
@@ -63,8 +63,13 @@ const OrdersTable = () => {
     });
   };
 
-  const handleSearch = (searchTerm: string) => {
-    setFilter({ ...filter, searchTerm, page: 1 });
+  const calculateOrderTotal = (order: Order) => {
+    const itemsTotal = order.items.reduce((sum, item) => sum + item.total, 0);
+    const shippingCost =
+      typeof order.shipping_cost === 'string'
+        ? parseFloat(order.shipping_cost)
+        : order.shipping_cost;
+    return itemsTotal + shippingCost;
   };
 
   const handleEdit = (orderId: string) => {
@@ -90,8 +95,10 @@ const OrdersTable = () => {
     try {
       await deleteOrders(selectedOrders);
       setSelectedOrders([]);
+      toast.success('Orders deleted successfully');
     } catch (error) {
       console.error('Failed to delete orders:', error);
+      toast.error('Failed to delete orders');
     }
   };
 
@@ -112,7 +119,13 @@ const OrdersTable = () => {
     return (
       <Card className="p-6">
         <div className="flex items-center justify-center py-8">
-          No orders found
+          {filter.searchTerm ? (
+            <>
+              No orders found matching "<strong>{filter.searchTerm}</strong>"
+            </>
+          ) : (
+            'No orders found'
+          )}
         </div>
       </Card>
     );
@@ -185,8 +198,8 @@ const OrdersTable = () => {
             <Input
               placeholder="Search orders..."
               className="w-[300px]"
-              onChange={(e) => handleSearch(e.target.value)}
-              value={filter.searchTerm}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
             />
             <Button variant="ghost" size="icon">
               <Filter className="h-4 w-4" />
@@ -199,7 +212,7 @@ const OrdersTable = () => {
           <Select
             value={String(filter.pageSize)}
             onValueChange={(value) =>
-              setFilter({ ...filter, pageSize: Number(value) })
+              setFilter({ pageSize: Number(value), page: 1 })
             }
           >
             <SelectTrigger className="w-[70px]">

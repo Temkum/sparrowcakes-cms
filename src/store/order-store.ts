@@ -56,6 +56,11 @@ const useOrderStore = create<OrderState>((set, get) => {
       completedOrders: 0,
       totalRevenue: 0,
       averageOrderValue: 0,
+      weeklyOrders: [],
+      monthlyOrders: [],
+      yearlyOrders: [],
+      topProducts: [],
+      topCustomers: [],
     },
 
     loadOrders: async () => {
@@ -79,7 +84,6 @@ const useOrderStore = create<OrderState>((set, get) => {
           },
           token
         );
-        console.log('Fetched orders STORE:', response);
 
         set({
           orders: response,
@@ -159,7 +163,9 @@ const useOrderStore = create<OrderState>((set, get) => {
         await orderService.deleteOrders(ids, token);
 
         set((state) => ({
-          orders: state.orders.filter((order) => !ids.includes(order.id)),
+          orders: state.orders.filter(
+            (order) => !ids.includes(String(order.id))
+          ),
           totalCount: state.totalCount - ids.length,
         }));
 
@@ -182,6 +188,7 @@ const useOrderStore = create<OrderState>((set, get) => {
       })),
 
     loadStats: async () => {
+      set({ loading: true });
       try {
         const token = getAuthToken();
         if (!token) {
@@ -189,10 +196,11 @@ const useOrderStore = create<OrderState>((set, get) => {
         }
 
         const stats = await orderService.getOrderStats(token);
-        set({ stats });
+        set({ stats, loading: false });
       } catch (error) {
         console.error('Error loading order stats:', error);
         toast.error('Failed to load order statistics');
+        set({ loading: false });
       }
     },
   };

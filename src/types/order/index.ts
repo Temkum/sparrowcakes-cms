@@ -20,7 +20,7 @@ export interface OrderCustomer {
 }
 
 export interface OrderItem {
-  id?: string;
+  id?: number;
   product_id: string | number;
   quantity: number;
   unit_price: number;
@@ -70,4 +70,19 @@ export interface OrderStats {
   completedOrders: number;
   totalRevenue: number;
   averageOrderValue: number;
+  weeklyOrders: number[];
+  monthlyOrders: number[];
+  yearlyOrders: number[];
+  topProducts: {
+    productId: string;
+    productName: string;
+    totalSales: number;
+    totalQuantity: number;
+  }[];
+  topCustomers: {
+    customerId: number;
+    customerName: string;
+    totalSpent: number;
+    totalOrders: number;
+  }[];
 }
