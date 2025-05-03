@@ -1,3 +1,14 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { useDebounce } from '@/hooks/useDebounce';
+import useOrderStore from '@/store/order-store';
+import { OrderStatus, Order } from '@/types/order';
+import { toast } from 'react-hot-toast';
+
+// UI Components
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -6,7 +17,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -14,19 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Filter, Columns3, CircleCheck, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import useOrderStore from '@/store/order-store';
-import { OrderStatus, Order } from '@/types/order';
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { useDebounce } from '@/hooks/useDebounce';
-import { toast } from 'react-hot-toast';
+import {
+  Filter,
+  Columns3,
+  CircleCheck,
+  Loader2,
+  ArrowDown,
+  ArrowUp,
+} from 'lucide-react';
 
-const OrdersTable = () => {
+const OrdersTable: React.FC = () => {
   const navigate = useNavigate();
   const {
     orders,
@@ -40,35 +49,59 @@ const OrdersTable = () => {
 
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [currentStatus, setCurrentStatus] = useState<OrderStatus | 'all'>(
-    'all'
+    filter.status || 'all'
   );
   const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
-  const debouncedSearch = useDebounce(searchValue, 400);
+  const debouncedSearch = useDebounce(searchValue, 600);
 
   // Effect for debounced search
   useEffect(() => {
-    setFilter({ searchTerm: debouncedSearch, page: 1 });
-  }, [debouncedSearch, setFilter]);
+    if (debouncedSearch !== filter.searchTerm) {
+      setFilter({
+        searchTerm: debouncedSearch,
+        page: 1,
+      });
+    }
+  }, [debouncedSearch, filter.searchTerm, setFilter]);
 
   useEffect(() => {
-    loadOrders();
+    const loadOrdersData = async () => {
+      try {
+        await loadOrders();
+      } catch (error) {
+        console.error('Failed to load orders:', error);
+        toast.error('Failed to load orders');
+      }
+    };
+    loadOrdersData();
   }, [filter, loadOrders]);
 
+  // Update status filter state when filter changes from outside this component
+  useEffect(() => {
+    setCurrentStatus(filter.status || 'all');
+  }, [filter.status]);
+
+  // Enhance status filter handling
   const handleStatusFilter = (status: OrderStatus | 'all') => {
     setCurrentStatus(status);
     setFilter({
-      ...filter,
       status: status === 'all' ? undefined : status,
-      page: 1,
     });
   };
 
   const calculateOrderTotal = (order: Order) => {
-    const itemsTotal = order.items.reduce((sum, item) => sum + item.total, 0);
+    if (!order.items) return 0;
+
+    const itemsTotal = order.items.reduce((sum, item) => {
+      const itemTotal = item.total || item.quantity * item.unit_price;
+      return sum + itemTotal;
+    }, 0);
+
     const shippingCost =
       typeof order.shipping_cost === 'string'
         ? parseFloat(order.shipping_cost)
-        : order.shipping_cost;
+        : order.shipping_cost || 0;
+
     return itemsTotal + shippingCost;
   };
 
@@ -92,44 +125,43 @@ const OrdersTable = () => {
   const handleDelete = async () => {
     if (selectedOrders.length === 0) return;
 
-    try {
-      await deleteOrders(selectedOrders);
-      setSelectedOrders([]);
-      toast.success('Orders deleted successfully');
-    } catch (error) {
-      console.error('Failed to delete orders:', error);
-      toast.error('Failed to delete orders');
+    if (
+      confirm(
+        `Are you sure you want to delete ${selectedOrders.length} order(s)?`
+      )
+    ) {
+      try {
+        await deleteOrders(selectedOrders);
+        setSelectedOrders([]);
+      } catch (error) {
+        console.error('Failed to delete orders:', error);
+      }
     }
   };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <Card className="p-6">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          Loading orders...
-        </div>
-      </Card>
-    );
-  }
+  // Handle sorting
+  const handleSort = (columnName: string) => {
+    const newDirection =
+      filter.sortBy === columnName && filter.sortDirection === 'asc'
+        ? 'desc'
+        : 'asc';
 
-  // Show empty state
-  if (!orders || orders.length === 0) {
-    return (
-      <Card className="p-6">
-        <div className="flex items-center justify-center py-8">
-          {filter.searchTerm ? (
-            <>
-              No orders found matching "<strong>{filter.searchTerm}</strong>"
-            </>
-          ) : (
-            'No orders found'
-          )}
-        </div>
-      </Card>
+    setFilter({
+      sortBy: columnName,
+      sortDirection: newDirection,
+    });
+  };
+
+  // Render sort indicator
+  const renderSortIndicator = (columnName: string) => {
+    if (filter.sortBy !== columnName) return null;
+
+    return filter.sortDirection === 'asc' ? (
+      <ArrowUp className="h-4 w-4 inline ml-1" />
+    ) : (
+      <ArrowDown className="h-4 w-4 inline ml-1" />
     );
-  }
+  };
 
   return (
     <>
@@ -181,7 +213,7 @@ const OrdersTable = () => {
         </div>
       </div>
 
-      {/* Orders Table */}
+      {/* Orders Table and Controls */}
       <Card>
         <div className="flex justify-between items-center mb-4 p-3">
           {/* Table Controls */}
@@ -208,7 +240,6 @@ const OrdersTable = () => {
               <Columns3 className="h-4 w-4" />
             </Button>
           </div>
-
           <Select
             value={String(filter.pageSize)}
             onValueChange={(value) =>
@@ -232,22 +263,73 @@ const OrdersTable = () => {
             <TableRow className="font-bold text-black-600 bg-gray-200">
               <TableHead className="w-[30px]">
                 <Checkbox
-                  checked={selectedOrders.length === orders.length}
+                  checked={
+                    orders.length > 0 && selectedOrders.length === orders.length
+                  }
                   onCheckedChange={handleSelectAll}
                 />
               </TableHead>
-              <TableHead>Number</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('order_number')}
+              >
+                Number {renderSortIndicator('order_number')}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('customer_id')}
+              >
+                Customer {renderSortIndicator('customer_id')}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('status')}
+              >
+                Status {renderSortIndicator('status')}
+              </TableHead>
               <TableHead>Currency</TableHead>
-              <TableHead>Total Amount</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('items')}
+              >
+                Total Amount {renderSortIndicator('items')}
+              </TableHead>
               <TableHead>Shipping Cost</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('created_at')}
+              >
+                Date {renderSortIndicator('created_at')}
+              </TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders &&
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : orders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-8">
+                  No orders found
+                  {filter.searchTerm && (
+                    <>
+                      {' '}
+                      for "<strong>{filter.searchTerm}</strong>"
+                    </>
+                  )}
+                  {filter.status && (
+                    <>
+                      {' '}
+                      with status "<strong>{filter.status}</strong>"
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+            ) : (
               orders.map((order) => {
                 const totalAmount = calculateOrderTotal(order);
                 return (
@@ -326,7 +408,8 @@ const OrdersTable = () => {
                     </TableCell>
                   </TableRow>
                 );
-              })}
+              })
+            )}
           </TableBody>
         </Table>
 
@@ -334,6 +417,35 @@ const OrdersTable = () => {
         <div className="flex justify-between items-center p-4 border-t">
           <div className="text-sm text-gray-500">
             Showing {orders.length} of {totalCount} orders
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilter({ page: Math.max(1, filter.page - 1) })}
+              disabled={filter.page <= 1}
+            >
+              Previous
+            </Button>
+
+            <div className="text-sm">
+              Page {filter.page} of{' '}
+              {Math.ceil(totalCount / filter.pageSize) || 1}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setFilter({
+                  page: filter.page + 1,
+                })
+              }
+              disabled={filter.page >= Math.ceil(totalCount / filter.pageSize)}
+            >
+              Next
+            </Button>
           </div>
         </div>
       </Card>

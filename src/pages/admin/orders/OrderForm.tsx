@@ -62,20 +62,14 @@ export function OrderForm() {
     defaultValues: {
       orderNumber: generateOrderNumber(),
       status: 'New',
-      customer: 0,
+      customer: undefined, // Remove default 0 to ensure user selects a customer
       currency: '',
       country: '',
       address: '',
       city: '',
       state: '',
       notes: '',
-      items: [
-        {
-          productId: 0,
-          quantity: 1,
-          unitPrice: 0,
-        },
-      ],
+      items: [], // Empty array to start with
       shippingCost: 0,
     },
   });

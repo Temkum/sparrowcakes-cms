@@ -73,34 +73,87 @@ const useOrderStore = create<OrderState>((set, get) => {
           throw new Error('No authentication token found');
         }
 
-        const response = await orderService.getOrders(
-          {
-            page: filter.page,
-            limit: filter.pageSize,
-            searchTerm: filter.searchTerm,
-            sortBy: filter.sortBy,
-            sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
-            status: filter.status,
-          },
-          token
-        );
+        // Clean filter values before sending to API
+        const cleanFilter = {
+          page: filter.page,
+          limit: filter.pageSize,
+          searchTerm: filter.searchTerm?.trim() || undefined,
+          sortBy: filter.sortBy,
+          sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+          status: filter.status,
+        };
+
+        const response = await orderService.getOrders(cleanFilter, token);
+
+        // Apply client-side filtering if API doesn't support it fully
+        // This is a fallback if the API doesn't handle filtering properly
+        let filteredOrders = [...response];
+
+        // Apply status filter if set
+        if (filter.status) {
+          filteredOrders = filteredOrders.filter(
+            (order) => order.status === filter.status
+          );
+        }
+
+        // Apply search filter if set
+        if (filter.searchTerm) {
+          const searchLower = filter.searchTerm.toLowerCase();
+          filteredOrders = filteredOrders.filter(
+            (order) =>
+              order.order_number.toLowerCase().includes(searchLower) ||
+              (order.customer?.name &&
+                order.customer.name.toLowerCase().includes(searchLower)) ||
+              String(order.id).includes(searchLower) ||
+              (order.notes && order.notes.toLowerCase().includes(searchLower))
+          );
+        }
+
+        // Apply sorting
+        filteredOrders.sort((a, b) => {
+          const sortField = filter.sortBy as keyof Order;
+          let aValue = a[sortField];
+          let bValue = b[sortField];
+
+          // Handle special cases for complex fields
+          if (sortField === 'customer' && a.customer && b.customer) {
+            aValue = a.customer.name;
+            bValue = b.customer.name;
+          }
+
+          // Compare values based on their types
+          if (typeof aValue === 'string' && typeof bValue === 'string') {
+            return filter.sortDirection === 'asc'
+              ? aValue.localeCompare(bValue)
+              : bValue.localeCompare(aValue);
+          }
+
+          // Handle dates
+          if (aValue instanceof Date && bValue instanceof Date) {
+            return filter.sortDirection === 'asc'
+              ? aValue.getTime() - bValue.getTime()
+              : bValue.getTime() - aValue.getTime();
+          }
+
+          // Default numeric comparison
+          if (aValue !== undefined && bValue !== undefined) {
+            return filter.sortDirection === 'asc'
+              ? Number(aValue) - Number(bValue)
+              : Number(bValue) - Number(aValue);
+          }
+
+          return 0;
+        });
 
         set({
-          orders: response,
+          orders: filteredOrders,
           totalCount: response.length,
           loading: false,
         });
       } catch (error) {
         console.error('Error loading orders:', error);
-        toast.error('Failed to load orders');
         set({ loading: false });
-
-        if (
-          error instanceof Error &&
-          error.message === 'No authentication token found'
-        ) {
-          window.location.href = '/login';
-        }
+        throw error;
       }
     },
 
@@ -179,13 +232,38 @@ const useOrderStore = create<OrderState>((set, get) => {
       }
     },
 
-    setFilter: (newFilter) =>
-      set((state) => ({
-        filter: {
+    setFilter: (newFilter) => {
+      set((state) => {
+        // Create a new filter object
+        const updatedFilter = {
           ...state.filter,
           ...newFilter,
-        },
-      })),
+        };
+
+        // Handle special case for 'all' status
+        if (newFilter.status === 'all') {
+          updatedFilter.status = undefined;
+        }
+
+        // Ensure search term is always a string
+        updatedFilter.searchTerm =
+          newFilter.searchTerm ?? state.filter.searchTerm;
+
+        // Reset to page 1 if filter criteria change (except page itself)
+        if (
+          newFilter.page === undefined &&
+          (newFilter.status !== undefined ||
+            newFilter.searchTerm !== undefined ||
+            newFilter.sortBy !== undefined ||
+            newFilter.sortDirection !== undefined ||
+            newFilter.pageSize !== undefined)
+        ) {
+          updatedFilter.page = 1;
+        }
+
+        return { filter: updatedFilter };
+      });
+    },
 
     loadStats: async () => {
       set({ loading: true });
