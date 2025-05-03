@@ -23,6 +23,13 @@ import useCustomerStore from '@/store/customer-store';
 import { Loader2 } from 'lucide-react';
 import { CustomerFormProps } from '@/types/customer';
 import toast, { Toaster } from 'react-hot-toast';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 
 export function CreateCustomerModal({
   open,
@@ -40,6 +47,10 @@ export function CreateCustomerModal({
       email: customer?.email || '',
       city: customer?.city || '',
       name: customer?.name || '',
+      address: customer?.address || '',
+      postal_code: customer?.postal_code || '',
+      country: customer?.country || '',
+      state: customer?.state || '',
       phone: customer?.phone || '',
       occupation: customer?.occupation || '',
     },
@@ -59,6 +70,10 @@ export function CreateCustomerModal({
         email: '',
         city: '',
         name: '',
+        address: '',
+        state: '',
+        postal_code: '',
+        country: '',
         phone: '',
         occupation: '',
       });
@@ -86,6 +101,10 @@ export function CreateCustomerModal({
             email: '',
             city: '',
             name: '',
+            address: '',
+            postal_code: '',
+            country: '',
+            state: '',
             phone: '',
             occupation: '',
           });
@@ -97,10 +116,12 @@ export function CreateCustomerModal({
 
       // Always call onSuccess to refresh the list
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating/updating customer:', error);
       toast.error(
-        `Failed to ${mode} customer: ${error.message || 'Unknown error'}`
+        `Failed to ${mode} customer: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
       );
     }
   };
@@ -184,6 +205,76 @@ export function CreateCustomerModal({
                   render={({ field }) => (
                     <FormItem className="col-span-1">
                       <FormLabel>Occupation</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="country"
+                  render={({ field }) => (
+                    <FormItem className="col-span-1">
+                      <FormLabel>Country</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="CM">Cameroon</SelectItem>
+                          <SelectItem value="US">United States</SelectItem>
+                          <SelectItem value="CA">Canada</SelectItem>
+                          <SelectItem value="FR">France</SelectItem>
+                          <SelectItem value="DE">Germany</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem className="col-span-1">
+                      <FormLabel>State/Region</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="postal_code"
+                  render={({ field }) => (
+                    <FormItem className="col-span-1">
+                      <FormLabel>Postal Code</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Address</FormLabel>
                       <FormControl>
                         <Input {...field} value={field.value || ''} />
                       </FormControl>

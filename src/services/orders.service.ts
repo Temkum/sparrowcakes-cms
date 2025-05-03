@@ -35,7 +35,7 @@ export const orderService = {
           },
         }
       );
-      console.log('Fetched orders:', response);
+
       return response;
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -49,7 +49,7 @@ export const orderService = {
       const response = await axiosInstance.get<Order>(
         `${API_URL}/orders/${id}`
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error fetching order with ID ${id}:`, error);
       throw error;
@@ -70,7 +70,8 @@ export const orderService = {
           },
         }
       );
-      return response.data;
+      console.log('Order created successfully:', response);
+      return response;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -89,7 +90,7 @@ export const orderService = {
           },
         }
       );
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error updating order with ID ${id}:`, error);
       throw error;
@@ -105,7 +106,7 @@ export const orderService = {
         },
         data: { ids },
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error deleting orders:', error);
       throw error;
@@ -123,8 +124,7 @@ export const orderService = {
           },
         }
       );
-      console.log('Fetched order stats:', response);
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching order stats:', error);
       throw error;

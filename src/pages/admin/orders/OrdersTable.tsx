@@ -247,27 +247,31 @@ const OrdersTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => {
-              const totalAmount = calculateOrderTotal(order);
-              return (
-                <TableRow key={order.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedOrders.includes(String(order.id))}
-                      onCheckedChange={(checked) =>
-                        handleSelectOrder(String(order.id), checked as boolean)
-                      }
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {order.order_number}
-                  </TableCell>
-                  <TableCell>
-                    {order.customer?.name || `Customer ${order.customer_id}`}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium
+            {orders &&
+              orders.map((order) => {
+                const totalAmount = calculateOrderTotal(order);
+                return (
+                  <TableRow key={order.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedOrders.includes(String(order.id))}
+                        onCheckedChange={(checked) =>
+                          handleSelectOrder(
+                            String(order.id),
+                            checked as boolean
+                          )
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {order.order_number}
+                    </TableCell>
+                    <TableCell>
+                      {order.customer?.name || `Customer ${order.customer_id}`}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium
                         ${
                           order.status === 'Processing'
                             ? 'bg-yellow-100 text-orange-600'
@@ -279,50 +283,50 @@ const OrdersTable = () => {
                             ? 'bg-red-100 text-red-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}
-                    >
-                      {order.status === 'Processing' && '⌛'}
-                      {order.status === 'Delivered' && (
-                        <CircleCheck className="h-4 w-4 mr-1" color="green" />
-                      )}
-                      {order.status === 'Shipped' && '🚚'} {order.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>{order.currency}</TableCell>
-                  <TableCell>
-                    {totalAmount.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    {typeof order.shipping_cost === 'string'
-                      ? parseFloat(order.shipping_cost).toLocaleString(
-                          'en-US',
-                          {
+                      >
+                        {order.status === 'Processing' && '⌛'}
+                        {order.status === 'Delivered' && (
+                          <CircleCheck className="h-4 w-4 mr-1" color="green" />
+                        )}
+                        {order.status === 'Shipped' && '🚚'} {order.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{order.currency}</TableCell>
+                    <TableCell>
+                      {totalAmount.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {typeof order.shipping_cost === 'string'
+                        ? parseFloat(order.shipping_cost).toLocaleString(
+                            'en-US',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )
+                        : order.shipping_cost.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
-                          }
-                        )
-                      : order.shipping_cost.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(order.created_at), 'MMM dd, yyyy')}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      className="text-orange-500 hover:text-orange-600"
-                      onClick={() => handleEdit(String(order.id))}
-                    >
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                          })}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(order.created_at), 'MMM dd, yyyy')}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        className="text-orange-500 hover:text-orange-600"
+                        onClick={() => handleEdit(String(order.id))}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
 

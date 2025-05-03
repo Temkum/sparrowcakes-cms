@@ -3,6 +3,10 @@ export interface Customer {
   name: string;
   email?: string | null;
   phone: string;
+  address?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  state?: string | null;
   city: string | null;
   occupation?: string | null;
   created_at: string;
