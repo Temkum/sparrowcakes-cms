@@ -38,13 +38,25 @@ const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
 const OrdersPage: React.FC = () => {
   const { stats = EMPTY_STATS, loadStats, loading } = useOrderStore();
 
-  const formatCurrency = useCallback((amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  }, []);
+  /**
+   * Formats a number as currency, supporting XOF/FCFA and USD.
+   * @param amount The amount to format
+   * @param currency The currency code, e.g. 'XOF' (FCFA), 'USD'
+   * @returns Formatted currency string
+   */
+  const formatCurrency = useCallback(
+    (amount: number, currency: string = 'XOF'): string => {
+      // Use 'fr-FR' for XOF/FCFA, 'en-US' for USD, fallback to 'en'
+      const locale = currency === 'XOF' ? 'fr-FR' : 'en-US';
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    },
+    []
+  );
 
   useEffect(() => {
     let mounted = true;

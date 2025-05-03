@@ -34,6 +34,17 @@ import {
   ArrowDown,
   ArrowUp,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 const OrdersTable: React.FC = () => {
   const navigate = useNavigate();
@@ -44,7 +55,7 @@ const OrdersTable: React.FC = () => {
     totalCount,
     setFilter,
     loadOrders,
-    deleteOrders,
+    softDeleteOrders,
   } = useOrderStore();
 
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
@@ -53,6 +64,9 @@ const OrdersTable: React.FC = () => {
   );
   const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
   const debouncedSearch = useDebounce(searchValue, 600);
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Effect for debounced search
   useEffect(() => {
@@ -122,20 +136,23 @@ const OrdersTable: React.FC = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (selectedOrders.length === 0) return;
+  // Only allow soft delete if at least one order is selected
+  const canSoftDelete = selectedOrders.length > 0;
 
-    if (
-      confirm(
-        `Are you sure you want to delete ${selectedOrders.length} order(s)?`
-      )
-    ) {
-      try {
-        await deleteOrders(selectedOrders);
-        setSelectedOrders([]);
-      } catch (error) {
-        console.error('Failed to delete orders:', error);
-      }
+  const handleSoftDelete = async () => {
+    if (selectedOrders.length === 0) return;
+    setDeleting(true);
+    try {
+      // Send all selected order IDs for soft delete
+      await softDeleteOrders(selectedOrders);
+      setSelectedOrders([]);
+    } catch (error) {
+      // error toast handled in store
+      console.error('Failed to soft delete orders:', error);
+      toast.error('Failed to delete orders');
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -162,6 +179,48 @@ const OrdersTable: React.FC = () => {
       <ArrowDown className="h-4 w-4 inline ml-1" />
     );
   };
+
+  // Enhanced search filter for client-side fallback (if needed)
+  const filteredOrders = React.useMemo(() => {
+    if (!filter.searchTerm) return orders;
+    const search = filter.searchTerm.toLowerCase();
+    return orders.filter((order) => {
+      // Customer name
+      const customerName = order.customer?.name?.toLowerCase() ?? '';
+      // Order number
+      const orderNumber = String(order.order_number).toLowerCase();
+      // Price (total amount)
+      const totalAmount = (() => {
+        if (!order.items) return '';
+        const itemsTotal = order.items.reduce(
+          (sum, item) => sum + (item.total || item.quantity * item.unit_price),
+          0
+        );
+        const shipping =
+          typeof order.shipping_cost === 'string'
+            ? parseFloat(order.shipping_cost)
+            : order.shipping_cost || 0;
+        return (itemsTotal + shipping).toFixed(2);
+      })();
+      // Shipping cost
+      const shippingCost =
+        typeof order.shipping_cost === 'string'
+          ? order.shipping_cost
+          : order.shipping_cost?.toString() ?? '';
+      // Date
+      const createdAt = order.created_at
+        ? format(new Date(order.created_at), 'yyyy-MM-dd').toLowerCase()
+        : '';
+
+      return (
+        customerName.includes(search) ||
+        orderNumber.includes(search) ||
+        totalAmount.includes(search) ||
+        shippingCost.includes(search) ||
+        createdAt.includes(search)
+      );
+    });
+  }, [orders, filter.searchTerm]);
 
   return (
     <>
@@ -219,13 +278,45 @@ const OrdersTable: React.FC = () => {
           {/* Table Controls */}
           <div className="flex items-center gap-2">
             {selectedOrders.length > 0 && (
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                className="mr-2"
+              <AlertDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
               >
-                Delete Selected ({selectedOrders.length})
-              </Button>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="mr-2"
+                    type="button"
+                    disabled={!canSoftDelete}
+                  >
+                    Delete Selected ({selectedOrders.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Delete {selectedOrders.length} order
+                      {selectedOrders.length > 1 ? 's' : ''}?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will delete {selectedOrders.length} orders. This
+                      action is not reversible.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleting}>
+                      No, keep
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={handleSoftDelete}
+                      disabled={deleting}
+                    >
+                      {deleting ? 'Deleting...' : 'Yes, delete'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
             <Input
               placeholder="Search orders..."
@@ -311,7 +402,7 @@ const OrdersTable: React.FC = () => {
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
-            ) : orders.length === 0 ? (
+            ) : filteredOrders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center py-8">
                   No orders found
@@ -330,7 +421,7 @@ const OrdersTable: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((order) => {
+              filteredOrders.map((order) => {
                 const totalAmount = calculateOrderTotal(order);
                 return (
                   <TableRow key={order.id}>

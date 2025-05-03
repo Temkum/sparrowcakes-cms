@@ -62,17 +62,61 @@ export function OrderForm() {
     defaultValues: {
       orderNumber: generateOrderNumber(),
       status: 'New',
-      customer: undefined, // Remove default 0 to ensure user selects a customer
+      customer: undefined,
       currency: '',
       country: '',
       address: '',
       city: '',
       state: '',
       notes: '',
-      items: [], // Empty array to start with
+      items: [], // Start with empty array, not one product
       shippingCost: 0,
     },
   });
+
+  // Autofill address fields when customer is selected
+  useEffect(() => {
+    const customerId = form.watch('customer');
+    if (!customerId) return;
+    const selectedCustomer = customers.find((c) => c.id === customerId);
+    if (selectedCustomer) {
+      // Only autofill if fields are empty or match previous customer
+      const currentAddress = form.getValues('address');
+      const currentCity = form.getValues('city');
+      const currentState = form.getValues('state');
+      if (
+        !currentAddress ||
+        currentAddress === '' ||
+        currentAddress === selectedCustomer.address
+      ) {
+        form.setValue('address', selectedCustomer.address || '');
+      }
+      if (
+        !currentCity ||
+        currentCity === '' ||
+        currentCity === selectedCustomer.city
+      ) {
+        form.setValue('city', selectedCustomer.city || '');
+      }
+      // If you store state/region in customer, use it; else leave as is
+      if (
+        'state' in selectedCustomer &&
+        (!currentState || currentState === '')
+      ) {
+        // state may not exist on all customer types
+        form.setValue('state', selectedCustomer.state || '');
+      }
+
+      // If you store country in customer, use it; else leave as is
+      if (
+        'country' in selectedCustomer &&
+        (!form.getValues('country') || form.getValues('country') === '')
+      ) {
+        form.setValue('country', selectedCustomer.country || '');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.watch('customer'), customers]);
 
   const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
     try {
@@ -173,6 +217,7 @@ export function OrderForm() {
                             </SelectItem>
                             <SelectItem value="Shipped">Shipped</SelectItem>
                             <SelectItem value="Delivered">Delivered</SelectItem>
+                            <SelectItem value="Cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

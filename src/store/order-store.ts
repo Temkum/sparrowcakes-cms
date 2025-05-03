@@ -22,8 +22,9 @@ interface OrderState {
   // Actions
   loadOrders: () => Promise<void>;
   createOrder: (orderData: Partial<Order>) => Promise<Order>;
-  updateOrder: (id: string, orderData: Partial<Order>) => Promise<Order>;
-  deleteOrders: (ids: string[]) => Promise<void>;
+  updateOrder: (id: number, orderData: Partial<Order>) => Promise<Order>;
+  deleteOrders: (ids: number[]) => Promise<void>;
+  softDeleteOrders: (ids: number[]) => Promise<void>;
   setFilter: (filter: Partial<OrderState['filter']>) => void;
   loadStats: () => Promise<void>;
 }
@@ -216,9 +217,7 @@ const useOrderStore = create<OrderState>((set, get) => {
         await orderService.deleteOrders(ids, token);
 
         set((state) => ({
-          orders: state.orders.filter(
-            (order) => !ids.includes(String(order.id))
-          ),
+          orders: state.orders.filter((order) => !ids.includes(order.id)),
           totalCount: state.totalCount - ids.length,
         }));
 
@@ -228,6 +227,36 @@ const useOrderStore = create<OrderState>((set, get) => {
       } catch (error) {
         console.error('Failed to delete orders:', error);
         toast.error('Failed to delete orders');
+        throw error;
+      }
+    },
+
+    softDeleteOrders: async (ids: number[]): Promise<void> => {
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+        if (!Array.isArray(ids) || ids.length === 0) {
+          throw new Error('No order IDs provided for soft delete');
+        }
+
+        await orderService.softDeleteOrders(ids, token);
+
+        set((state) => ({
+          orders: state.orders.map((order) =>
+            ids.includes(order.id) ? { ...order } : order
+          ),
+        }));
+
+        toast.success(
+          `Successfully soft deleted ${ids.length} order${
+            ids.length > 1 ? 's' : ''
+          }`
+        );
+      } catch (error) {
+        console.error('Failed to soft delete orders:', error);
+        toast.error('Failed to soft delete orders');
         throw error;
       }
     },

@@ -10,27 +10,6 @@ export type OrderStatus =
   | 'processing'
   | 'completed'
   | 'cancelled';
-// interface OrderFilterProps {
-//   page?: number;
-//   limit?: number;
-//   searchTerm?: string;
-//   sortBy?: string;
-//   sortDirection?: 'ASC' | 'DESC';
-//   status?: OrderStatus;
-// }
-
-// interface OrderStats {
-//   total: number;
-//   pending: number;
-//   processing: number;
-//   completed: number;
-//   cancelled: number;
-//   revenue: {
-//     total: number;
-//     thisMonth: number;
-//     thisWeek: number;
-//   };
-// }
 
 interface OrderHistoryItem {
   timestamp: string;
@@ -163,7 +142,7 @@ export const orderService = {
   },
 
   // Delete multiple orders
-  async deleteOrders(ids: string[], token: string): Promise<AxiosResponse> {
+  async deleteOrders(ids: number[], token: string): Promise<AxiosResponse> {
     try {
       if (!ids.length) {
         throw new Error('No order IDs provided for deletion');
@@ -178,6 +157,32 @@ export const orderService = {
       return response;
     } catch (error) {
       console.error('Error deleting orders:', error);
+      throw error;
+    }
+  },
+
+  // Soft delete one or more orders
+  async softDeleteOrders(ids: number[], token: string): Promise<void> {
+    // Convert all ids to integers and filter out invalid ones
+    const validIds = ids
+      .map((id) => Number(id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (!Array.isArray(validIds) || validIds.length === 0) {
+      throw new Error('No valid order IDs provided for soft delete');
+    }
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    try {
+      await axiosInstance.delete(`${API_URL}/orders`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: { ids: validIds },
+      });
+    } catch (error) {
+      console.error('Error soft deleting orders:', error);
       throw error;
     }
   },
