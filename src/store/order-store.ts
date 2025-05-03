@@ -169,10 +169,9 @@ const useOrderStore = create<OrderState>((set, get) => {
 
         const response = await orderService.createOrder(orderData, token);
 
-        set((state) => ({
-          orders: [response, ...state.orders],
-          totalCount: state.totalCount + 1,
-        }));
+        await get().loadOrders();
+        await get().loadStats();
+        toast.success('Order created successfully');
 
         return response;
       } catch (error) {
@@ -194,9 +193,9 @@ const useOrderStore = create<OrderState>((set, get) => {
 
         const response = await orderService.updateOrder(id, orderData, token);
 
-        set((state) => ({
-          orders: state.orders.map((o) => (o.id === id ? response : o)),
-        }));
+        await get().loadOrders();
+        await get().loadStats();
+        toast.success('Order updated successfully');
 
         return response;
       } catch (error) {
@@ -243,11 +242,9 @@ const useOrderStore = create<OrderState>((set, get) => {
 
         await orderService.softDeleteOrders(ids, token);
 
-        set((state) => ({
-          orders: state.orders.map((order) =>
-            ids.includes(order.id) ? { ...order } : order
-          ),
-        }));
+        // Refresh orders and stats to get latest data
+        await get().loadOrders();
+        await get().loadStats();
 
         toast.success(
           `Successfully soft deleted ${ids.length} order${
