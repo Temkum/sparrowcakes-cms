@@ -38,22 +38,30 @@ const ErrorFallback: React.FC<{ error: Error }> = ({ error }) => (
 const OrdersPage: React.FC = () => {
   const { stats = EMPTY_STATS, loadStats, loading } = useOrderStore();
 
-  /**
-   * Formats a number as currency, supporting XOF/FCFA and USD.
-   * @param amount The amount to format
-   * @param currency The currency code, e.g. 'XOF' (FCFA), 'USD'
-   * @returns Formatted currency string
-   */
   const formatCurrency = useCallback(
-    (amount: number, currency: string = 'XOF'): string => {
-      // Use 'fr-FR' for XOF/FCFA, 'en-US' for USD, fallback to 'en'
-      const locale = currency === 'XOF' ? 'fr-FR' : 'en-US';
-      return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount);
+    (amount: number, currency: string = 'XAF'): string => {
+      const localeMap: Record<string, string> = {
+        XAF: 'fr-FR', // Franc CFA BEAC
+        USD: 'en-US',
+        EUR: 'fr-FR',
+        GBP: 'en-GB',
+        XOF: 'fr-FR', // Franc CFA BCEAO
+      };
+
+      try {
+        const locale = localeMap[currency] || 'en';
+
+        return new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+          currencyDisplay: 'symbol',
+        }).format(amount);
+      } catch (error) {
+        console.error('Failed to format currency:', error);
+        return `${amount.toFixed(2)} ${currency}`;
+      }
     },
     []
   );

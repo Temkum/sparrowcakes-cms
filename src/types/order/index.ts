@@ -28,7 +28,7 @@ export interface OrderItem {
 }
 
 export interface Order {
-  id: string | number;
+  id: number;
   order_number: string;
   customer_id: number;
   customer?: OrderCustomer;

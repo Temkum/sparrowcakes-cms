@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import useCustomerStore from '@/store/customer-store';
 import useOrderStore from '@/store/order-store';
 import { useNavigate } from 'react-router-dom';
+import { Order } from '@/types/order';
 
 import {
   orderFormSchema,
@@ -33,14 +34,43 @@ import { Card } from '@/components/ui/card';
 import { ProductSelector } from '../products/productSelector';
 
 const generateOrderNumber = () => {
-  const timestamp = Date.now();
-  const random = Math.floor(Math.random() * 1000);
-  return `OR-${timestamp}-${random}`;
+  const date = new Date();
+  const year = date.getFullYear().toString().slice(-2); // Get last 2 digits of year
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month with leading zero
+  const day = date.getDate().toString().padStart(2, '0'); // Day with leading zero
+  const random = Math.floor(Math.random() * 9999)
+    .toString()
+    .padStart(4, '0'); // 4-digit random number
+
+  // Format: ORD-YYMMDD-XXXX (e.g., ORD-250425-0001)
+  return `ORD-${year}${month}${day}-${random}`;
 };
 
-export function OrderForm() {
+interface OrderFormProps {
+  mode?: 'create' | 'edit';
+  order?: Order;
+  onSubmit?: (data: Partial<Order>) => Promise<void>;
+  submitting?: boolean;
+  editableFields?: string[];
+}
+
+export function OrderForm({
+  mode = 'create',
+  order,
+  onSubmit: propOnSubmit,
+  submitting: propSubmitting,
+  editableFields = [
+    'status',
+    'notes',
+    'shipping_cost',
+    'address',
+    'city',
+    'state',
+    'country',
+  ],
+}: OrderFormProps) {
   const navigate = useNavigate();
-  const { createOrder, submitting } = useOrderStore();
+  const { createOrder, submitting: createSubmitting } = useOrderStore();
   const {
     products,
     loading: productsLoading,
@@ -52,6 +82,8 @@ export function OrderForm() {
     fetchCustomers,
   } = useCustomerStore();
 
+  const isSubmitting = propSubmitting || createSubmitting;
+
   useEffect(() => {
     loadProducts();
     fetchCustomers();
@@ -60,17 +92,22 @@ export function OrderForm() {
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
-      orderNumber: generateOrderNumber(),
-      status: 'New',
-      customer: undefined,
-      currency: '',
-      country: '',
-      address: '',
-      city: '',
-      state: '',
-      notes: '',
-      items: [], // Start with empty array, not one product
-      shippingCost: 0,
+      orderNumber: order?.order_number || generateOrderNumber(),
+      status: order?.status || 'New',
+      customer: order?.customer_id || undefined,
+      currency: order?.currency || '',
+      country: order?.country || '',
+      address: order?.address || '',
+      city: order?.city || '',
+      state: order?.state || '',
+      notes: order?.notes || '',
+      items:
+        order?.items?.map((item) => ({
+          productId: Number(item.product_id),
+          quantity: item.quantity,
+          unitPrice: item.unit_price,
+        })) || [],
+      shippingCost: Number(order?.shipping_cost) || 0,
     },
   });
 
@@ -118,37 +155,53 @@ export function OrderForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.watch('customer'), customers]);
 
-  const onSubmit: SubmitHandler<OrderFormValues> = async (data) => {
+  const handleSubmit: SubmitHandler<OrderFormValues> = async (data) => {
     try {
-      const orderData = {
-        order_number: data.orderNumber,
-        customer_id: data.customer,
-        status: data.status,
-        currency: data.currency,
-        country: data.country,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        notes: data.notes,
-        shipping_cost: data.shippingCost,
-        items: data.items.map((item) => ({
-          product_id: item.productId,
-          quantity: item.quantity,
-          unit_price: item.unitPrice,
-          total: item.quantity * item.unitPrice,
-        })),
-      };
+      if (mode === 'edit' && propOnSubmit) {
+        // Transform form data to match Order type for edit mode
+        const editData: Partial<Order> = {
+          status: data.status,
+          notes: data.notes,
+          shipping_cost: data.shippingCost,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          country: data.country,
+        };
+        await propOnSubmit(editData);
+      } else {
+        const orderData = {
+          order_number: data.orderNumber,
+          customer_id: data.customer,
+          status: data.status,
+          currency: data.currency,
+          country: data.country,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          notes: data.notes,
+          shipping_cost: data.shippingCost,
+          items: data.items.map((item) => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+            total: item.quantity * item.unitPrice,
+          })),
+        };
 
-      await createOrder(orderData);
-      toast.success('Order created successfully!');
-      navigate('/admin/orders');
+        await createOrder(orderData);
+        toast.success('Order created successfully!');
+        navigate('/admin/orders');
+      }
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('Failed to create order. Please try again.');
+      console.error('Error with order:', error);
+      toast.error(
+        mode === 'edit' ? 'Failed to update order' : 'Failed to create order'
+      );
     }
   };
 
-  if (productsLoading || customersLoading || submitting) {
+  if (productsLoading || customersLoading || isSubmitting) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -175,7 +228,10 @@ export function OrderForm() {
       <div className="flex flex-col lg:flex-row gap-8">
         <Form {...form}>
           <Card className="flex-1 space-y-8 p-4 bg-white shadow-sm border border-gray-200">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-8"
+            >
               {/* Order Details */}
               <div className="space-y-6">
                 <h2 className="text-lg font-semibold">Order Details</h2>
@@ -204,6 +260,10 @@ export function OrderForm() {
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          disabled={
+                            mode === 'edit' &&
+                            !editableFields.includes('status')
+                          }
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -236,6 +296,7 @@ export function OrderForm() {
                             field.onChange(Number(value))
                           }
                           defaultValue={field.value?.toString()}
+                          disabled={mode === 'edit'}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -267,6 +328,7 @@ export function OrderForm() {
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          disabled={mode === 'edit'}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -300,6 +362,10 @@ export function OrderForm() {
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
+                          disabled={
+                            mode === 'edit' &&
+                            !editableFields.includes('country')
+                          }
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -324,7 +390,14 @@ export function OrderForm() {
                       <FormItem>
                         <FormLabel>Street Address*</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Ex: 123 Main Street" />
+                          <Input
+                            {...field}
+                            placeholder="Ex: 123 Main Street"
+                            disabled={
+                              mode === 'edit' &&
+                              !editableFields.includes('address')
+                            }
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -338,7 +411,14 @@ export function OrderForm() {
                       <FormItem>
                         <FormLabel>City*</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Ex: Buea" />
+                          <Input
+                            {...field}
+                            placeholder="Ex: Buea"
+                            disabled={
+                              mode === 'edit' &&
+                              !editableFields.includes('city')
+                            }
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -352,7 +432,14 @@ export function OrderForm() {
                       <FormItem>
                         <FormLabel>State / Region*</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Ex: Southwest" />
+                          <Input
+                            {...field}
+                            placeholder="Ex: Southwest"
+                            disabled={
+                              mode === 'edit' &&
+                              !editableFields.includes('state')
+                            }
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -363,7 +450,11 @@ export function OrderForm() {
 
               {/* Items */}
               <h2 className="text-lg font-semibold">Products</h2>
-              <ProductSelector name="items" products={formattedProducts} />
+              <ProductSelector
+                name="items"
+                products={formattedProducts}
+                readOnly={mode === 'edit'}
+              />
 
               {/* Shipping Cost */}
               <h2 className="text-lg font-semibold">
@@ -381,6 +472,10 @@ export function OrderForm() {
                         type="number"
                         min={0}
                         onChange={(e) => field.onChange(Number(e.target.value))}
+                        disabled={
+                          mode === 'edit' &&
+                          !editableFields.includes('shipping_cost')
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -396,7 +491,12 @@ export function OrderForm() {
                   <FormItem>
                     <FormLabel>Notes</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        {...field}
+                        disabled={
+                          mode === 'edit' && !editableFields.includes('notes')
+                        }
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -407,13 +507,15 @@ export function OrderForm() {
               <Button
                 type="submit"
                 className="bg-orange-500 hover:bg-orange-600"
-                disabled={submitting}
+                disabled={isSubmitting}
               >
-                {submitting ? (
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {mode === 'edit' ? 'Updating...' : 'Creating...'}
                   </>
+                ) : mode === 'edit' ? (
+                  'Update Order'
                 ) : (
                   'Create Order'
                 )}

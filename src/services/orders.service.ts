@@ -116,7 +116,7 @@ export const orderService = {
 
   // Update an existing order
   async updateOrder(
-    id: string,
+    id: number,
     orderData: Partial<Order>,
     token: string
   ): Promise<AxiosResponse<Order>> {
@@ -207,7 +207,7 @@ export const orderService = {
 
   // Update order status
   async updateOrderStatus(
-    id: string,
+    id: number,
     status: OrderStatus,
     token: string
   ): Promise<AxiosResponse<Order>> {
@@ -239,7 +239,7 @@ export const orderService = {
 
   // Get order history/timeline
   async getOrderHistory(
-    id: string,
+    id: number,
     token: string
   ): Promise<AxiosResponse<OrderHistoryItem[]>> {
     try {
@@ -265,7 +265,7 @@ export const orderService = {
 
   // Add a note to an order
   async addOrderNote(
-    id: string,
+    id: number,
     note: string,
     token: string
   ): Promise<AxiosResponse<{ success: boolean }>> {
@@ -297,7 +297,7 @@ export const orderService = {
 
   // Generate invoice for an order
   async generateInvoice(
-    id: string,
+    id: number,
     token: string
   ): Promise<AxiosResponse<Blob>> {
     try {
@@ -359,7 +359,7 @@ export const orderService = {
 
   // Send order confirmation email
   async sendOrderConfirmation(
-    id: string,
+    id: number,
     emailData: {
       to: string;
       cc?: string[];

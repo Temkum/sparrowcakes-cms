@@ -22,9 +22,14 @@ import { Trash2 } from 'lucide-react';
 interface ProductSelectorProps {
   name: string;
   products: { id: number; name: string; price: number }[];
+  readOnly?: boolean;
 }
 
-export function ProductSelector({ name, products }: ProductSelectorProps) {
+export function ProductSelector({
+  name,
+  products,
+  readOnly,
+}: ProductSelectorProps) {
   const { control, setValue } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -67,6 +72,7 @@ export function ProductSelector({ name, products }: ProductSelectorProps) {
                       handleProductChange(index, value);
                     }}
                     value={field.value ? String(field.value) : undefined}
+                    disabled={readOnly}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -99,6 +105,7 @@ export function ProductSelector({ name, products }: ProductSelectorProps) {
                       type="number"
                       min={1}
                       onChange={(e) => field.onChange(Number(e.target.value))}
+                      disabled={readOnly}
                     />
                   </FormControl>
                   <FormMessage />
@@ -130,8 +137,8 @@ export function ProductSelector({ name, products }: ProductSelectorProps) {
             />
           </div>
 
-          {/* Remove Button (only show if there's more than one product) */}
-          {fields.length > 1 && (
+          {/* Remove Button (only show if there's more than one product and not in readOnly mode) */}
+          {fields.length > 1 && !readOnly && (
             <Button
               type="button"
               variant="destructive"
@@ -145,16 +152,18 @@ export function ProductSelector({ name, products }: ProductSelectorProps) {
         </div>
       ))}
 
-      {/* Add Product Button */}
-      <div className="flex justify-center">
-        <Button
-          type="button"
-          onClick={handleAddProduct}
-          className="w-full md:w-auto"
-        >
-          Add 1 more item
-        </Button>
-      </div>
+      {/* Add Product Button (only show if not in readOnly mode) */}
+      {!readOnly && (
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            onClick={handleAddProduct}
+            className="w-full md:w-auto"
+          >
+            Add 1 more item
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useDebounce } from '@/hooks/useDebounce';
 import useOrderStore from '@/store/order-store';
@@ -33,6 +33,7 @@ import {
   Loader2,
   ArrowDown,
   ArrowUp,
+  Download,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -45,6 +46,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
+import { orderService } from '@/services/orders.service';
 
 const OrdersTable: React.FC = () => {
   const navigate = useNavigate();
@@ -58,7 +60,7 @@ const OrdersTable: React.FC = () => {
     softDeleteOrders,
   } = useOrderStore();
 
-  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [currentStatus, setCurrentStatus] = useState<OrderStatus | 'all'>(
     filter.status || 'all'
   );
@@ -67,6 +69,7 @@ const OrdersTable: React.FC = () => {
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Effect for debounced search
   useEffect(() => {
@@ -119,16 +122,16 @@ const OrdersTable: React.FC = () => {
     return itemsTotal + shippingCost;
   };
 
-  const handleEdit = (orderId: string) => {
+  const handleEdit = (orderId: number) => {
     navigate(`/admin/orders/${orderId}/edit`);
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (!orders) return;
-    setSelectedOrders(checked ? orders.map((order) => String(order.id)) : []);
+    setSelectedOrders(checked ? orders.map((order) => order.id) : []);
   };
 
-  const handleSelectOrder = (orderId: string, checked: boolean) => {
+  const handleSelectOrder = (orderId: number, checked: boolean) => {
     if (checked) {
       setSelectedOrders((prev) => [...prev, orderId]);
     } else {
@@ -221,6 +224,57 @@ const OrdersTable: React.FC = () => {
       );
     });
   }, [orders, filter.searchTerm]);
+
+  const handleExport = async (format: 'csv' | 'excel' | 'pdf') => {
+    setExporting(true);
+    try {
+      const token = localStorage.getItem('auth-storage')
+        ? JSON.parse(localStorage.getItem('auth-storage')!).state.token
+        : '';
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const filterToUse = {
+        ...filter,
+        ids: selectedOrders.length > 0 ? selectedOrders : undefined,
+        limit: selectedOrders.length || filter.pageSize,
+        sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+      };
+
+      const response = await orderService.exportOrders(
+        filterToUse,
+        format,
+        token
+      );
+
+      const contentType =
+        format === 'csv'
+          ? 'text/csv'
+          : format === 'excel'
+          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          : 'application/pdf';
+
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `orders_${new Date().toISOString().split('T')[0]}.${
+        format === 'excel' ? 'xlsx' : format
+      }`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success(`Orders exported successfully as ${format.toUpperCase()}`);
+    } catch (error) {
+      console.error('Failed to export orders:', error);
+      toast.error('Failed to export orders');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <>
@@ -324,6 +378,33 @@ const OrdersTable: React.FC = () => {
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
             />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {exporting ? 'Exporting...' : 'Export CSV'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('excel')}
+              disabled={exporting}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {exporting ? 'Exporting...' : 'Export Excel'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('pdf')}
+              disabled={exporting}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {exporting ? 'Exporting...' : 'Export PDF'}
+            </Button>
             <Button variant="ghost" size="icon">
               <Filter className="h-4 w-4" />
             </Button>
@@ -427,17 +508,16 @@ const OrdersTable: React.FC = () => {
                   <TableRow key={order.id}>
                     <TableCell>
                       <Checkbox
-                        checked={selectedOrders.includes(String(order.id))}
+                        checked={selectedOrders.includes(order.id)}
                         onCheckedChange={(checked) =>
-                          handleSelectOrder(
-                            String(order.id),
-                            checked as boolean
-                          )
+                          handleSelectOrder(order.id, checked as boolean)
                         }
                       />
                     </TableCell>
                     <TableCell className="font-medium">
-                      {order.order_number}
+                      <Link to={`/admin/orders/${order.id}`}>
+                        {order.order_number}
+                      </Link>
                     </TableCell>
                     <TableCell>
                       {order.customer?.name || `Customer ${order.customer_id}`}
@@ -492,7 +572,7 @@ const OrdersTable: React.FC = () => {
                       <Button
                         variant="ghost"
                         className="text-orange-500 hover:text-orange-600"
-                        onClick={() => handleEdit(String(order.id))}
+                        onClick={() => handleEdit(order.id)}
                       >
                         Edit
                       </Button>
