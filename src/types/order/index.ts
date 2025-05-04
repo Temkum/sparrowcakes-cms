@@ -53,6 +53,7 @@ export interface OrderFilterProps {
   sortBy?: string;
   sortDirection?: 'ASC' | 'DESC';
   status?: OrderStatus;
+  ids?: number[];
 }
 
 export interface PaginatedOrdersResponse {

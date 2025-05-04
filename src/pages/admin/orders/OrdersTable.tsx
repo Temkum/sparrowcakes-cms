@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useDebounce } from '@/hooks/useDebounce';
 import useOrderStore from '@/store/order-store';
+import { useAuthStore } from '@/store/auth';
+import { orderService } from '@/services/orders.service';
 import { OrderStatus, Order } from '@/types/order';
 import { toast } from 'react-hot-toast';
 
@@ -46,7 +48,8 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { orderService } from '@/services/orders.service';
+
+type StatusFilter = OrderStatus | 'all';
 
 const OrdersTable: React.FC = () => {
   const navigate = useNavigate();
@@ -61,9 +64,7 @@ const OrdersTable: React.FC = () => {
   } = useOrderStore();
 
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
-  const [currentStatus, setCurrentStatus] = useState<OrderStatus | 'all'>(
-    filter.status || 'all'
-  );
+  const [currentStatus, setCurrentStatus] = useState<StatusFilter>('all');
   const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
   const debouncedSearch = useDebounce(searchValue, 600);
 
@@ -99,7 +100,7 @@ const OrdersTable: React.FC = () => {
   }, [filter.status]);
 
   // Enhance status filter handling
-  const handleStatusFilter = (status: OrderStatus | 'all') => {
+  const handleStatusFilter = (status: StatusFilter) => {
     setCurrentStatus(status);
     setFilter({
       status: status === 'all' ? undefined : status,
@@ -228,49 +229,71 @@ const OrdersTable: React.FC = () => {
   const handleExport = async (format: 'csv' | 'excel' | 'pdf') => {
     setExporting(true);
     try {
-      const token = localStorage.getItem('auth-storage')
-        ? JSON.parse(localStorage.getItem('auth-storage')!).state.token
-        : '';
+      // Prepare filter parameters
+      const exportFilter = {
+        searchTerm: filter.searchTerm || undefined,
+        status: currentStatus === 'all' ? undefined : currentStatus,
+        sortBy: filter.sortBy,
+        sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+        ids: selectedOrders.length > 0 ? selectedOrders : undefined,
+      };
 
+      // Get token from auth store
+      const { token } = useAuthStore.getState();
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      const filterToUse = {
-        ...filter,
-        ids: selectedOrders.length > 0 ? selectedOrders : undefined,
-        limit: selectedOrders.length || filter.pageSize,
-        sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
-      };
-
       const response = await orderService.exportOrders(
-        filterToUse,
+        exportFilter,
         format,
         token
       );
 
-      const contentType =
-        format === 'csv'
-          ? 'text/csv'
-          : format === 'excel'
-          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-          : 'application/pdf';
+      // Defensive: check if response.data is a Blob
+      if (!(response instanceof Blob)) {
+        throw new Error('Export failed: response is not a file');
+      }
 
-      const blob = new Blob([response.data], { type: contentType });
+      // Check for error response masquerading as Blob (e.g. JSON error)
+      if (response.type && response.type.includes('application/json')) {
+        const text = await response.text();
+        const errorJson = JSON.parse(text);
+        throw new Error(errorJson.message || 'Export failed');
+      }
+
+      const blob = response;
+      const filename = `orders_${format === 'excel' ? 'xlsx' : format}_${
+        selectedOrders.length > 0
+          ? 'selected'
+          : filter.searchTerm || currentStatus !== 'all'
+          ? 'filtered'
+          : 'all'
+      }_${new Date().toISOString().split('T')[0]}.${
+        format === 'excel' ? 'xlsx' : format
+      }`;
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `orders_${new Date().toISOString().split('T')[0]}.${
-        format === 'excel' ? 'xlsx' : format
-      }`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      toast.success(`Orders exported successfully as ${format.toUpperCase()}`);
-    } catch (error) {
+
+      const exportType =
+        selectedOrders.length > 0
+          ? 'selected orders'
+          : filter.searchTerm || currentStatus !== 'all'
+          ? 'filtered orders'
+          : 'all orders';
+      toast.success(
+        `Successfully exported ${exportType} as ${format.toUpperCase()}`
+      );
+    } catch (error: any) {
       console.error('Failed to export orders:', error);
-      toast.error('Failed to export orders');
+      toast.error(error?.message || 'Failed to export orders');
     } finally {
       setExporting(false);
     }

@@ -1,15 +1,13 @@
 import axiosInstance from './axiosInstance';
-import { Order, OrderFilterProps, OrderStats } from '@/types/order';
+import {
+  Order,
+  OrderFilterProps,
+  OrderStats,
+  OrderStatus,
+} from '@/types/order';
 import { AxiosResponse } from 'axios';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
-
-export type OrderStatus =
-  | 'new'
-  | 'pending'
-  | 'processing'
-  | 'completed'
-  | 'cancelled';
 
 interface OrderHistoryItem {
   timestamp: string;
@@ -216,7 +214,15 @@ export const orderService = {
         throw new Error('Order ID is required');
       }
 
-      if (!Object.values(OrderStatus).includes(status)) {
+      const validStatuses: OrderStatus[] = [
+        'New',
+        'Processing',
+        'Shipped',
+        'Delivered',
+        'Cancelled',
+      ];
+
+      if (!validStatuses.includes(status)) {
         throw new Error('Invalid order status');
       }
 
@@ -329,15 +335,16 @@ export const orderService = {
     token: string
   ): Promise<AxiosResponse<Blob>> {
     try {
-      const params = {
-        page: filter.page || 1,
-        limit: filter.limit || 100,
-        searchTerm: filter.searchTerm?.trim() || '',
-        sortBy: filter.sortBy || 'created_at',
-        sortDirection: filter.sortDirection || 'DESC',
-        status: filter.status,
+      // Prepare query params
+      const params: Record<string, string> = {
         format,
       };
+      if (filter.searchTerm) params.searchTerm = filter.searchTerm.trim();
+      if (filter.sortBy) params.sortBy = filter.sortBy;
+      if (filter.sortDirection) params.sortDirection = filter.sortDirection;
+      if (filter.status) params.status = filter.status;
+      if (filter.ids && filter.ids.length > 0)
+        params.ids = filter.ids.join(',');
 
       const response = await axiosInstance.get<Blob>(
         `${API_URL}/orders/export`,
@@ -345,11 +352,16 @@ export const orderService = {
           params,
           headers: {
             Authorization: `Bearer ${token}`,
+            Accept:
+              format === 'csv'
+                ? 'text/csv'
+                : format === 'excel'
+                ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                : 'application/pdf',
           },
           responseType: 'blob',
         }
       );
-
       return response;
     } catch (error) {
       console.error('Error exporting orders:', error);
