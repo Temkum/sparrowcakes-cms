@@ -32,3 +32,6 @@ dist-ssr
 Todo.md
 *.session.sql
 *.csv
+
+.github/copilot-instructions.md
+.github/*

@@ -9,6 +9,11 @@ interface AuthStoreState {
   token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
+  user?: {
+    name: string;
+    email: string;
+    avatar?: string;
+  } | null;
 }
 
 interface AuthStoreActions {
@@ -42,6 +47,7 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
       token: getToken(),
       isAuthenticated: false,
       loading: false,
+      user: null,
 
       registerUser: async (name, email, password) => {
         set({ loading: true });
@@ -75,7 +81,11 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
         try {
           const response = await login({ email, password });
 
-          set({ token: response.token, isAuthenticated: true });
+          set({
+            token: response.token,
+            isAuthenticated: true,
+            user: response.user,
+          });
           return true;
         } catch (error: any) {
           set({ loading: false });
@@ -92,7 +102,7 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
 
       logoutUser: () => {
         logout();
-        set({ token: null, isAuthenticated: false });
+        set({ token: null, isAuthenticated: false, user: null });
         localStorage.removeItem('token');
         localStorage.removeItem('auth-storage');
         toast.success('Logged out successfully!', {

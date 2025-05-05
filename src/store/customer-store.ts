@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { customerService } from '@/services/customers.service';
 import { Customer } from '@/types/customer';
 import { useAuthStore } from './auth';
+import { toast } from 'react-hot-toast';
 
 interface CustomerState {
   customers: Customer[];
@@ -23,6 +24,7 @@ interface CustomerState {
     customerData: Partial<Customer>
   ) => Promise<Customer>;
   setFilter: (filter: Partial<CustomerState['filter']>) => void;
+  fetchCustomers: () => Promise<void>;
 }
 
 const useCustomerStore = create<CustomerState>((set, get) => ({
@@ -139,6 +141,22 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
         ...newFilter,
       },
     })),
+
+  fetchCustomers: async () => {
+    set({ loading: true });
+    try {
+      const { filter } = get();
+      const response = await customerService.getCustomers({
+        limit: filter.pageSize,
+        sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+      });
+      set({ customers: response.items, loading: false });
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+      toast.error('Failed to load customers');
+      set({ loading: false });
+    }
+  },
 }));
 
 export default useCustomerStore;

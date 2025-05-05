@@ -3,6 +3,7 @@
 import * as React from 'react';
 import {
   AudioWaveform,
+  BadgeDollarSign,
   BookOpen,
   Bot,
   Command,
@@ -11,7 +12,9 @@ import {
   Map,
   PieChart,
   Settings2,
+  ShoppingBag,
   SquareTerminal,
+  Users,
 } from 'lucide-react';
 
 import { NavMain } from '@/components/NavMain';
@@ -25,6 +28,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { useAuthStore } from '@/store/auth';
 
 // This is sample data.
 const data = {
@@ -52,28 +56,25 @@ const data = {
   ],
   navMain: [
     {
-      title: 'Shop',
-      url: '/shop',
+      title: 'Categories',
+      url: '/admin/categories',
       icon: SquareTerminal,
       isActive: true,
-      items: [
-        {
-          title: 'Categories',
-          url: '/admin/categories',
-        },
-        {
-          title: 'Products',
-          url: '/admin/products',
-        },
-        {
-          title: 'Orders',
-          url: '/admin/orders',
-        },
-        {
-          title: 'Customers',
-          url: '/admin/customers',
-        },
-      ],
+    },
+    {
+      title: 'Products',
+      url: '/admin/products',
+      icon: ShoppingBag,
+    },
+    {
+      title: 'Orders',
+      url: '/admin/orders',
+      icon: BadgeDollarSign,
+    },
+    {
+      title: 'Customers',
+      url: '/admin/customers',
+      icon: Users,
     },
     {
       title: 'Site Content',
@@ -161,6 +162,21 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const user = useAuthStore().user;
+
+  // fallback if user is not loaded yet
+  const sidebarUser = user
+    ? {
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar || '/assets/profiles/poupe.png',
+      }
+    : {
+        name: 'Loading...',
+        email: '',
+        avatar: '/assets/profiles/poupe.png',
+      };
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -171,7 +187,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavShop projects={data.content} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={sidebarUser} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

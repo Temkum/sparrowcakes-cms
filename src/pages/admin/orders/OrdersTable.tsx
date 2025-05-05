@@ -1,3 +1,16 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { useDebounce } from '@/hooks/useDebounce';
+import useOrderStore from '@/store/order-store';
+import { useAuthStore } from '@/store/auth';
+import { orderService } from '@/services/orders.service';
+import { OrderStatus, Order } from '@/types/order';
+import { toast } from 'react-hot-toast';
+
+// UI Components
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -6,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -14,211 +26,620 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Filter, Columns3, CircleCheck } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ordersData } from '@/utilities/data';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
+import {
+  Filter,
+  Columns3,
+  CircleCheck,
+  Loader2,
+  ArrowDown,
+  ArrowUp,
+  Download,
+} from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
-const OrdersTable = () => {
-  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+type StatusFilter = OrderStatus | 'all';
+
+const OrdersTable: React.FC = () => {
+  const navigate = useNavigate();
+  const {
+    orders,
+    loading,
+    filter,
+    totalCount,
+    setFilter,
+    loadOrders,
+    softDeleteOrders,
+  } = useOrderStore();
+
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
+  const [currentStatus, setCurrentStatus] = useState<StatusFilter>('all');
+  const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
+  const debouncedSearch = useDebounce(searchValue, 600);
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Effect for debounced search
+  useEffect(() => {
+    if (debouncedSearch !== filter.searchTerm) {
+      setFilter({
+        searchTerm: debouncedSearch,
+        page: 1,
+      });
+    }
+  }, [debouncedSearch, filter.searchTerm, setFilter]);
+
+  useEffect(() => {
+    const loadOrdersData = async () => {
+      try {
+        await loadOrders();
+      } catch (error) {
+        console.error('Failed to load orders:', error);
+        toast.error('Failed to load orders');
+      }
+    };
+    loadOrdersData();
+  }, [filter, loadOrders]);
+
+  // Update status filter state when filter changes from outside this component
+  useEffect(() => {
+    setCurrentStatus(filter.status || 'all');
+  }, [filter.status]);
+
+  // Enhance status filter handling
+  const handleStatusFilter = (status: StatusFilter) => {
+    setCurrentStatus(status);
+    setFilter({
+      status: status === 'all' ? undefined : status,
+    });
+  };
+
+  const calculateOrderTotal = (order: Order) => {
+    if (!order.items) return 0;
+
+    const itemsTotal = order.items.reduce((sum, item) => {
+      const itemTotal = item.total || item.quantity * item.unit_price;
+      return sum + itemTotal;
+    }, 0);
+
+    const shippingCost =
+      typeof order.shipping_cost === 'string'
+        ? parseFloat(order.shipping_cost)
+        : order.shipping_cost || 0;
+
+    return itemsTotal + shippingCost;
+  };
+
+  const handleEdit = (orderId: number) => {
+    navigate(`/admin/orders/${orderId}/edit`);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (!orders) return;
+    setSelectedOrders(checked ? orders.map((order) => order.id) : []);
+  };
+
+  const handleSelectOrder = (orderId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedOrders((prev) => [...prev, orderId]);
+    } else {
+      setSelectedOrders((prev) => prev.filter((id) => id !== orderId));
+    }
+  };
+
+  // Only allow soft delete if at least one order is selected
+  const canSoftDelete = selectedOrders.length > 0;
+
+  const handleSoftDelete = async () => {
+    if (selectedOrders.length === 0) return;
+    setDeleting(true);
+    try {
+      // Send all selected order IDs for soft delete
+      await softDeleteOrders(selectedOrders);
+      setSelectedOrders([]);
+    } catch (error) {
+      // error toast handled in store
+      console.error('Failed to soft delete orders:', error);
+      toast.error('Failed to delete orders');
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  // Handle sorting
+  const handleSort = (columnName: string) => {
+    const newDirection =
+      filter.sortBy === columnName && filter.sortDirection === 'asc'
+        ? 'desc'
+        : 'asc';
+
+    setFilter({
+      sortBy: columnName,
+      sortDirection: newDirection,
+    });
+  };
+
+  // Render sort indicator
+  const renderSortIndicator = (columnName: string) => {
+    if (filter.sortBy !== columnName) return null;
+
+    return filter.sortDirection === 'asc' ? (
+      <ArrowUp className="h-4 w-4 inline ml-1" />
+    ) : (
+      <ArrowDown className="h-4 w-4 inline ml-1" />
+    );
+  };
+
+  // Enhanced search filter for client-side fallback (if needed)
+  const filteredOrders = React.useMemo(() => {
+    if (!filter.searchTerm) return orders;
+    const search = filter.searchTerm.toLowerCase();
+    return orders.filter((order) => {
+      // Customer name
+      const customerName = order.customer?.name?.toLowerCase() ?? '';
+      // Order number
+      const orderNumber = String(order.order_number).toLowerCase();
+      // Price (total amount)
+      const totalAmount = (() => {
+        if (!order.items) return '';
+        const itemsTotal = order.items.reduce(
+          (sum, item) => sum + (item.total || item.quantity * item.unit_price),
+          0
+        );
+        const shipping =
+          typeof order.shipping_cost === 'string'
+            ? parseFloat(order.shipping_cost)
+            : order.shipping_cost || 0;
+        return (itemsTotal + shipping).toFixed(2);
+      })();
+      // Shipping cost
+      const shippingCost =
+        typeof order.shipping_cost === 'string'
+          ? order.shipping_cost
+          : order.shipping_cost?.toString() ?? '';
+      // Date
+      const createdAt = order.created_at
+        ? format(new Date(order.created_at), 'yyyy-MM-dd').toLowerCase()
+        : '';
+
+      return (
+        customerName.includes(search) ||
+        orderNumber.includes(search) ||
+        totalAmount.includes(search) ||
+        shippingCost.includes(search) ||
+        createdAt.includes(search)
+      );
+    });
+  }, [orders, filter.searchTerm]);
+
+  const handleExport = async (format: 'csv' | 'excel' | 'pdf') => {
+    setExporting(true);
+    try {
+      // Prepare filter parameters
+      const exportFilter = {
+        searchTerm: filter.searchTerm || undefined,
+        status: currentStatus === 'all' ? undefined : currentStatus,
+        sortBy: filter.sortBy,
+        sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+        ids: selectedOrders.length > 0 ? selectedOrders : undefined,
+      };
+
+      // Get token from auth store
+      const { token } = useAuthStore.getState();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await orderService.exportOrders(
+        exportFilter,
+        format,
+        token
+      );
+
+      // Defensive: check if response.data is a Blob
+      if (!(response instanceof Blob)) {
+        throw new Error('Export failed: response is not a file');
+      }
+
+      // Check for error response masquerading as Blob (e.g. JSON error)
+      if (response.type && response.type.includes('application/json')) {
+        const text = await response.text();
+        const errorJson = JSON.parse(text);
+        throw new Error(errorJson.message || 'Export failed');
+      }
+
+      const blob = response;
+      const filename = `orders_${format === 'excel' ? 'xlsx' : format}_${
+        selectedOrders.length > 0
+          ? 'selected'
+          : filter.searchTerm || currentStatus !== 'all'
+          ? 'filtered'
+          : 'all'
+      }_${new Date().toISOString().split('T')[0]}.${
+        format === 'excel' ? 'xlsx' : format
+      }`;
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      const exportType =
+        selectedOrders.length > 0
+          ? 'selected orders'
+          : filter.searchTerm || currentStatus !== 'all'
+          ? 'filtered orders'
+          : 'all orders';
+      toast.success(
+        `Successfully exported ${exportType} as ${format.toUpperCase()}`
+      );
+    } catch (error: any) {
+      console.error('Failed to export orders:', error);
+      toast.error(error?.message || 'Failed to export orders');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <>
       {/* Status Filters */}
-      <div className="flex gap-2 mb-6 justify-center ">
+      <div className="flex gap-2 mb-6 justify-center">
         <div className="border rounded-md text-gray-500">
-          <Button variant="ghost" className="text-orange-500">
+          <Button
+            variant="ghost"
+            className={currentStatus === 'all' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('all')}
+          >
             All
           </Button>
-          <Button variant="ghost">New</Button>
-          <Button variant="ghost">Processing</Button>
-          <Button variant="ghost">Shipped</Button>
-          <Button variant="ghost">Delivered</Button>
-          <Button variant="ghost">Cancelled</Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'New' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('New')}
+          >
+            New
+          </Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'Processing' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('Processing')}
+          >
+            Processing
+          </Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'Shipped' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('Shipped')}
+          >
+            Shipped
+          </Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'Delivered' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('Delivered')}
+          >
+            Delivered
+          </Button>
+          <Button
+            variant="ghost"
+            className={currentStatus === 'Cancelled' ? 'text-orange-500' : ''}
+            onClick={() => handleStatusFilter('Cancelled')}
+          >
+            Cancelled
+          </Button>
         </div>
       </div>
 
-      {/* Orders Table */}
+      {/* Orders Table and Controls */}
       <Card>
         <div className="flex justify-between items-center mb-4 p-3">
           {/* Table Controls */}
-          <Select defaultValue="default">
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Group by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Group by</SelectItem>
-              <SelectItem value="status">Status</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center gap-1">
-            <Input placeholder="Search" className="w-[200px]" />
-            <Button variant="ghost" size="icon">
-              <Filter className="h-4 w-4" fill="gray" color="gray" />
+          <div className="flex items-center gap-2">
+            {selectedOrders.length > 0 && (
+              <AlertDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+              >
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="mr-2"
+                    type="button"
+                    disabled={!canSoftDelete}
+                  >
+                    Delete Selected ({selectedOrders.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Delete {selectedOrders.length} order
+                      {selectedOrders.length > 1 ? 's' : ''}?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will delete {selectedOrders.length} orders. This
+                      action is not reversible.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleting}>
+                      No, keep
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={handleSoftDelete}
+                      disabled={deleting}
+                    >
+                      {deleting ? 'Deleting...' : 'Yes, delete'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Input
+              placeholder="Search orders..."
+              className="w-[300px]"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {exporting ? 'Exporting...' : 'Export CSV'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('excel')}
+              disabled={exporting}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {exporting ? 'Exporting...' : 'Export Excel'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('pdf')}
+              disabled={exporting}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {exporting ? 'Exporting...' : 'Export PDF'}
             </Button>
             <Button variant="ghost" size="icon">
-              <Columns3 className="h-4 w-4" color="gray" />
+              <Filter className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Columns3 className="h-4 w-4" />
             </Button>
           </div>
+          <Select
+            value={String(filter.pageSize)}
+            onValueChange={(value) =>
+              setFilter({ pageSize: Number(value), page: 1 })
+            }
+          >
+            <SelectTrigger className="w-[70px]">
+              <SelectValue placeholder="Per page" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
         <Table>
           <TableHeader>
             <TableRow className="font-bold text-black-600 bg-gray-200">
               <TableHead className="w-[30px]">
                 <Checkbox
-                  checked={selectedOrders.length === ordersData.length}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedOrders(ordersData.map((order) => order.id));
-                    } else {
-                      setSelectedOrders([]);
-                    }
-                  }}
+                  checked={
+                    orders.length > 0 && selectedOrders.length === orders.length
+                  }
+                  onCheckedChange={handleSelectAll}
                 />
               </TableHead>
-              <TableHead>Number</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('order_number')}
+              >
+                Number {renderSortIndicator('order_number')}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('customer_id')}
+              >
+                Customer {renderSortIndicator('customer_id')}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('status')}
+              >
+                Status {renderSortIndicator('status')}
+              </TableHead>
               <TableHead>Currency</TableHead>
-              <TableHead>Total price</TableHead>
-              <TableHead>Shipping cost</TableHead>
-              <TableHead>Order Date</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('items')}
+              >
+                Total Amount {renderSortIndicator('items')}
+              </TableHead>
+              <TableHead>Shipping Cost</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-300"
+                onClick={() => handleSort('created_at')}
+              >
+                Date {renderSortIndicator('created_at')}
+              </TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {ordersData.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedOrders.includes(order.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedOrders([...selectedOrders, order.id]);
-                      } else {
-                        setSelectedOrders(
-                          selectedOrders.filter((id) => id !== order.id)
-                        );
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{order.number}</TableCell>
-                <TableCell>{order.customer}</TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium
-                      ${
-                        order.status === 'Processing'
-                          ? 'bg-yellow-100 text-orange-600'
-                          : order.status === 'Delivered' && (
-                              <CircleCheck className="h-4 w-4" />
-                            )
-                          ? 'bg-green-100 text-green-600'
-                          : order.status === 'Shipped'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                  >
-                    {order.status === 'Processing' && '⌛'}
-                    {order.status === 'Delivered' && (
-                      <CircleCheck
-                        className="h-4 w-4 mr-1"
-                        color="white"
-                        fill="green"
-                      />
-                    )}
-                    {order.status === 'Shipped' && '🚚'} {order.status}
-                  </span>
-                </TableCell>
-                <TableCell>{order.currency}</TableCell>
-                <TableCell>{order.totalPrice.toFixed(2)}</TableCell>
-                <TableCell>{order.shippingCost.toFixed(2)}</TableCell>
-                <TableCell>{order.orderDate}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    className="text-orange-500 hover:text-orange-600"
-                  >
-                    Edit
-                  </Button>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
-            ))}
+            ) : filteredOrders.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-8">
+                  No orders found
+                  {filter.searchTerm && (
+                    <>
+                      {' '}
+                      for "<strong>{filter.searchTerm}</strong>"
+                    </>
+                  )}
+                  {filter.status && (
+                    <>
+                      {' '}
+                      with status "<strong>{filter.status}</strong>"
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredOrders.map((order) => {
+                const totalAmount = calculateOrderTotal(order);
+                return (
+                  <TableRow key={order.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedOrders.includes(order.id)}
+                        onCheckedChange={(checked) =>
+                          handleSelectOrder(order.id, checked as boolean)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <Link to={`/admin/orders/${order.id}`}>
+                        {order.order_number}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {order.customer?.name || `Customer ${order.customer_id}`}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium
+                        ${
+                          order.status === 'Processing'
+                            ? 'bg-yellow-100 text-orange-600'
+                            : order.status === 'Delivered'
+                            ? 'bg-green-100 text-green-600'
+                            : order.status === 'Shipped'
+                            ? 'bg-blue-100 text-blue-800'
+                            : order.status === 'Cancelled'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {order.status === 'Processing' && '⌛'}
+                        {order.status === 'Delivered' && (
+                          <CircleCheck className="h-4 w-4 mr-1" color="green" />
+                        )}
+                        {order.status === 'Shipped' && '🚚'} {order.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{order.currency}</TableCell>
+                    <TableCell>
+                      {totalAmount.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {typeof order.shipping_cost === 'string'
+                        ? parseFloat(order.shipping_cost).toLocaleString(
+                            'en-US',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )
+                        : order.shipping_cost.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(order.created_at), 'MMM dd, yyyy')}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        className="text-orange-500 hover:text-orange-600"
+                        onClick={() => handleEdit(order.id)}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
           </TableBody>
         </Table>
 
-        {/* Summary Section */}
-        <div className="p-4 border-t">
-          <div className="space-y-4">
-            <div className="font-medium">Summary</div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-2">This page</div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Total price</div>
-                    <div>Sum</div>
-                    <div className="text-gray-600">$10,267.38</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Shipping cost</div>
-                    <div>Sum</div>
-                    <div className="text-gray-600">$2,627.24</div>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-2">All orders</div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Total price</div>
-                    <div>Sum</div>
-                    <div className="text-gray-600">$1,024,185.96</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Shipping cost</div>
-                    <div>Sum</div>
-                    <div className="text-gray-600">$291,223.85</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Pagination */}
+        {/* Pagination Controls */}
         <div className="flex justify-between items-center p-4 border-t">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">
-              Showing 1 to 10 of 998 results
-            </span>
-            <Select defaultValue="10">
-              <SelectTrigger className="w-[70px]">
-                <SelectValue placeholder="Per page" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="text-sm text-gray-500">
+            Showing {orders.length} of {totalCount} orders
           </div>
+
           <div className="flex items-center gap-2">
-            <Button variant="ghost" className="text-orange-500">
-              1
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilter({ page: Math.max(1, filter.page - 1) })}
+              disabled={filter.page <= 1}
+            >
+              Previous
             </Button>
-            <Button variant="ghost">2</Button>
-            <Button variant="ghost">3</Button>
-            <Button variant="ghost">4</Button>
-            <span>...</span>
-            <Button variant="ghost">99</Button>
-            <Button variant="ghost">100</Button>
-            <Button variant="ghost">→</Button>
+
+            <div className="text-sm">
+              Page {filter.page} of{' '}
+              {Math.ceil(totalCount / filter.pageSize) || 1}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setFilter({
+                  page: filter.page + 1,
+                })
+              }
+              disabled={filter.page >= Math.ceil(totalCount / filter.pageSize)}
+            >
+              Next
+            </Button>
           </div>
         </div>
       </Card>

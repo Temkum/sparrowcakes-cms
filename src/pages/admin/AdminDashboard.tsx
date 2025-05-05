@@ -30,6 +30,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { LogOut, Search, TrendingDown, TrendingUp } from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { logout } from '@/services/auth.service';
+import { useAuthStore } from '@/store/auth';
 
 const monthlyOrders: ChartData[] = [
   { name: 'Jan', value: 2000 },
@@ -74,6 +75,8 @@ const breadcrumbItems = [
 ];
 
 const AdminDashboard = () => {
+  const user = useAuthStore().user;
+
   return (
     <div className="min-h-screen">
       {/* Breadcrumb */}
@@ -82,7 +85,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1280px] mx-auto">
+      <div className="max-w-[1280px] mx-auto p-4">
         <div className="flex justify-between items-center my-7">
           <div className="space-y-4">
             <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -112,7 +115,9 @@ const AdminDashboard = () => {
             </Avatar>
             <div>
               <p className="font-medium">Welcome</p>
-              <p className="text-sm text-gray-500">Demo User</p>
+              <p className="text-sm text-gray-500">
+                {user?.name || 'Loading...'}
+              </p>
             </div>
             <Button
               variant="ghost"
