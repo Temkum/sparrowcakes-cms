@@ -18,6 +18,7 @@ import { ProductDetails } from '@/pages/admin/products/ProductDetails';
 import ProductEdit from '@/pages/admin/products/ProductEdit';
 import ViewOrder from '@/pages/admin/orders/ViewOrder';
 import EditOrder from '@/pages/admin/orders/EditOrder';
+import ReviewsPage from '@/pages/admin/reviews/Reviews';
 const Root = createBrowserRouter([
   {
     path: '/',
@@ -104,6 +105,10 @@ const Root = createBrowserRouter([
       {
         path: '/admin/categories/new',
         element: <CategoriesPage />,
+      },
+      {
+        path: '/admin/reviews',
+        element: <ReviewsPage />,
       },
     ],
   },

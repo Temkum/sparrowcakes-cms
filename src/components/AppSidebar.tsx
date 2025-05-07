@@ -10,6 +10,7 @@ import {
   Frame,
   GalleryVerticalEnd,
   Map,
+  MessageCircleCode,
   PieChart,
   Settings2,
   ShoppingBag,
@@ -75,6 +76,11 @@ const data = {
       title: 'Customers',
       url: '/admin/customers',
       icon: Users,
+    },
+    {
+      title: 'Reviews',
+      url: '/admin/reviews',
+      icon: MessageCircleCode,
     },
     {
       title: 'Site Content',
