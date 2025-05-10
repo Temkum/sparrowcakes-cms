@@ -27,7 +27,7 @@ export interface ReviewResponse {
   is_deleted: boolean;
   user: User | null;
   product: Product;
-  customer: Customer; // Add this line
+  customer: Customer;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -36,6 +36,13 @@ export interface ReviewResponse {
 export interface User {
   id: number;
   name: string;
+  email: string;
+}
+
+export interface Customer {
+  id: number;
+  name: string;
+  phone: string;
   email: string;
 }
 

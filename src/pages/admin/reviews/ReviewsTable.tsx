@@ -12,8 +12,6 @@ import { Input } from '@/components/ui/input';
 import { StarRating } from '@/components/sparrow/StarRating';
 import { format } from 'date-fns';
 import { Review } from '@/types/review';
-import { Customer } from '@/types/customer';
-import { Product } from '@/pages/admin/products/types/product.types';
 import {
   Dialog,
   DialogContent,
@@ -22,19 +20,16 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Search } from 'lucide-react';
+import { ReviewResponse } from '@/types/review';
 
 interface ReviewsTableProps {
-  reviews: Review[];
-  customers: Customer[];
-  products?: Product[];
-  onEdit: (review: Review) => void;
+  reviews: ReviewResponse[];
+  onEdit: (review: ReviewResponse) => void;
   onDelete: (reviewId: number) => void;
 }
 
 const ReviewsTable: React.FC<ReviewsTableProps> = ({
   reviews,
-  customers,
-  products = [],
   onEdit,
   onDelete,
 }) => {
@@ -42,28 +37,27 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const getCustomerName = (customerId: number) => {
-    const customer = customers.find((c) => c.id === customerId);
-    return customer ? customer.name : 'Unknown Customer';
-  };
-
-  const getProductName = (productId: number) => {
-    const product = products.find((p) => p.id === productId);
-    return product ? product.name : 'Unknown Product';
-  };
-
   const filteredReviews = reviews?.filter((review) => {
-    const customerName = getCustomerName(review.customerId).toLowerCase();
+    const cusNmae = review.customer.name;
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      customerName.includes(searchTermLower) ||
+      cusNmae.includes(searchTermLower) ||
       review.comment.toLowerCase().includes(searchTermLower) ||
       review.id.toString().includes(searchTermLower)
     );
   });
 
-  const handleViewReview = (review: Review) => {
-    setSelectedReview(review);
+  const handleViewReview = (review: ReviewResponse) => {
+    setSelectedReview({
+      id: review.id,
+      productId: review.product.id,
+      customerId: review.customer.id,
+      rating: review.rating,
+      comment: review.comment,
+      isActive: review.display,
+      createdAt: review.created_at,
+      updatedAt: review.updated_at,
+    } as Review);
     setIsViewDialogOpen(true);
   };
 
@@ -105,10 +99,10 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                       onClick={() => handleViewReview(review)}
                       className="text-blue-600 hover:underline"
                     >
-                      {getCustomerName(review.customerId)}
+                      {review.customer.name}
                     </button>
                   </TableCell>
-                  <TableCell>{getProductName(review.productId)}</TableCell>
+                  <TableCell>{review.product.name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <StarRating rating={review.rating} />
@@ -121,15 +115,13 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                     {review.comment}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={review.isActive ? 'default' : 'destructive'}
-                    >
-                      {review.isActive ? 'Active' : 'Inactive'}
+                    <Badge variant={review.display ? 'default' : 'destructive'}>
+                      {review.display ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  {/* <TableCell>
-                    {format(new Date(review.createdAt), 'MMM d, yyyy')}
-                  </TableCell> */}
+                  <TableCell>
+                    {format(new Date(review.created_at), 'MMM d, yyyy')}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -142,7 +134,16 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => onDelete(review.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (
+                            window.confirm(
+                              'Are you sure you want to delete this review?'
+                            )
+                          ) {
+                            onDelete(review.id);
+                          }
+                        }}
                       >
                         Delete
                       </Button>
@@ -163,7 +164,12 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold">Customer</h3>
-                <p>{getCustomerName(selectedReview.customerId)}</p>
+                <p>
+                  {
+                    reviews.find((review) => review.id === selectedReview.id)
+                      ?.customer.name
+                  }
+                </p>
               </div>
               <div>
                 <h3 className="font-semibold">Rating</h3>

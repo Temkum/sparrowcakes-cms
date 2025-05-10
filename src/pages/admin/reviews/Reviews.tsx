@@ -6,7 +6,6 @@ import { Review } from '@/types/review';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import ReviewForm from '@/components/reviews/ReviewForm';
-import ReviewsTable from './ReviewsTable';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import ReviewsTable from '@/pages/admin/reviews/ReviewsTable';
 
 const Reviews: React.FC = () => {
   const { reviews, fetchReviews, createReview, updateReview, deleteReview } =
@@ -69,7 +69,14 @@ const Reviews: React.FC = () => {
   };
 
   const handleEdit = (review: Review) => {
-    setSelectedReview(review);
+    console.log('Editing review:', review);
+    // Make sure the review has all required fields
+    const reviewToEdit = {
+      ...review,
+      customerId: review.customerId || 0,
+      productId: review.productId || 0,
+    };
+    setSelectedReview(reviewToEdit);
     setIsFormOpen(true);
   };
 

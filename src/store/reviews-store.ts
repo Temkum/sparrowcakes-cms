@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import axiosInstance from '@/services/axiosInstance';
-import { Review } from '@/types/review';
+import { Review, ReviewResponse } from '@/types/review';
 import { useAuthStore } from '@/store/auth';
 
 interface ReviewsState {
   loading: boolean;
-  reviews: Review[];
+  reviews: ReviewResponse[];
   fetchReviews: () => Promise<void>;
   createReview: (review: Partial<Review>) => Promise<void>;
   updateReview: (reviewId: number, review: Partial<Review>) => Promise<void>;
@@ -27,6 +27,8 @@ const useReviewsStore = create<ReviewsState>((set) => ({
 
     try {
       const response = await axiosInstance.get('/reviews');
+      console.log('Response reviews:', response);
+
       set({ reviews: response, loading: false });
     } catch (error) {
       console.error('Error fetching reviews:', error);
@@ -34,8 +36,15 @@ const useReviewsStore = create<ReviewsState>((set) => ({
     }
   },
   createReview: async (review) => {
+    const reviewData = {
+      comment: review.comment,
+      customer_id: review.customerId,
+      display: review.isActive,
+      product_id: review.productId,
+      rating: review.rating,
+    };
     try {
-      const response = await axiosInstance.post('/reviews', review, {
+      const response = await axiosInstance.post('/reviews', reviewData, {
         headers: getAuthHeader(),
       });
       console.log('Response:', response);
@@ -47,9 +56,20 @@ const useReviewsStore = create<ReviewsState>((set) => ({
   },
   updateReview: async (reviewId, review) => {
     try {
-      const response = await axiosInstance.put(`/reviews/${reviewId}`, review, {
-        headers: getAuthHeader(),
-      });
+      const reviewData = {
+        comment: review.comment,
+        customer_id: review.customerId,
+        display: review.isActive,
+        product_id: review.productId,
+        rating: review.rating,
+      };
+      const response = await axiosInstance.put(
+        `/reviews/${reviewId}`,
+        reviewData,
+        {
+          headers: getAuthHeader(),
+        }
+      );
       set((state) => ({
         reviews: state.reviews.map((r) => (r.id === reviewId ? response : r)),
       }));
@@ -60,6 +80,8 @@ const useReviewsStore = create<ReviewsState>((set) => ({
   },
   deleteReview: async (reviewId) => {
     try {
+      console.log('Deleting review with ID:', reviewId);
+      console.log('Auth headers:', getAuthHeader());
       await axiosInstance.delete(`/reviews/${reviewId}`, {
         headers: getAuthHeader(),
       });

@@ -88,7 +88,6 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             <FormItem>
               <FormLabel>Customer</FormLabel>
               <Select
-                disabled={!!review}
                 onValueChange={(value) => field.onChange(Number(value))}
                 defaultValue={field.value?.toString()}
               >
@@ -120,7 +119,6 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             <FormItem>
               <FormLabel>Product</FormLabel>
               <Select
-                disabled={!!review}
                 onValueChange={(value) => field.onChange(Number(value))}
                 defaultValue={field.value?.toString()}
               >
