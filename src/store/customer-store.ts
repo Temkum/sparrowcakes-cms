@@ -28,7 +28,7 @@ interface CustomerState {
 }
 
 const useCustomerStore = create<CustomerState>((set, get) => ({
-  customers: [], // Initialize as empty array
+  customers: [],
   currentCustomer: null,
   loading: false,
   submitting: false,

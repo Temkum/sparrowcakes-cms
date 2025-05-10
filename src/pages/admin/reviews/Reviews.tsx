@@ -10,26 +10,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
 import ReviewsTable from '@/pages/admin/reviews/ReviewsTable';
 import useProductStore from '@/store/product-store';
 import useCustomerStore from '@/store/customer-store';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 
 const Reviews: React.FC = () => {
   const { reviews, fetchReviews, createReview, updateReview, deleteReview } =
     useReviewsStore();
-
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<ReviewResponse | null>(
     null
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast: uiToast } = useToast();
 
   const { products: productsFromStore, loadProducts } = useProductStore();
-
   const { customers: customersFromStore, loadCustomers } = useCustomerStore();
 
   const products = productsFromStore.map((product) => ({
@@ -51,6 +47,7 @@ const Reviews: React.FC = () => {
   const handleSubmit = async (data: Partial<ReviewResponse>) => {
     try {
       setIsSubmitting(true);
+      console.log('DATA', data);
 
       if (selectedReview) {
         await updateReview(selectedReview.id, {
@@ -60,19 +57,11 @@ const Reviews: React.FC = () => {
           productId: data.product?.id || (selectedReview.product?.id as number),
         });
         toast.success('Review updated successfully');
-        uiToast({
-          title: 'Success',
-          description: 'Review updated successfully',
-        });
       } else {
         await createReview({
           ...data,
         });
         toast.success('Review created successfully');
-        uiToast({
-          title: 'Success',
-          description: 'Review created successfully',
-        });
       }
 
       setIsFormOpen(false);
@@ -81,24 +70,19 @@ const Reviews: React.FC = () => {
     } catch (err) {
       console.error('Error saving review:', err);
       toast.error('Failed to save review');
-      uiToast({
-        title: 'Error',
-        description: 'Failed to save review',
-        variant: 'destructive',
-      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleEdit = (review: ReviewResponse) => {
-    const reviewToEdit = {
+    console.log('HANDLE EDIT', review);
+    setSelectedReview({
       ...review,
-      customer: review.customer || null,
-      product: review.product || null,
-      display: review.display,
-    };
-    setSelectedReview(reviewToEdit);
+      isActive: review.display,
+      customerId: review.customer?.id,
+      productId: review.product?.id,
+    });
     setIsFormOpen(true);
   };
 
@@ -106,18 +90,9 @@ const Reviews: React.FC = () => {
     try {
       await deleteReview(reviewId);
       toast.success('Review deleted successfully');
-      uiToast({
-        title: 'Success',
-        description: 'Review deleted successfully',
-      });
     } catch (err) {
       console.error('Error deleting review:', err);
       toast.error('Failed to delete review');
-      uiToast({
-        title: 'Error',
-        description: 'Failed to delete review',
-        variant: 'destructive',
-      });
     }
   };
 
@@ -130,52 +105,55 @@ const Reviews: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6 px-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Reviews</h1>
-        <Button
-          onClick={() => {
-            setSelectedReview(null);
-            setIsFormOpen(true);
+    <>
+      <Toaster />
+      <div className="container mx-auto py-6 space-y-6 px-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Reviews</h1>
+          <Button
+            onClick={() => {
+              setSelectedReview(null);
+              setIsFormOpen(true);
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Review
+          </Button>
+        </div>
+
+        <ReviewsTable
+          reviews={reviews}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+
+        <Dialog
+          open={isFormOpen}
+          onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) {
+              setSelectedReview(null);
+            }
           }}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Review
-        </Button>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedReview ? 'Edit Review' : 'Add Review'}
+              </DialogTitle>
+            </DialogHeader>
+            <ReviewForm
+              review={selectedReview || undefined}
+              onSubmit={handleSubmit}
+              onDelete={selectedReview ? handleDeleteCurrent : undefined}
+              customers={customers}
+              products={products}
+              submitting={isSubmitting}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
-
-      <ReviewsTable
-        reviews={reviews}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      <Dialog
-        open={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) {
-            setSelectedReview(null);
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {selectedReview ? 'Edit Review' : 'Add Review'}
-            </DialogTitle>
-          </DialogHeader>
-          <ReviewForm
-            review={selectedReview || undefined}
-            onSubmit={handleSubmit}
-            onDelete={selectedReview ? handleDeleteCurrent : undefined}
-            customers={customers}
-            products={products}
-            submitting={isSubmitting}
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
+    </>
   );
 };
 

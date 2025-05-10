@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { StarRating } from '@/components/sparrow/StarRating';
 import { Loader2 } from 'lucide-react';
-import { Review } from '@/types/review';
+import { Review, ReviewResponse } from '@/types/review';
 import { Customer } from '@/types/customer';
 import {
   Select,
@@ -25,7 +24,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Product } from '@/types/product';
-import toast from 'react-hot-toast';
 
 const reviewFormSchema = z.object({
   customerId: z.number({
@@ -40,7 +38,7 @@ const reviewFormSchema = z.object({
     .max(5, { message: 'Rating must be at most 5' }),
   comment: z
     .string()
-    .min(1, { message: 'Comment must be at least 1 character' }),
+    .min(1, { message: 'Comment must be at least 2 character' }),
   isActive: z.boolean(),
 });
 
@@ -53,15 +51,16 @@ interface ReviewFormProps {
   submitting?: boolean;
   customers: Customer[];
   products: Product[];
+  loadedReview: ReviewResponse;
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
   review,
   onSubmit,
-  onDelete,
   submitting = false,
   customers,
   products,
+  loadedReview,
 }) => {
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
@@ -70,28 +69,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       productId: review?.productId || undefined,
       rating: review?.rating || 5,
       comment: review?.comment || '',
-      isActive: review?.isActive ?? true,
+      isActive: review?.isActive === true ? true : false,
     },
   });
 
-  useEffect(() => {
-    if (review) {
-      toast.success('Review loaded successfully');
-    }
-  }, [review]);
-
   const handleFormSubmit = async (data: ReviewFormData) => {
     await onSubmit(data);
-    toast.success('Review submitted successfully');
-  };
-
-  const handleDelete = () => {
-    if (
-      onDelete &&
-      window.confirm('Are you sure you want to delete this review?')
-    ) {
-      onDelete();
-    }
   };
 
   return (
@@ -205,21 +188,17 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
           name="isActive"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>Display review?</FormLabel>
               <Switch
                 checked={field.value}
                 onCheckedChange={field.onChange}
-                className={`${field.value ? 'bg-green-500' : 'bg-gray-500'}`}
+                className={`ml-3 ${
+                  field.value ? 'bg-green-500' : 'bg-gray-500'
+                }`}
               />
             </FormItem>
           )}
         />
-
-        {onDelete && (
-          <Button type="button" onClick={handleDelete} className="w-full">
-            Delete Review
-          </Button>
-        )}
 
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

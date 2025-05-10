@@ -225,6 +225,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                   setIsViewDialogOpen(false);
                   onEdit(selectedReview);
                 }}
+                className="bg-orange-500"
               >
                 Edit
               </Button>
