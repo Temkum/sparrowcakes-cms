@@ -23,11 +23,16 @@ import {
 } from '@/components/ui/select';
 import { Review } from '@/types/review';
 import { Customer } from '@/types/customer';
+import { Product } from '@/pages/admin/products/types/product.types';
+import useProductStore from '@/store/product-store';
 import useCustomerStore from '@/store/customer-store';
 
 const reviewFormSchema = z.object({
   customerId: z.number({
     required_error: 'Please select a customer',
+  }),
+  productId: z.number({
+    required_error: 'Please select a product',
   }),
   rating: z.number().min(1).max(5),
   comment: z.string().min(1, 'Comment is required'),
@@ -40,28 +45,35 @@ interface ReviewFormProps {
   review?: Review | null;
   onSubmit: (data: Partial<Review>) => void;
   customers: Customer[];
+  products: Product[];
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
   review,
   onSubmit,
   customers,
+  products,
 }) => {
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
       customerId: review?.customerId,
+      productId: review?.productId,
       rating: review?.rating || 0,
       comment: review?.comment || '',
       isActive: review?.isActive ?? true,
     },
   });
   const { customers: storeCustomers } = useCustomerStore();
+  const { products: storeProducts } = useProductStore();
 
   console.log('Customers from props:', customers);
   console.log('Customers from store:', storeCustomers);
+  console.log('Products from props:', products);
+  console.log('Products from store:', storeProducts);
 
   const handleFormSubmit = (data: ReviewFormData) => {
+    console.log('Form data:', data);
     onSubmit(data);
   };
 
@@ -96,6 +108,40 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                       {customer.name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="productId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product</FormLabel>
+              <Select
+                disabled={!!review}
+                onValueChange={(value) => field.onChange(Number(value))}
+                defaultValue={field.value?.toString()}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a product" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {products
+                    .filter((product) => product.id !== undefined)
+                    .map((product) => (
+                      <SelectItem
+                        key={product.id}
+                        value={product.id!.toString()}
+                      >
+                        {product.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <FormMessage />

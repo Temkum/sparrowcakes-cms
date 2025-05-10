@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import useReviewsStore from '@/store/reviews-store';
 import useCustomerStore from '@/store/customer-store';
+import useProductStore from '@/store/product-store';
 import { Review } from '@/types/review';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -18,6 +19,7 @@ const Reviews: React.FC = () => {
   const { reviews, fetchReviews, createReview, updateReview, deleteReview } =
     useReviewsStore();
   const { customers, fetchCustomers } = useCustomerStore();
+  const { products, loadProducts } = useProductStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,19 +28,27 @@ const Reviews: React.FC = () => {
   useEffect(() => {
     fetchReviews();
     fetchCustomers();
+    loadProducts();
   }, [fetchReviews, fetchCustomers]);
 
   const handleSubmit = async (data: Partial<Review>) => {
+    console.log('Submitting review with data:', data);
     try {
       setIsSubmitting(true);
       if (selectedReview) {
-        await updateReview(selectedReview.id, data);
+        await updateReview(selectedReview.id, {
+          ...data,
+          productId: data.productId || 0, // Ensure productId is included in the request
+        });
         toast({
           title: 'Success',
           description: 'Review updated successfully',
         });
       } else {
-        await createReview(data);
+        await createReview({
+          ...data,
+          productId: data.productId || 0, // Ensure productId is included in the request
+        });
         toast({
           title: 'Success',
           description: 'Review created successfully',
@@ -81,7 +91,7 @@ const Reviews: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-6 space-y-6 px-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Reviews</h1>
         <Button onClick={() => setIsFormOpen(true)}>
@@ -93,6 +103,7 @@ const Reviews: React.FC = () => {
       <ReviewsTable
         reviews={reviews}
         customers={customers ?? []}
+        products={products ?? []}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
@@ -108,6 +119,7 @@ const Reviews: React.FC = () => {
             review={selectedReview as Review | undefined}
             onSubmit={handleSubmit}
             customers={customers ?? []}
+            products={products ?? []}
             submitting={isSubmitting}
           />
         </DialogContent>

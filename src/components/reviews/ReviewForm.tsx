@@ -24,10 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Product } from '@/types/product';
 
 const reviewFormSchema = z.object({
   customerId: z.number({
     required_error: 'Please select a customer',
+  }),
+  productId: z.number({
+    required_error: 'Please select a product',
   }),
   rating: z
     .number()
@@ -46,6 +50,7 @@ interface ReviewFormProps {
   onSubmit: (data: Partial<Review>) => void;
   submitting?: boolean;
   customers: Customer[];
+  products: Product[];
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
@@ -53,11 +58,13 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   onSubmit,
   submitting = false,
   customers,
+  products,
 }) => {
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
       customerId: review?.customerId || undefined,
+      productId: review?.productId || undefined,
       rating: review?.rating || 5,
       comment: review?.comment || '',
       isActive: review?.isActive ?? true,
@@ -97,6 +104,38 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                       value={customer.id.toString()}
                     >
                       {customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="productId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product</FormLabel>
+              <Select
+                disabled={!!review}
+                onValueChange={(value) => field.onChange(Number(value))}
+                defaultValue={field.value?.toString()}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a product" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {products.map((product) => (
+                    <SelectItem
+                      key={product.id}
+                      value={product.id.toString()}
+                    >
+                      {product.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

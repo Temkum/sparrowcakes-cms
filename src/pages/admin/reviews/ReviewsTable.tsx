@@ -13,6 +13,7 @@ import { StarRating } from '@/components/sparrow/StarRating';
 import { format } from 'date-fns';
 import { Review } from '@/types/review';
 import { Customer } from '@/types/customer';
+import { Product } from '@/pages/admin/products/types/product.types';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ import { Search } from 'lucide-react';
 interface ReviewsTableProps {
   reviews: Review[];
   customers: Customer[];
+  products?: Product[];
   onEdit: (review: Review) => void;
   onDelete: (reviewId: number) => void;
 }
@@ -32,6 +34,7 @@ interface ReviewsTableProps {
 const ReviewsTable: React.FC<ReviewsTableProps> = ({
   reviews,
   customers,
+  products = [],
   onEdit,
   onDelete,
 }) => {
@@ -42,6 +45,11 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
   const getCustomerName = (customerId: number) => {
     const customer = customers.find((c) => c.id === customerId);
     return customer ? customer.name : 'Unknown Customer';
+  };
+
+  const getProductName = (productId: number) => {
+    const product = products.find((p) => p.id === productId);
+    return product ? product.name : 'Unknown Product';
   };
 
   const filteredReviews = reviews?.filter((review) => {
@@ -79,6 +87,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
             <TableRow>
               <TableHead>ID</TableHead>
               <TableHead>Customer</TableHead>
+              <TableHead>Product</TableHead>
               <TableHead>Rating</TableHead>
               <TableHead>Comment</TableHead>
               <TableHead>Status</TableHead>
@@ -99,6 +108,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                       {getCustomerName(review.customerId)}
                     </button>
                   </TableCell>
+                  <TableCell>{getProductName(review.productId)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <StarRating rating={review.rating} />
@@ -117,9 +127,9 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                       {review.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     {format(new Date(review.createdAt), 'MMM d, yyyy')}
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
