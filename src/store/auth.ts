@@ -53,7 +53,7 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
         set({ loading: true });
         try {
           const response = await register(name, email, password);
-          console.log('reg response', response);
+
           if (response?.data) {
             set({ loading: false });
             return true;

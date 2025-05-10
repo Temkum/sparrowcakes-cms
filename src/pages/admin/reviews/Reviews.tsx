@@ -47,7 +47,6 @@ const Reviews: React.FC = () => {
   const handleSubmit = async (data: Partial<ReviewResponse>) => {
     try {
       setIsSubmitting(true);
-      console.log('DATA', data);
 
       if (selectedReview) {
         await updateReview(selectedReview.id, {
@@ -76,7 +75,6 @@ const Reviews: React.FC = () => {
   };
 
   const handleEdit = (review: ReviewResponse) => {
-    console.log('HANDLE EDIT', review);
     setSelectedReview({
       ...review,
       isActive: review.display,

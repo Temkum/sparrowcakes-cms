@@ -251,11 +251,8 @@ const useProductStore = create<ProductState>((set, get) => ({
 
   // Update existing product
   updateProduct: async (id: number, formData: FormData) => {
-    console.log('id', id);
-    console.log('edit data', formData);
     set({ submitting: true, validationErrors: [] });
     const { token } = useAuthStore.getState();
-    console.log('edit token', token);
 
     set({
       submitting: true,
@@ -264,7 +261,6 @@ const useProductStore = create<ProductState>((set, get) => ({
 
     try {
       const response = await productService.updateProduct(id, formData, token);
-      console.log('Update product response:', response);
 
       if (response) {
         set({
@@ -438,7 +434,6 @@ const useProductStore = create<ProductState>((set, get) => ({
         }
 
         // Plan B: Try fallback to individual deletes if bulk fails
-        console.log('Attempting individual deletes as fallback...');
         let successCount = 0;
         let failureCount = 0;
 

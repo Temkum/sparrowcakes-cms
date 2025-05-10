@@ -102,7 +102,6 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
 
   const handleDelete = async (productId: number) => {
     try {
-      console.log('DELETEING HERE');
       setDeletingProductId(productId);
       const success = await deleteProduct(productId);
       if (success) {

@@ -83,8 +83,6 @@ export const orderService = {
     orderData: Partial<Order>,
     token: string
   ): Promise<AxiosResponse<Order>> {
-    console.log('Creating order with data:', orderData);
-
     try {
       // Validate required fields
       if (!orderData.order_number) {
@@ -104,7 +102,6 @@ export const orderService = {
           },
         }
       );
-      console.log('Order created successfully:', response);
       return response;
     } catch (error) {
       console.error('Error creating order:', error);

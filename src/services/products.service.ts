@@ -167,9 +167,6 @@ export const productService = {
         throw new Error('Invalid product IDs detected');
       }
 
-      // Log the request for debugging
-      console.log('Bulk delete request payload:', { ids: validatedIds });
-
       // Try the most common API format first
       const response = await axiosInstance.delete(
         `${API_URL}/products/bulk-delete`,
@@ -178,7 +175,6 @@ export const productService = {
           data: { ids },
         }
       );
-      console.log('RESPONSE:', response);
 
       return response;
     } catch (error) {

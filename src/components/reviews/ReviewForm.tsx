@@ -60,7 +60,6 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   submitting = false,
   customers,
   products,
-  loadedReview,
 }) => {
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
