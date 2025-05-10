@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { z } from 'zod';
 import {
   Form,
   FormControl,
@@ -11,9 +10,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { StarRating } from '@/components/sparrow/StarRating';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { StarRating } from '@/components/sparrow/StarRating';
+import { Loader2 } from 'lucide-react';
+import { Review } from '@/types/review';
+import { Customer } from '@/types/customer';
 import {
   Select,
   SelectContent,
@@ -21,11 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Review } from '@/types/review';
-import { Customer } from '@/types/customer';
-import { Product } from '@/pages/admin/products/types/product.types';
-import useProductStore from '@/store/product-store';
-import useCustomerStore from '@/store/customer-store';
+import { Product } from '@/types/product';
 
 const reviewFormSchema = z.object({
   customerId: z.number({
@@ -34,16 +33,22 @@ const reviewFormSchema = z.object({
   productId: z.number({
     required_error: 'Please select a product',
   }),
-  rating: z.number().min(1).max(5),
-  comment: z.string().min(1, 'Comment is required'),
-  isActive: z.boolean().default(true),
+  rating: z
+    .number()
+    .min(1, { message: 'Rating must be at least 1' })
+    .max(5, { message: 'Rating must be at most 5' }),
+  comment: z
+    .string()
+    .min(1, { message: 'Comment must be at least 1 character' }),
+  isActive: z.boolean(),
 });
 
 type ReviewFormData = z.infer<typeof reviewFormSchema>;
 
 interface ReviewFormProps {
-  review?: Review | null;
+  review?: Review;
   onSubmit: (data: Partial<Review>) => void;
+  submitting?: boolean;
   customers: Customer[];
   products: Product[];
 }
@@ -51,30 +56,36 @@ interface ReviewFormProps {
 const ReviewForm: React.FC<ReviewFormProps> = ({
   review,
   onSubmit,
+  submitting = false,
   customers,
   products,
 }) => {
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
-      customerId: review?.customerId,
-      productId: review?.productId,
-      rating: review?.rating || 0,
+      customerId: review?.customerId || undefined,
+      productId: review?.productId || undefined,
+      rating: review?.rating || 5,
       comment: review?.comment || '',
       isActive: review?.isActive ?? true,
     },
   });
-  const { customers: storeCustomers } = useCustomerStore();
-  const { products: storeProducts } = useProductStore();
 
-  console.log('Customers from props:', customers);
-  console.log('Customers from store:', storeCustomers);
-  console.log('Products from props:', products);
-  console.log('Products from store:', storeProducts);
+  // Reset form when review changes
+  useEffect(() => {
+    if (review) {
+      form.reset({
+        customerId: review.customerId,
+        productId: review.productId,
+        rating: review.rating,
+        comment: review.comment,
+        isActive: review.isActive ?? true,
+      });
+    }
+  }, [review, form]);
 
-  const handleFormSubmit = (data: ReviewFormData) => {
-    console.log('Form data:', data);
-    onSubmit(data);
+  const handleFormSubmit = async (data: ReviewFormData) => {
+    await onSubmit(data);
   };
 
   return (
@@ -90,9 +101,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             <FormItem>
               <FormLabel>Customer</FormLabel>
               <Select
-                disabled={!!review}
                 onValueChange={(value) => field.onChange(Number(value))}
-                defaultValue={field.value?.toString()}
+                value={field.value?.toString()}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -122,9 +132,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             <FormItem>
               <FormLabel>Product</FormLabel>
               <Select
-                disabled={!!review}
                 onValueChange={(value) => field.onChange(Number(value))}
-                defaultValue={field.value?.toString()}
+                value={field.value?.toString()}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -132,16 +141,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {products
-                    .filter((product) => product.id !== undefined)
-                    .map((product) => (
-                      <SelectItem
-                        key={product.id}
-                        value={product.id!.toString()}
-                      >
-                        {product.name}
-                      </SelectItem>
-                    ))}
+                  {products.map((product) => (
+                    <SelectItem key={product.id} value={product.id.toString()}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -156,10 +160,16 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
             <FormItem>
               <FormLabel>Rating</FormLabel>
               <FormControl>
-                <StarRating
-                  rating={field.value}
-                  onClick={(rating) => field.onChange(rating)}
-                />
+                <div className="flex items-center gap-2">
+                  <StarRating
+                    rating={field.value}
+                    className="cursor-pointer"
+                    onClick={(rating) => field.onChange(rating)}
+                  />
+                  <span className="text-sm text-gray-500">
+                    ({field.value}/5)
+                  </span>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -174,9 +184,9 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
               <FormLabel>Comment</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Write your review..."
-                  className="resize-none"
                   {...field}
+                  placeholder="Write your review..."
+                  className="min-h-[100px]"
                 />
               </FormControl>
               <FormMessage />
@@ -188,26 +198,32 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
           control={form.control}
           name="isActive"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">Active</FormLabel>
+                <FormLabel>Status</FormLabel>
                 <div className="text-sm text-muted-foreground">
-                  Show this review on the website
+                  {field.value
+                    ? 'Review is active and visible'
+                    : 'Review is inactive and hidden'}
                 </div>
               </div>
               <FormControl>
                 <Switch
                   checked={field.value}
                   onCheckedChange={field.onChange}
+                  className={field.value ? 'bg-green-500' : 'bg-gray-300'}
                 />
               </FormControl>
             </FormItem>
           )}
         />
 
-        <Button type="submit" className="w-full">
-          {review ? 'Update Review' : 'Create Review'}
-        </Button>
+        <div className="flex gap-3">
+          <Button type="submit" disabled={submitting} className="flex-1">
+            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {review ? 'Update Review' : 'Create Review'}
+          </Button>
+        </div>
       </form>
     </Form>
   );

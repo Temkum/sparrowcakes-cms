@@ -11,15 +11,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StarRating } from '@/components/sparrow/StarRating';
 import { format } from 'date-fns';
-import { Review } from '@/types/review';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search } from 'lucide-react';
+import { Search, AlertTriangle } from 'lucide-react';
 import { ReviewResponse } from '@/types/review';
 
 interface ReviewsTableProps {
@@ -34,31 +34,39 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
   onDelete,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [selectedReview, setSelectedReview] = useState<ReviewResponse | null>(
+    null
+  );
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<number | null>(null);
 
   const filteredReviews = reviews?.filter((review) => {
-    const cusNmae = review.customer.name;
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      cusNmae.includes(searchTermLower) ||
-      review.comment.toLowerCase().includes(searchTermLower) ||
+      review.customer?.name?.toLowerCase().includes(searchTermLower) ||
+      review.product?.name?.toLowerCase().includes(searchTermLower) ||
+      review.comment?.toLowerCase().includes(searchTermLower) ||
       review.id.toString().includes(searchTermLower)
     );
   });
 
   const handleViewReview = (review: ReviewResponse) => {
-    setSelectedReview({
-      id: review.id,
-      productId: review.product.id,
-      customerId: review.customer.id,
-      rating: review.rating,
-      comment: review.comment,
-      isActive: review.display,
-      createdAt: review.created_at,
-      updatedAt: review.updated_at,
-    } as Review);
+    setSelectedReview(review);
     setIsViewDialogOpen(true);
+  };
+
+  const confirmDelete = (reviewId: number) => {
+    setReviewToDelete(reviewId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (reviewToDelete !== null) {
+      onDelete(reviewToDelete);
+      setIsDeleteDialogOpen(false);
+      setReviewToDelete(null);
+    }
   };
 
   return (
@@ -67,7 +75,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by customer name or review content..."
+            placeholder="Search by customer, product, or review content..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8"
@@ -90,7 +98,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredReviews &&
+            {filteredReviews && filteredReviews.length > 0 ? (
               filteredReviews.map((review) => (
                 <TableRow key={review.id}>
                   <TableCell className="font-medium">#{review.id}</TableCell>
@@ -99,10 +107,12 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                       onClick={() => handleViewReview(review)}
                       className="text-blue-600 hover:underline"
                     >
-                      {review.customer.name}
+                      {review.customer?.name || 'Unknown Customer'}
                     </button>
                   </TableCell>
-                  <TableCell>{review.product.name}</TableCell>
+                  <TableCell>
+                    {review.product?.name || 'Unknown Product'}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <StarRating rating={review.rating} />
@@ -115,7 +125,12 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                     {review.comment}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={review.display ? 'default' : 'destructive'}>
+                    <Badge
+                      variant={review.display ? 'default' : 'outline'}
+                      className={
+                        review.display ? 'bg-green-500' : 'bg-gray-300'
+                      }
+                    >
                       {review.display ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
@@ -136,13 +151,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (
-                            window.confirm(
-                              'Are you sure you want to delete this review?'
-                            )
-                          ) {
-                            onDelete(review.id);
-                          }
+                          confirmDelete(review.id);
                         }}
                       >
                         Delete
@@ -150,11 +159,19 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="h-24 text-center">
+                  No reviews found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
 
+      {/* View Review Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -164,12 +181,11 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold">Customer</h3>
-                <p>
-                  {
-                    reviews.find((review) => review.id === selectedReview.id)
-                      ?.customer.name
-                  }
-                </p>
+                <p>{selectedReview.customer?.name || 'Unknown Customer'}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold">Product</h3>
+                <p>{selectedReview.product?.name || 'Unknown Product'}</p>
               </div>
               <div>
                 <h3 className="font-semibold">Rating</h3>
@@ -187,17 +203,60 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
               <div>
                 <h3 className="font-semibold">Status</h3>
                 <Badge
-                  variant={selectedReview.isActive ? 'default' : 'destructive'}
+                  variant={selectedReview.display ? 'default' : 'outline'}
+                  className={
+                    selectedReview.display ? 'bg-green-500' : 'bg-gray-300'
+                  }
                 >
-                  {selectedReview.isActive ? 'Active' : 'Inactive'}
+                  {selectedReview.display ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
               <div>
                 <h3 className="font-semibold">Date</h3>
-                <p>{format(new Date(selectedReview.createdAt), 'PPP')}</p>
+                <p>{format(new Date(selectedReview.created_at), 'PPP')}</p>
               </div>
             </div>
           )}
+          <DialogFooter>
+            <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+            {selectedReview && (
+              <Button
+                onClick={() => {
+                  setIsViewDialogOpen(false);
+                  onEdit(selectedReview);
+                }}
+              >
+                Edit
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Confirm Deletion
+            </DialogTitle>
+          </DialogHeader>
+          <p>
+            Are you sure you want to delete this review? This action cannot be
+            undone.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

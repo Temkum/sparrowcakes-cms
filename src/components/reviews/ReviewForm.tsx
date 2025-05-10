@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Product } from '@/types/product';
+import toast from 'react-hot-toast';
 
 const reviewFormSchema = z.object({
   customerId: z.number({
@@ -48,6 +49,7 @@ type ReviewFormData = z.infer<typeof reviewFormSchema>;
 interface ReviewFormProps {
   review?: Review;
   onSubmit: (data: Partial<Review>) => void;
+  onDelete?: () => void;
   submitting?: boolean;
   customers: Customer[];
   products: Product[];
@@ -56,6 +58,7 @@ interface ReviewFormProps {
 const ReviewForm: React.FC<ReviewFormProps> = ({
   review,
   onSubmit,
+  onDelete,
   submitting = false,
   customers,
   products,
@@ -71,8 +74,24 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
     },
   });
 
+  useEffect(() => {
+    if (review) {
+      toast.success('Review loaded successfully');
+    }
+  }, [review]);
+
   const handleFormSubmit = async (data: ReviewFormData) => {
     await onSubmit(data);
+    toast.success('Review submitted successfully');
+  };
+
+  const handleDelete = () => {
+    if (
+      onDelete &&
+      window.confirm('Are you sure you want to delete this review?')
+    ) {
+      onDelete();
+    }
   };
 
   return (
@@ -129,10 +148,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                 </FormControl>
                 <SelectContent>
                   {products.map((product) => (
-                    <SelectItem
-                      key={product.id}
-                      value={product.id.toString()}
-                    >
+                    <SelectItem key={product.id} value={product.id.toString()}>
                       {product.name}
                     </SelectItem>
                   ))}
@@ -188,23 +204,22 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
           control={form.control}
           name="isActive"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Active</FormLabel>
-                <div className="text-sm text-gray-500">
-                  Make this review visible to customers
-                </div>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  className="data-[state=checked]:bg-orange-500"
-                />
-              </FormControl>
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                className={`${field.value ? 'bg-green-500' : 'bg-gray-500'}`}
+              />
             </FormItem>
           )}
         />
+
+        {onDelete && (
+          <Button type="button" onClick={handleDelete} className="w-full">
+            Delete Review
+          </Button>
+        )}
 
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
