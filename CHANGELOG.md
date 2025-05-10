@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github-personal/Temkum/sparrowcakes-cms/compare/v1.3.0...v1.7.0) (2025-05-10)
+
+
+### Features
+
+* implement reviews management feature with CRUD operations ([adbfe63](https://github-personal/Temkum/sparrowcakes-cms/commit/adbfe6337ba830202fda4481ed1d5008c1fcdcf3))
+
+
+### Bug Fixes
+
+* fix issues with reviews from database ([c725352](https://github-personal/Temkum/sparrowcakes-cms/commit/c7253524c0243a3bc0a2c29ffe847f8cf233a53b))
+* fix review update and products, customers dropdown bug ([066f0c3](https://github-personal/Temkum/sparrowcakes-cms/commit/066f0c315ae068156539fb33d412d76cf682fcd7))
+
 ## [1.6.0](https://github.com/Temkum/sparrowcakes-cms/compare/v1.3.0...v1.6.0) (2025-04-25)
 
 
