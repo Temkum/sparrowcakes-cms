@@ -14,6 +14,12 @@ import ReviewsTable from '@/pages/admin/reviews/ReviewsTable';
 import useProductStore from '@/store/product-store';
 import useCustomerStore from '@/store/customer-store';
 import toast, { Toaster } from 'react-hot-toast';
+import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
+
+const breadcrumbItems = [
+  { label: 'Dashboard', href: '/admin/dashboard' },
+  { label: 'Reviews', href: '#' },
+];
 
 const Reviews: React.FC = () => {
   const { reviews, fetchReviews, createReview, updateReview, deleteReview } =
@@ -105,6 +111,7 @@ const Reviews: React.FC = () => {
   return (
     <>
       <Toaster />
+      <BreadcrumbComponent items={breadcrumbItems} />
       <div className="container mx-auto py-6 space-y-6 px-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Reviews</h1>

@@ -64,6 +64,10 @@ const customerFormSchema = z
       .max(100, { message: 'State cannot exceed 100 characters.' })
       .optional(),
     postal_code: z.string().optional(),
+    image_url: z
+      .string()
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
   })
   .refine(
     (data) => {

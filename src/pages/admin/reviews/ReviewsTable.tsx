@@ -212,7 +212,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                 </Badge>
               </div>
               <div>
-                <h3 className="font-semibold">Date</h3>
+                <h3 className="font-semibold">Date Created</h3>
                 <p>{format(new Date(selectedReview.created_at), 'PPP')}</p>
               </div>
             </div>
