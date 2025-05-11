@@ -26,8 +26,8 @@ const customerFormSchema = z
       .email({
         message: 'Please enter a valid email address (e.g., user@example.com).',
       })
-      .optional()
-      .or(z.literal('').transform(() => undefined)),
+      .or(z.literal(''))
+      .optional(),
 
     phone: z
       .string()

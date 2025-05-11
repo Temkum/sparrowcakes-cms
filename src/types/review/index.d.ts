@@ -37,6 +37,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  image_url: string;
 }
 
 export interface Customer {
@@ -44,6 +45,7 @@ export interface Customer {
   name: string;
   phone: string;
   email: string;
+  image_url: string;
 }
 
 export interface Product {

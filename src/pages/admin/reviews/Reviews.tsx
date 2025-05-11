@@ -15,6 +15,7 @@ import useProductStore from '@/store/product-store';
 import useCustomerStore from '@/store/customer-store';
 import toast, { Toaster } from 'react-hot-toast';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
+import { Product } from '@/types/product';
 
 const breadcrumbItems = [
   { label: 'Dashboard', href: '/admin/dashboard' },
@@ -34,10 +35,11 @@ const Reviews: React.FC = () => {
   const { products: productsFromStore, loadProducts } = useProductStore();
   const { customers: customersFromStore, loadCustomers } = useCustomerStore();
 
+  // Convert product data to match the expected Product type
   const products = productsFromStore.map((product) => ({
     ...product,
     id: Number(product.id),
-  }));
+  })) as unknown as Product[];
 
   const customers = customersFromStore.map((customer) => ({
     ...customer,
@@ -50,21 +52,26 @@ const Reviews: React.FC = () => {
     loadCustomers();
   }, [fetchReviews, loadProducts, loadCustomers]);
 
-  const handleSubmit = async (data: Partial<ReviewResponse>) => {
+  const handleSubmit = async (data: ReviewFormData) => {
     try {
       setIsSubmitting(true);
 
       if (selectedReview) {
         await updateReview(selectedReview.id, {
-          ...data,
-          customerId:
-            data.customer?.id || (selectedReview.customer?.id as number),
-          productId: data.product?.id || (selectedReview.product?.id as number),
+          comment: data.comment,
+          rating: data.rating,
+          isActive: data.isActive,
+          customerId: data.customerId,
+          productId: data.productId,
         });
         toast.success('Review updated successfully');
       } else {
         await createReview({
-          ...data,
+          comment: data.comment,
+          rating: data.rating,
+          isActive: data.isActive,
+          customerId: data.customerId,
+          productId: data.productId,
         });
         toast.success('Review created successfully');
       }
@@ -80,13 +87,17 @@ const Reviews: React.FC = () => {
     }
   };
 
+  // Define a type for form data
+  type ReviewFormData = {
+    customerId?: number;
+    productId?: number;
+    rating?: number;
+    comment?: string;
+    isActive?: boolean;
+  };
+
   const handleEdit = (review: ReviewResponse) => {
-    setSelectedReview({
-      ...review,
-      isActive: review.display,
-      customerId: review.customer?.id,
-      productId: review.product?.id,
-    });
+    setSelectedReview(review);
     setIsFormOpen(true);
   };
 

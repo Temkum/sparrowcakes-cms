@@ -37,6 +37,9 @@ export const updateReview = async (
   review: Partial<Review>
 ): Promise<Review> => {
   try {
+    if (!id) {
+      throw new Error('Review ID is required for update');
+    }
     const response = await axiosInstance.put(`/reviews/${id}`, review, {
       headers: getAuthHeader(),
     });
@@ -49,6 +52,9 @@ export const updateReview = async (
 
 export const deleteReview = async (id: number): Promise<void> => {
   try {
+    if (!id) {
+      throw new Error('Review ID is required for deletion');
+    }
     await axiosInstance.delete(`/reviews/${id}`, {
       headers: getAuthHeader(),
     });

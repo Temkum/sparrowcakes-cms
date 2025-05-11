@@ -47,7 +47,12 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
       review.customer?.name?.toLowerCase().includes(searchTermLower) ||
       review.product?.name?.toLowerCase().includes(searchTermLower) ||
       review.comment?.toLowerCase().includes(searchTermLower) ||
-      review.id.toString().includes(searchTermLower)
+      review.id.toString().includes(searchTermLower) ||
+      review.customer?.email?.toLowerCase().includes(searchTermLower) ||
+      review.customer?.phone?.toLowerCase().includes(searchTermLower) ||
+      format(new Date(review.created_at), 'dd MMM yyyy').includes(
+        searchTermLower
+      )
     );
   });
 
@@ -93,8 +98,8 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
               <TableHead>Rating</TableHead>
               <TableHead>Comment</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Date added</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -179,6 +184,20 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
           </DialogHeader>
           {selectedReview && (
             <div className="space-y-4">
+              <div>
+                <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-200">
+                  <img
+                    src={
+                      selectedReview.customer?.image_url || '/placeholder.svg'
+                    }
+                    alt={selectedReview.customer?.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+              </div>
               <div>
                 <h3 className="font-semibold">Customer</h3>
                 <p>{selectedReview.customer?.name || 'Unknown Customer'}</p>

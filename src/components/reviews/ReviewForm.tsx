@@ -45,13 +45,12 @@ const reviewFormSchema = z.object({
 type ReviewFormData = z.infer<typeof reviewFormSchema>;
 
 interface ReviewFormProps {
-  review?: Review;
+  review?: Review | ReviewResponse;
   onSubmit: (data: Partial<Review>) => void;
   onDelete?: () => void;
   submitting?: boolean;
   customers: Customer[];
   products: Product[];
-  loadedReview: ReviewResponse;
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({
@@ -64,11 +63,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
-      customerId: review?.customerId || undefined,
-      productId: review?.productId || undefined,
+      customerId: review ? ('customerId' in review ? review.customerId : review.customer?.id) : undefined,
+      productId: review ? ('productId' in review ? review.productId : review.product?.id) : undefined,
       rating: review?.rating || 5,
       comment: review?.comment || '',
-      isActive: review?.isActive === true ? true : false,
+      isActive: review ? ('isActive' in review ? review.isActive : (review.display === true)) : false,
     },
   });
 
