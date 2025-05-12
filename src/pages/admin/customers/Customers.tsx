@@ -122,6 +122,12 @@ export default function Customers() {
 
     try {
       const { token } = useAuthStore.getState(); // Ensure token is available
+
+      if (!token) {
+        toast.error('Authentication token not found. Please log in again.');
+        return;
+      }
+
       await customerService.deleteCustomers(selectedCustomers, token);
       toast.success(
         `${selectedCustomers.length} ${

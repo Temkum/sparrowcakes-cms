@@ -55,7 +55,7 @@ axiosInstance.interceptors.response.use(
 
       // Handle validation errors array
       if (Array.isArray(errorData?.errors)) {
-        const messages = errorData.errors.map((e: any) => e.message).join(', ');
+        const messages = errorData.errors.map((e: string) => e).join(', ');
         toast.error(messages, { position: 'bottom-center' });
         return Promise.reject(new Error(messages));
       }

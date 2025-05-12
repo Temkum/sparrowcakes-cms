@@ -107,7 +107,7 @@ const CategoriesTable = () => {
         },
       });
       setCategories(response.data);
-      setTotal(response.total);
+      setTotal(Number(response.data.total));
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to load categories');

@@ -62,8 +62,8 @@ const ProductEdit = () => {
               costPerUnit: currentProduct.cost_per_unit || 0,
               isActive: currentProduct.is_active || false,
               images: currentProduct.image_urls || [],
-              categories: currentProduct.categories.map(
-                (category) => category.id
+              categories: currentProduct.categories.map((category) =>
+                Number(category.id)
               ),
               availability: new Date(currentProduct.availability),
             }}

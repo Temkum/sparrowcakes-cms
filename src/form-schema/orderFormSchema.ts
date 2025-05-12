@@ -3,7 +3,7 @@ import productItemSchema from './productItemSchema';
 
 const orderFormSchema = z.object({
   orderNumber: z.string().min(1, 'Order number is required'),
-  status: z.enum(['New', 'Processing', 'Shipped', 'Delivered', 'Cancelled']),
+  status: z.enum(['New', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'all']),
   customer: z
     .number({
       required_error: 'Customer is required',

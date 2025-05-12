@@ -28,11 +28,11 @@ import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
 import Editor from '../Editor';
 import { DynamicCategories } from '../categories/DynamicCategories';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom'; // Unused
 import { productFormSchema } from '@/form-schema/productFormSchema';
 import { ImageUpload } from './ImageUpload';
 import useProductStore from '@/store/product-store';
-import { useAuthStore } from '@/store/auth';
+// import { useAuthStore } from '@/store/auth'; // Unused
 
 interface Product {
   id: number;
@@ -99,7 +99,8 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
   ) => {
     clearValidationErrors();
     const formData = new FormData();
-    const { token } = useAuthStore.getState();
+    // Token is handled internally by the store functions
+    // const { token } = useAuthStore.getState();
 
     // Format form data
     formData.append('name', values.name);
@@ -117,11 +118,14 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
 
       if (mode === 'create') {
         // Handle create mode
-        formData.append('slug', values.slug);
+        // Only append slug if it exists
+        if (values.slug) {
+          formData.append('slug', values.slug);
+        }
         (values.images as File[]).forEach((file) => {
           formData.append('images', file);
         });
-        result = await createProduct(formData, token);
+        result = await createProduct(formData);
       } else {
         // Handle edit mode
         if (!product?.id) throw new Error('Product ID is required for updates');
@@ -194,7 +198,8 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     if (validationErrors.length > 0) {
       validationErrors.forEach((error) => {
         console.error('Validation error:', error);
-        const fieldName = error.field.toLowerCase() as any;
+        // Convert field name to a valid form field key
+        const fieldName = error.field.toLowerCase() as keyof z.infer<ReturnType<typeof productFormSchema>>;
         form.setError(fieldName, {
           type: 'server',
           message: error.message,

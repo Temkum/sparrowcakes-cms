@@ -28,7 +28,7 @@ export const orderService = {
       status,
     }: OrderFilterProps,
     token: string
-  ): Promise<AxiosResponse<{ items: Order[] }>> {
+  ): Promise<{ items: Order[] }> {
     try {
       const params = {
         page,
@@ -49,7 +49,7 @@ export const orderService = {
         }
       );
 
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;
@@ -57,7 +57,7 @@ export const orderService = {
   },
 
   // Get a single order by ID
-  async getOrderById(id: string, token: string): Promise<AxiosResponse<Order>> {
+  async getOrderById(id: string, token: string): Promise<Order> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
@@ -71,7 +71,8 @@ export const orderService = {
           },
         }
       );
-      return response;
+
+      return response.data;
     } catch (error) {
       console.error(`Error fetching order with ID ${id}:`, error);
       throw error;
@@ -82,7 +83,7 @@ export const orderService = {
   async createOrder(
     orderData: Partial<Order>,
     token: string
-  ): Promise<AxiosResponse<Order>> {
+  ): Promise<Order> {
     try {
       // Validate required fields
       if (!orderData.order_number) {
@@ -99,10 +100,12 @@ export const orderService = {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
         }
       );
-      return response;
+
+      return response.data;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -114,22 +117,24 @@ export const orderService = {
     id: number,
     orderData: Partial<Order>,
     token: string
-  ): Promise<AxiosResponse<Order>> {
+  ): Promise<Order> {
     try {
       if (!id) {
         throw new Error('Order ID is required for update');
       }
 
-      const response = await axiosInstance.patch<Order>(
+      const response = await axiosInstance.put<Order>(
         `${API_URL}/orders/${id}`,
         orderData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
         }
       );
-      return response;
+
+      return response.data;
     } catch (error) {
       console.error(`Error updating order with ID ${id}:`, error);
       throw error;
@@ -137,7 +142,7 @@ export const orderService = {
   },
 
   // Delete multiple orders
-  async deleteOrders(ids: number[], token: string): Promise<AxiosResponse> {
+  async deleteOrders(ids: number[], token: string): Promise<{ success: boolean }> {
     try {
       if (!ids.length) {
         throw new Error('No order IDs provided for deletion');
@@ -149,7 +154,8 @@ export const orderService = {
         },
         data: { ids },
       });
-      return response;
+
+      return response.data;
     } catch (error) {
       console.error('Error deleting orders:', error);
       throw error;
@@ -183,7 +189,7 @@ export const orderService = {
   },
 
   // Get order statistics
-  async getOrderStats(token: string): Promise<AxiosResponse<OrderStats>> {
+  async getOrderStats(token: string): Promise<OrderStats> {
     try {
       const response = await axiosInstance.get<OrderStats>(
         `${API_URL}/orders/stats`,
@@ -193,7 +199,8 @@ export const orderService = {
           },
         }
       );
-      return response;
+
+      return response.data;
     } catch (error) {
       console.error('Error fetching order stats:', error);
       throw error;
@@ -205,7 +212,7 @@ export const orderService = {
     id: number,
     status: OrderStatus,
     token: string
-  ): Promise<AxiosResponse<Order>> {
+  ): Promise<Order> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
@@ -233,7 +240,7 @@ export const orderService = {
         }
       );
 
-      return response;
+      return response.data;
     } catch (error) {
       console.error(`Error updating status for order with ID ${id}:`, error);
       throw error;
@@ -244,7 +251,7 @@ export const orderService = {
   async getOrderHistory(
     id: number,
     token: string
-  ): Promise<AxiosResponse<OrderHistoryItem[]>> {
+  ): Promise<OrderHistoryItem[]> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
@@ -259,7 +266,7 @@ export const orderService = {
         }
       );
 
-      return response;
+      return response.data;
     } catch (error) {
       console.error(`Error fetching history for order with ID ${id}:`, error);
       throw error;
@@ -271,7 +278,7 @@ export const orderService = {
     id: number,
     note: string,
     token: string
-  ): Promise<AxiosResponse<{ success: boolean }>> {
+  ): Promise<{ success: boolean }> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
@@ -291,7 +298,7 @@ export const orderService = {
         }
       );
 
-      return response;
+      return response.data;
     } catch (error) {
       console.error(`Error adding note to order with ID ${id}:`, error);
       throw error;

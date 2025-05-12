@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -27,7 +27,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   value = [],
   onChange,
   maxFiles = 10,
-  isEditMode = false,
+  // isEditMode prop is not currently used
+  // isEditMode = false,
   disabled = false,
 }) => {
   const [isUploading, setIsUploading] = useState(false);

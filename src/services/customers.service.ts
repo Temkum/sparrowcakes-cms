@@ -20,28 +20,26 @@ export const customerService = {
   }: CustomerFilterProps): Promise<PaginatedCustomersResponse> {
     try {
       // Clean and normalize search parameters
-      const params = {
-        page: Math.max(1, Number(page)),
-        limit: Math.max(1, Number(limit)),
-        searchTerm: searchTerm ? searchTerm.trim() : undefined,
+      const cleanParams = {
+        page: Number(page),
+        limit: Number(limit),
+        searchTerm: searchTerm?.trim() || undefined,
         sortBy,
         sortDirection: sortDirection.toUpperCase(),
       };
 
-      // Filter out undefined values
-      const cleanParams = Object.fromEntries(
-        Object.entries(params).filter(([_, v]) => v != null)
-      );
-
+      // Fetch customers with pagination
       const response = await axiosInstance.get<PaginatedCustomersResponse>(
         `${API_URL}/customers`,
         {
           params: cleanParams,
           paramsSerializer: (params) => {
             return Object.entries(params)
-              .map(
-                ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
+              .filter(
+                ([, value]) =>
+                  value !== undefined && value !== null && value !== ''
               )
+              .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
               .join('&');
           },
         }
@@ -51,7 +49,7 @@ export const customerService = {
         throw new Error('No data received from server');
       }
 
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error fetching customers:', error);
       // Add more specific error handling
@@ -67,7 +65,7 @@ export const customerService = {
   async getCustomerById(id: number) {
     try {
       const response = await axiosInstance.get(`${API_URL}/customers/${id}`);
-      return response;
+      return response.data;
     } catch (error) {
       console.error(`Error fetching customer with ID ${id}:`, error);
       throw error;
@@ -90,10 +88,11 @@ export const customerService = {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
         }
       );
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error creating customer:', error);
       throw error;
@@ -107,16 +106,17 @@ export const customerService = {
     token: string
   ) {
     try {
-      const response = await axiosInstance.patch(
+      const response = await axiosInstance.put(
         `${API_URL}/customers/${id}`,
         customerData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
         }
       );
-      return response;
+      return response.data;
     } catch (error) {
       console.error(`Error updating customer with ID ${id}:`, error);
       throw error;
@@ -138,7 +138,7 @@ export const customerService = {
         },
         data: { ids },
       });
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error deleting customers:', error);
       throw error;
@@ -151,12 +151,7 @@ export const customerService = {
       const response = await axiosInstance.get<CustomerStats>(
         `${API_URL}/customers/stats`
       );
-
-      if (!response) {
-        throw new Error('No stats data received from server');
-      }
-
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error fetching customer stats:', error);
       throw error;

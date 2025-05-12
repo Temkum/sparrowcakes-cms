@@ -33,33 +33,25 @@ export interface ReviewResponse {
   deleted_at: string | null;
 }
 
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  image_url: string;
-}
-
 export interface Customer {
   id: number;
   name: string;
   phone: string;
   email: string;
-  image_url: string;
+  image_url?: string | null;
 }
 
 export interface Product {
   id: number;
   name: string;
-  slug: string;
   description: string;
-  price: string;
-  cost_per_unit: number;
+  price: number;
   discount: number;
   quantity: number;
-  image_urls: string[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  availability: string;
+  deleted_at: string | null;
+  image_urls: string[];
+  categories: number[];
 }

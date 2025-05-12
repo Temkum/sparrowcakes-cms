@@ -4,6 +4,9 @@ import { Review, ReviewResponse } from '@/types/review';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 
+// Note: Our axios instance has a response interceptor that automatically extracts response.data
+// This means we need to handle the typing differently than standard axios
+
 interface ReviewsState {
   loading: boolean;
   reviews: ReviewResponse[];
@@ -30,8 +33,9 @@ const useReviewsStore = create<ReviewsState>((set) => ({
     set({ loading: true });
 
     try {
-      const response = await axiosInstance.get('/reviews');
-      set({ reviews: response, loading: false });
+      // The axios interceptor already extracts the data
+      const reviews = await axiosInstance.get('/reviews') as unknown as ReviewResponse[];
+      set({ reviews, loading: false });
     } catch (error) {
       console.error('Error fetching reviews:', error);
       toast.error('Failed to load reviews');
@@ -52,8 +56,11 @@ const useReviewsStore = create<ReviewsState>((set) => ({
 
       const response = await axiosInstance.post('/reviews', reviewData, {
         headers: getAuthHeader(),
-      });
+      }) as unknown as ReviewResponse;
 
+      console.log(response);
+
+      // The axios interceptor already extracts the data, so this is already a ReviewResponse
       set((state) => ({ reviews: [...state.reviews, response] }));
       return response;
     } catch (error) {
@@ -78,10 +85,13 @@ const useReviewsStore = create<ReviewsState>((set) => ({
         {
           headers: getAuthHeader(),
         }
-      );
+      ) as unknown as ReviewResponse;
 
+      // The axios interceptor already extracts the data, so this is already a ReviewResponse
       set((state) => ({
-        reviews: state.reviews.map((r) => (r.id === reviewId ? response : r)),
+        reviews: state.reviews.map((r) =>
+          r.id === reviewId ? response : r
+        ),
       }));
 
       return response;

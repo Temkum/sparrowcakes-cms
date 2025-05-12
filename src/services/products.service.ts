@@ -29,7 +29,7 @@ export const productService = {
         paramsSerializer: (params) => {
           return Object.entries(params)
             .filter(
-              ([_, value]) =>
+              ([, value]) =>
                 value !== undefined && value !== null && value !== ''
             )
             .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
@@ -37,7 +37,7 @@ export const productService = {
         },
       });
 
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
       throw error;
@@ -47,7 +47,7 @@ export const productService = {
   async getProductStats() {
     try {
       const response = await axiosInstance.get(`${API_URL}/products/stats`);
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error fetching product stats:', error);
       throw error;
@@ -58,7 +58,7 @@ export const productService = {
   async getProductById(id: number) {
     try {
       const response = await axiosInstance.get(`${API_URL}/products/${id}`);
-      return response;
+      return response.data;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
       throw error;
@@ -68,7 +68,7 @@ export const productService = {
   // Create a new product
   async createProduct(productData: FormData, token: string) {
     try {
-      const response = await axiosInstance.post(
+      const response = await axios.post(
         `${API_URL}/products`,
         productData,
         {
@@ -78,24 +78,30 @@ export const productService = {
           },
         }
       );
-      return response;
+
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errorData = error.response?.data;
+        const errorData = error.response?.data as { 
+          errors?: Array<{ field: string; message: string }>,
+          code?: string,
+          slug?: string,
+          message?: string 
+        };
+        const validationErrors = errorData?.errors || [];
 
         // Handle specific error cases
         if (errorData?.code === 'DUPLICATE_SLUG') {
-          throw new Error(
-            `Slug "${errorData.slug}" already exists. Please try a different one.`
-          );
+          throw new Error(`Slug "${errorData.slug}" already exists. Please try a different one.`);
         }
 
-        // Handle validation errors
-        if (errorData?.errors) {
-          throw new Error(JSON.stringify(errorData.errors));
+        if (validationErrors.length > 0) {
+          return {
+            success: false,
+            errors: validationErrors,
+          };
         }
 
-        // Handle generic error message
         if (errorData?.message) {
           throw new Error(errorData.message);
         }
@@ -106,7 +112,7 @@ export const productService = {
 
   async updateProduct(id: number, productData: FormData, token: string) {
     try {
-      const response = await axiosInstance.put(
+      const response = await axios.put(
         `${API_URL}/products/${id}`,
         productData,
         {
@@ -116,17 +122,25 @@ export const productService = {
           },
         }
       );
-      return response;
+
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errorData = error.response?.data;
+        const errorData = error.response?.data as { 
+          errors?: Array<{ field: string; message: string }>,
+          code?: string,
+          slug?: string,
+          message?: string 
+        };
+        const validationErrors = errorData?.errors || [];
 
+        // Handle specific error cases
         if (errorData?.code === 'DUPLICATE_SLUG') {
-          throw new Error(`Slug "${errorData.slug}" already exists.`);
+          throw new Error(`Slug "${errorData.slug}" already exists. Please try a different one.`);
         }
 
-        if (errorData?.errors) {
-          throw new Error(JSON.stringify(errorData.errors));
+        if (validationErrors.length > 0) {
+          throw new Error(JSON.stringify(validationErrors));
         }
 
         if (errorData?.message) {
@@ -140,12 +154,13 @@ export const productService = {
 
   async deleteProduct(id: number, token: string) {
     try {
-      const response = await axiosInstance.delete(`${API_URL}/products/${id}`, {
+      const response = await axios.delete(`${API_URL}/products/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      return response;
+
+      return response.data;
     } catch (error) {
       console.error(`Error deleting product with ID ${id}:`, error);
       throw error;
@@ -182,7 +197,7 @@ export const productService = {
 
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
-        const responseData = error.response?.data;
+        const responseData = error.response?.data as { message?: string; error?: string };
 
         console.error('API Response:', status, responseData);
 

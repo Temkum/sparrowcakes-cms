@@ -36,7 +36,7 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-  const logoutUser = useAuthStore((state) => state.logoutUser);
+  const logoutUser = useAuthStore.getState().logoutUser;
   const navigate = useNavigate();
 
   const handleLogout = () => {

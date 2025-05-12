@@ -102,8 +102,8 @@ const useProductStore = create<ProductState>((set, get) => ({
   // Load product stats
   loadStats: async () => {
     try {
-      const response = await productService.getProductStats();
-      set({ stats: response });
+      const stats = await productService.getProductStats();
+      set({ stats });
     } catch (error) {
       console.error('Error loading product stats:', error);
     }
@@ -122,11 +122,11 @@ const useProductStore = create<ProductState>((set, get) => ({
       );
 
       set({
-        products: response.items,
-        totalCount: response.totalCount,
-        currentPage: response.currentPage,
-        pageSize: response.pageSize,
-        totalPages: response.totalPages,
+        products: response.items || [],
+        totalCount: response.totalCount || 0,
+        currentPage: response.currentPage || 1,
+        pageSize: response.pageSize || 10,
+        totalPages: response.totalPages || 1,
         loading: false,
       });
     } catch (error) {
@@ -152,11 +152,14 @@ const useProductStore = create<ProductState>((set, get) => ({
       }
 
       // Transform dates to ensure they're valid
-      const product = {
-        ...response,
-        created_at: new Date(response.created_at).toISOString(),
-        updated_at: new Date(response.updated_at).toISOString(),
-        availability: new Date(response.availability).toISOString(),
+      const product: ProductAPIResponse = {
+        id: response.id,
+        name: response.name,
+        slug: response.slug,
+        description: response.description,
+        created_at: new Date(response.created_at || '').toISOString(),
+        updated_at: new Date(response.updated_at || '').toISOString(),
+        availability: new Date(response.availability || '').toISOString(),
         // Ensure other fields match the Product type
         image_urls: Array.isArray(response.image_urls)
           ? response.image_urls
@@ -194,26 +197,47 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   // Create new product
-  createProduct: async (formData: FormData) => {
+  createProduct: async (formData: FormData): Promise<Product | null> => {
     set({ submitting: true, validationErrors: [] });
-    const { token } = useAuthStore.getState();
-
-    if (!token) {
-      set({ submitting: false });
-      toast.error('Authentication token is missing');
-      window.location.href = '/login';
-      return;
-    }
 
     try {
+      const { token } = useAuthStore.getState();
+
+      if (!token) {
+        toast.error('You must be logged in to create a product');
+        set({ submitting: false });
+        return null;
+      }
+
       const response = await productService.createProduct(formData, token);
+
+      // Convert the response to a Product type
+      const product: Product = {
+        id: response.id,
+        name: response.name,
+        slug: response.slug,
+        description: response.description,
+        isActive: response.is_active,
+        is_active: response.is_active,
+        availability: response.availability,
+        categories: response.categories || [],
+        images: [],
+        image_urls: response.image_urls || [],
+        price: Number(response.price),
+        discount: Number(response.discount),
+        costPerUnit: Number(response.cost_per_unit),
+        cost_per_unit: Number(response.cost_per_unit),
+        createdAt: response.created_at,
+        created_at: response.created_at,
+        updatedAt: response.updated_at,
+        updated_at: response.updated_at,
+        quantity: Number(response.quantity || 0)
+      };
+
       set({ submitting: false });
+      toast.success('Product created successfully');
 
-      // Refresh product list after creation
-      await get().loadProducts();
-      await get().loadStats();
-
-      return response;
+      return product;
     } catch (error: any) {
       set({ submitting: false });
 
@@ -250,30 +274,51 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   // Update existing product
-  updateProduct: async (id: number, formData: FormData) => {
+  updateProduct: async (id: number, formData: FormData): Promise<Product | null> => {
     set({ submitting: true, validationErrors: [] });
-    const { token } = useAuthStore.getState();
-
-    set({
-      submitting: true,
-      validationErrors: [],
-    });
 
     try {
-      const response = await productService.updateProduct(id, formData, token);
+      const { token } = useAuthStore.getState();
 
-      if (response) {
-        set({
-          currentProduct: response,
-          submitting: false,
-        });
+      if (!token) {
+        toast.error('You must be logged in to update a product');
+        set({ submitting: false });
+        return null;
       }
 
-      // refresh product list after update
-      await get().loadStats();
-      await get().loadProducts();
+      const response = await productService.updateProduct(id, formData, token);
 
-      return response;
+      // Convert the response to a Product type
+      const product: Product = {
+        id: response.id,
+        name: response.name,
+        slug: response.slug,
+        description: response.description,
+        isActive: response.is_active,
+        is_active: response.is_active,
+        availability: response.availability,
+        categories: response.categories || [],
+        images: [],
+        image_urls: response.image_urls || [],
+        price: Number(response.price),
+        discount: Number(response.discount),
+        costPerUnit: Number(response.cost_per_unit),
+        cost_per_unit: Number(response.cost_per_unit),
+        createdAt: response.created_at,
+        created_at: response.created_at,
+        updatedAt: response.updated_at,
+        updated_at: response.updated_at,
+        quantity: Number(response.quantity || 0)
+      };
+
+      set({
+        submitting: false,
+        currentProduct: response,
+      });
+
+      toast.success('Product updated successfully');
+
+      return product;
     } catch (error: any) {
       set({ submitting: false });
 

@@ -3,7 +3,8 @@ export type OrderStatus =
   | 'Processing'
   | 'Shipped'
   | 'Delivered'
-  | 'Cancelled';
+  | 'Cancelled'
+  | 'all';
 
 export interface OrderCustomer {
   id: number;

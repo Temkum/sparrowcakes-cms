@@ -38,7 +38,7 @@ export function NewCategoryForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit() {
     navigate('/admin/categories');
   }
 

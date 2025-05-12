@@ -5,14 +5,20 @@ export interface Product {
   slug?: string;
   description: string;
   isActive: boolean;
+  is_active?: boolean; // Snake case version for API compatibility
   availability: Date | string; // Can be Date object or ISO string
   categories: number[]; // Array of category IDs as numbers
   images: (File | string)[]; // Can be File objects (for new uploads) or URLs (existing)
+  image_urls?: string[]; // URLs of images (for display)
   price: number;
   discount: number; // Compare at price
   costPerUnit: number; // Cost per item
+  cost_per_unit?: number; // Snake case version for API compatibility
   createdAt?: string;
+  created_at?: string; // Snake case version for API compatibility
   updatedAt?: string;
+  updated_at?: string; // Snake case version for API compatibility
+  quantity?: number; // Additional field from API
 }
 
 // For API operations

@@ -9,7 +9,7 @@ interface ImageUploadFieldProps {
 }
 
 const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
-  value,
+  // value, // Unused
   onChange,
   onFileChange,
 }) => {

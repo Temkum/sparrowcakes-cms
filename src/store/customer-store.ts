@@ -17,6 +17,7 @@ interface CustomerState {
     searchTerm: string;
   };
   totalCount: number;
+  error?: string;
   loadCustomers: () => Promise<void>;
   createCustomer: (customerData: Partial<Customer>) => Promise<Customer>;
   updateCustomer: (
