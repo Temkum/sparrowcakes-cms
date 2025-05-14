@@ -49,7 +49,7 @@ export const orderService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;
@@ -72,7 +72,7 @@ export const orderService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error fetching order with ID ${id}:`, error);
       throw error;
@@ -80,10 +80,7 @@ export const orderService = {
   },
 
   // Create a new order
-  async createOrder(
-    orderData: Partial<Order>,
-    token: string
-  ): Promise<Order> {
+  async createOrder(orderData: Partial<Order>, token: string): Promise<Order> {
     try {
       // Validate required fields
       if (!orderData.order_number) {
@@ -105,7 +102,7 @@ export const orderService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -134,7 +131,7 @@ export const orderService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error updating order with ID ${id}:`, error);
       throw error;
@@ -142,7 +139,10 @@ export const orderService = {
   },
 
   // Delete multiple orders
-  async deleteOrders(ids: number[], token: string): Promise<{ success: boolean }> {
+  async deleteOrders(
+    ids: number[],
+    token: string
+  ): Promise<{ success: boolean }> {
     try {
       if (!ids.length) {
         throw new Error('No order IDs provided for deletion');
@@ -155,7 +155,7 @@ export const orderService = {
         data: { ids },
       });
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error deleting orders:', error);
       throw error;
@@ -200,7 +200,7 @@ export const orderService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching order stats:', error);
       throw error;
@@ -240,7 +240,7 @@ export const orderService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error updating status for order with ID ${id}:`, error);
       throw error;
@@ -266,7 +266,7 @@ export const orderService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error fetching history for order with ID ${id}:`, error);
       throw error;
@@ -298,7 +298,7 @@ export const orderService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error adding note to order with ID ${id}:`, error);
       throw error;

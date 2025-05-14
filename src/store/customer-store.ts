@@ -53,6 +53,7 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
         sortBy: filter.sortBy,
         sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
       });
+      console.log('response customer store', response);
 
       set({
         customers: response.items,

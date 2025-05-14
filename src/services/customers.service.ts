@@ -39,7 +39,9 @@ export const customerService = {
                 ([, value]) =>
                   value !== undefined && value !== null && value !== ''
               )
-              .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
+              .map(
+                ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
+              )
               .join('&');
           },
         }
@@ -49,7 +51,7 @@ export const customerService = {
         throw new Error('No data received from server');
       }
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching customers:', error);
       // Add more specific error handling

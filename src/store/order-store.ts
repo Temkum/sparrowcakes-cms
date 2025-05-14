@@ -83,10 +83,11 @@ const useOrderStore = create<OrderState>((set, get) => {
         };
 
         const response = await orderService.getOrders(cleanFilter, token);
+        console.log('response store', response);
 
         // Apply client-side filtering if API doesn't support it fully
         // This is a fallback if the API doesn't handle filtering properly
-        let filteredOrders = [...response.items];
+        let filteredOrders = [...response];
 
         // Apply status filter if set
         if (filter.status) {
@@ -243,7 +244,9 @@ const useOrderStore = create<OrderState>((set, get) => {
         await get().loadStats();
 
         toast.success(
-          `Successfully soft deleted ${ids.length} order${ids.length > 1 ? 's' : ''}`
+          `Successfully soft deleted ${ids.length} order${
+            ids.length > 1 ? 's' : ''
+          }`
         );
       } catch (error) {
         console.error('Failed to soft delete orders:', error);

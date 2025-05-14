@@ -36,8 +36,9 @@ export const productService = {
             .join('&');
         },
       });
+      console.log('response', response);
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching products:', error);
       throw error;
@@ -68,31 +69,29 @@ export const productService = {
   // Create a new product
   async createProduct(productData: FormData, token: string) {
     try {
-      const response = await axios.post(
-        `${API_URL}/products`,
-        productData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      const response = await axios.post(`${API_URL}/products`, productData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errorData = error.response?.data as { 
-          errors?: Array<{ field: string; message: string }>,
-          code?: string,
-          slug?: string,
-          message?: string 
+        const errorData = error.response?.data as {
+          errors?: Array<{ field: string; message: string }>;
+          code?: string;
+          slug?: string;
+          message?: string;
         };
         const validationErrors = errorData?.errors || [];
 
         // Handle specific error cases
         if (errorData?.code === 'DUPLICATE_SLUG') {
-          throw new Error(`Slug "${errorData.slug}" already exists. Please try a different one.`);
+          throw new Error(
+            `Slug "${errorData.slug}" already exists. Please try a different one.`
+          );
         }
 
         if (validationErrors.length > 0) {
@@ -126,17 +125,19 @@ export const productService = {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errorData = error.response?.data as { 
-          errors?: Array<{ field: string; message: string }>,
-          code?: string,
-          slug?: string,
-          message?: string 
+        const errorData = error.response?.data as {
+          errors?: Array<{ field: string; message: string }>;
+          code?: string;
+          slug?: string;
+          message?: string;
         };
         const validationErrors = errorData?.errors || [];
 
         // Handle specific error cases
         if (errorData?.code === 'DUPLICATE_SLUG') {
-          throw new Error(`Slug "${errorData.slug}" already exists. Please try a different one.`);
+          throw new Error(
+            `Slug "${errorData.slug}" already exists. Please try a different one.`
+          );
         }
 
         if (validationErrors.length > 0) {
@@ -197,7 +198,10 @@ export const productService = {
 
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
-        const responseData = error.response?.data as { message?: string; error?: string };
+        const responseData = error.response?.data as {
+          message?: string;
+          error?: string;
+        };
 
         console.error('API Response:', status, responseData);
 

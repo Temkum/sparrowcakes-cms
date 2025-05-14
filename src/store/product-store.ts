@@ -111,8 +111,10 @@ const useProductStore = create<ProductState>((set, get) => ({
   // Load products with pagination and filtering
   loadProducts: async () => {
     set({ loading: true });
+
     try {
       const { filter } = get();
+
       const response = await productService.getProducts(
         Number(filter.page),
         Number(filter.pageSize),
@@ -174,6 +176,8 @@ const useProductStore = create<ProductState>((set, get) => ({
         quantity: Number(response.quantity),
       };
 
+      console.log('product store', product);
+
       set({
         currentProduct: product,
         loading: false,
@@ -231,7 +235,7 @@ const useProductStore = create<ProductState>((set, get) => ({
         created_at: response.created_at,
         updatedAt: response.updated_at,
         updated_at: response.updated_at,
-        quantity: Number(response.quantity || 0)
+        quantity: Number(response.quantity || 0),
       };
 
       set({ submitting: false });
@@ -274,7 +278,10 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   // Update existing product
-  updateProduct: async (id: number, formData: FormData): Promise<Product | null> => {
+  updateProduct: async (
+    id: number,
+    formData: FormData
+  ): Promise<Product | null> => {
     set({ submitting: true, validationErrors: [] });
 
     try {
@@ -308,7 +315,7 @@ const useProductStore = create<ProductState>((set, get) => ({
         created_at: response.created_at,
         updatedAt: response.updated_at,
         updated_at: response.updated_at,
-        quantity: Number(response.quantity || 0)
+        quantity: Number(response.quantity || 0),
       };
 
       set({
