@@ -1,5 +1,10 @@
 import axios from 'axios';
 import axiosInstance from './axiosInstance';
+import {
+  BulkDeletionError,
+  PaginatedProductsResponse,
+  ProductStats,
+} from '@/types/product';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -18,7 +23,10 @@ export const productService = {
         | 'ASC'
         | 'DESC';
 
-      const response = await axiosInstance.get(`${API_URL}/products`, {
+      const response = await axiosInstance.get<
+        object,
+        PaginatedProductsResponse
+      >(`${API_URL}/products`, {
         params: {
           page: Number(page),
           limit: Number(limit),
@@ -36,7 +44,6 @@ export const productService = {
             .join('&');
         },
       });
-      console.log('response', response);
 
       return response;
     } catch (error) {
@@ -47,7 +54,9 @@ export const productService = {
 
   async getProductStats() {
     try {
-      const response = await axiosInstance.get(`${API_URL}/products/stats`);
+      const response = await axiosInstance.get<ProductStats>(
+        `${API_URL}/products/stats`
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching product stats:', error);
@@ -59,7 +68,8 @@ export const productService = {
   async getProductById(id: number) {
     try {
       const response = await axiosInstance.get(`${API_URL}/products/${id}`);
-      return response.data;
+
+      return response;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
       throw error;
@@ -122,7 +132,7 @@ export const productService = {
         }
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {
@@ -161,7 +171,7 @@ export const productService = {
         },
       });
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error(`Error deleting product with ID ${id}:`, error);
       throw error;
@@ -210,11 +220,11 @@ export const productService = {
           responseData?.message ||
             responseData?.error ||
             'A database error occurred during bulk deletion'
-        );
+        ) as BulkDeletionError;
 
         // Add original response data to the error
-        (enhancedError as any).responseData = responseData;
-        (enhancedError as any).status = status;
+        enhancedError.responseData = responseData;
+        enhancedError.status = status;
 
         throw enhancedError;
       }

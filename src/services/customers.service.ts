@@ -29,7 +29,7 @@ export const customerService = {
       };
 
       // Fetch customers with pagination
-      const response = await axiosInstance.get<PaginatedCustomersResponse>(
+      const response = await axiosInstance.get<object, PaginatedCustomersResponse>(
         `${API_URL}/customers`,
         {
           params: cleanParams,

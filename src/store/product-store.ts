@@ -1,24 +1,15 @@
 import { productService } from '../services/products.service';
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
+import { useAuthStore } from './auth';
+import axios from 'axios';
 import {
   Product,
   ProductAPIResponse,
-} from '@/pages/admin/products/types/product.types';
-import { useAuthStore } from './auth';
-import axios from 'axios';
-
-interface ProductStats {
-  totalProducts: number;
-  activeProducts: number;
-  averagePrice: number;
-}
-
-interface ValidationError {
-  field: string;
-  message: string;
-}
-
+  ValidationError,
+  ProductStats,
+  ProductFilter,
+} from '@/types/product';
 interface ProductState {
   products: Product[];
   currentProduct: ProductAPIResponse | null | undefined;
@@ -44,15 +35,6 @@ interface ProductState {
   bulkDeleteProducts: (ids: number[]) => Promise<boolean>;
   clearCurrentProduct: () => void;
   clearValidationErrors: () => void;
-}
-
-interface ProductFilter {
-  searchTerm?: string;
-  categoryId?: number;
-  page?: number;
-  pageSize?: number;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
 }
 
 const useProductStore = create<ProductState>((set, get) => ({
@@ -102,8 +84,10 @@ const useProductStore = create<ProductState>((set, get) => ({
   // Load product stats
   loadStats: async () => {
     try {
+      set({ loading: true });
       const stats = await productService.getProductStats();
-      set({ stats });
+      console.log('store Stats', stats);
+      set({ stats, loading: false });
     } catch (error) {
       console.error('Error loading product stats:', error);
     }
@@ -123,17 +107,42 @@ const useProductStore = create<ProductState>((set, get) => ({
         filter.sortDirection || 'desc'
       );
 
+      // Transform API response to Product type
+      const transformedProducts: Product[] = response.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        slug: item.slug,
+        description: item.description,
+        isActive: item.is_active,
+        availability: item.availability,
+        categories: item.categories?.map((cat) => cat.id) || [],
+        images: item.image_urls || [],
+        imageUrls: item.image_urls || [],
+        price: Number(item.price),
+        discount: Number(item.discount),
+        costPerUnit: Number(item.cost_per_unit),
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+        quantity: Number(item.quantity || 0),
+      }));
+
       set({
-        products: response.items || [],
-        totalCount: response.totalCount || 0,
-        currentPage: response.currentPage || 1,
-        pageSize: response.pageSize || 10,
-        totalPages: response.totalPages || 1,
+        products: transformedProducts,
+        totalCount: response.meta?.totalItems || 0,
+        currentPage: response.meta?.currentPage || 1,
+        pageSize: response.meta?.itemsPerPage || 10,
+        totalPages: response.meta?.totalPages || 1,
         loading: false,
       });
     } catch (error) {
       set({ loading: false });
-      toast.error('Failed to load products');
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.message || 'Failed to load products';
+        toast.error(message);
+      } else {
+        toast.error('Failed to load products');
+      }
       console.error('Error loading products:', error);
     }
   },
@@ -143,59 +152,43 @@ const useProductStore = create<ProductState>((set, get) => ({
     set({ loading: true });
 
     try {
-      const response = await productService.getProductById(id);
+      const product = await productService.getProductById(id);
 
       // Check if response exists and has the expected structure
-      if (!response || !response.id) {
+      if (!product) {
         set({ loading: false });
         toast.error('Product not found or invalid data received');
-
         return null;
       }
 
-      // Transform dates to ensure they're valid
-      const product: ProductAPIResponse = {
-        id: response.id,
-        name: response.name,
-        slug: response.slug,
-        description: response.description,
-        created_at: new Date(response.created_at || '').toISOString(),
-        updated_at: new Date(response.updated_at || '').toISOString(),
-        availability: new Date(response.availability || '').toISOString(),
-        // Ensure other fields match the Product type
-        image_urls: Array.isArray(response.image_urls)
-          ? response.image_urls
-          : [],
-        categories: Array.isArray(response.categories)
-          ? response.categories
-          : [],
-        is_active: Boolean(response.is_active),
-        price: Number(response.price),
-        cost_per_unit: Number(response.cost_per_unit),
-        discount: Number(response.discount),
-        quantity: Number(response.quantity),
+      const transformedProduct: ProductAPIResponse = {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        is_active: product.is_active,
+        availability: product.availability,
+        categories: product.categories,
+        image_urls: product.image_urls,
+        price: Number(product.price),
+        discount: Number(product.discount),
+        cost_per_unit: Number(product.cost_per_unit),
+        created_at: product.created_at,
+        updated_at: product.updated_at,
+        quantity: Number(product.quantity || 0),
       };
 
-      console.log('product store', product);
-
       set({
-        currentProduct: product,
+        currentProduct: transformedProduct,
         loading: false,
       });
 
-      return product;
-    } catch (error: any) {
-      set({ loading: false });
-      console.error('Error loading product:', {
-        error,
-        message: error.message,
-        stack: error.stack,
-        response: error.response?.data,
-      });
+      return transformedProduct;
+    } catch (error) {
+      console.error('Error loading product:', error);
+      toast.error('Failed to load product details');
 
-      toast.error(
-        error.response?.data?.message || 'Failed to load product details'
-      );
+      set({ loading: false });
       return null;
     }
   },
@@ -208,71 +201,44 @@ const useProductStore = create<ProductState>((set, get) => ({
       const { token } = useAuthStore.getState();
 
       if (!token) {
-        toast.error('You must be logged in to create a product');
+        toast.error('Authentication token is missing');
         set({ submitting: false });
         return null;
       }
 
       const response = await productService.createProduct(formData, token);
 
-      // Convert the response to a Product type
-      const product: Product = {
-        id: response.id,
-        name: response.name,
-        slug: response.slug,
-        description: response.description,
-        isActive: response.is_active,
-        is_active: response.is_active,
-        availability: response.availability,
-        categories: response.categories || [],
-        images: [],
-        image_urls: response.image_urls || [],
-        price: Number(response.price),
-        discount: Number(response.discount),
-        costPerUnit: Number(response.cost_per_unit),
-        cost_per_unit: Number(response.cost_per_unit),
-        createdAt: response.created_at,
-        created_at: response.created_at,
-        updatedAt: response.updated_at,
-        updated_at: response.updated_at,
-        quantity: Number(response.quantity || 0),
-      };
+      // Update products list
+      set((state) => ({
+        products: [...state.products],
+        submitting: false,
+      }));
 
-      set({ submitting: false });
       toast.success('Product created successfully');
-
-      return product;
-    } catch (error: any) {
+      return response;
+    } catch (error) {
       set({ submitting: false });
 
-      // Handle structured validation errors
-      if (error.message.startsWith('[')) {
-        try {
-          const errors = JSON.parse(error.message);
-          const formattedErrors = errors.map((e: any) => ({
-            field: e.field || e.path || 'unknown',
-            message: e.message || 'Validation error',
-          }));
-          set({ validationErrors: formattedErrors });
-        } catch {
-          // If parsing fails, treat as regular error
-          toast.error(error.message);
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data;
+
+        if (errorData?.validation) {
+          set({
+            validationErrors: errorData.validation.map(
+              (err: { field: string; message: string }) => ({
+                field: err.field,
+                message: err.message,
+              })
+            ),
+          });
+        } else {
+          toast.error(errorData?.message || 'Failed to create product');
         }
-      } else if (error.message.includes('Slug')) {
-        // Handle specific slug error
-        set({
-          validationErrors: [
-            {
-              field: 'slug',
-              message: error.message,
-            },
-          ],
-        });
       } else {
-        // Handle other errors
-        toast.error(error.message || 'Failed to create product');
+        toast.error('Failed to create product');
       }
 
+      console.error('Error creating product:', error);
       return null;
     }
   },
@@ -288,57 +254,72 @@ const useProductStore = create<ProductState>((set, get) => ({
       const { token } = useAuthStore.getState();
 
       if (!token) {
-        toast.error('You must be logged in to update a product');
+        toast.error('Authentication token is missing');
         set({ submitting: false });
         return null;
       }
 
       const response = await productService.updateProduct(id, formData, token);
+      console.log('response update product', response);
 
-      // Convert the response to a Product type
-      const product: Product = {
-        id: response.id,
-        name: response.name,
-        slug: response.slug,
-        description: response.description,
-        isActive: response.is_active,
-        is_active: response.is_active,
-        availability: response.availability,
-        categories: response.categories || [],
-        images: [],
-        image_urls: response.image_urls || [],
-        price: Number(response.price),
-        discount: Number(response.discount),
-        costPerUnit: Number(response.cost_per_unit),
-        cost_per_unit: Number(response.cost_per_unit),
-        createdAt: response.created_at,
-        created_at: response.created_at,
-        updatedAt: response.updated_at,
-        updated_at: response.updated_at,
-        quantity: Number(response.quantity || 0),
+      if (!response.data) {
+        toast.error('Failed to update product');
+        set({ submitting: false });
+        return null;
+      }
+
+      const updatedProductData = response.data;
+
+      // Transform API response to Product type
+      const updatedProduct: Product = {
+        id: updatedProductData.id,
+        name: updatedProductData.name,
+        slug: updatedProductData.slug,
+        description: updatedProductData.description,
+        isActive: updatedProductData.is_active,
+        availability: updatedProductData.availability,
+        categories:
+          updatedProductData.categories?.map((cat: Category) => cat.id) || [],
+        images: updatedProductData.image_urls || [],
+        imageUrls: updatedProductData.image_urls || [],
+        price: Number(updatedProductData.price),
+        discount: Number(updatedProductData.discount),
+        costPerUnit: Number(updatedProductData.cost_per_unit),
+        createdAt: updatedProductData.created_at,
+        updatedAt: updatedProductData.updated_at,
+        quantity: Number(updatedProductData.quantity || 0),
       };
 
-      set({
+      // Update products list
+      set((state) => ({
+        products: state.products.map((p) =>
+          p.id === updatedProduct.id ? updatedProduct : p
+        ),
         submitting: false,
-        currentProduct: response,
-      });
+      }));
 
       toast.success('Product updated successfully');
-
-      return product;
-    } catch (error: any) {
+      return updatedProduct;
+    } catch (error) {
       set({ submitting: false });
 
-      // Handle validation errors
-      if (error.response?.data?.errors) {
-        const formattedErrors = error.response.data.errors.map((e: string) => {
-          const [field, message] = e.split(':');
-          return { field: field.trim(), message: message.trim() };
-        });
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data;
 
-        set({ validationErrors: formattedErrors });
+        if (errorData?.validation) {
+          set({
+            validationErrors: errorData.validation.map(
+              (err: { field: string; message: string }) => ({
+                field: err.field,
+                message: err.message,
+              })
+            ),
+          });
+        } else {
+          toast.error(errorData?.message || 'Failed to update product');
+        }
       } else {
-        toast.error(error.message || 'Failed to update product');
+        toast.error('Failed to update product');
       }
 
       console.error('Error updating product:', error);

@@ -39,7 +39,7 @@ export const orderService = {
         status,
       };
 
-      const response = await axiosInstance.get<{ items: Order[] }>(
+      const response = await axiosInstance.get<object, { items: Order[] }>(
         `${API_URL}/orders`,
         {
           params,
@@ -48,6 +48,7 @@ export const orderService = {
           },
         }
       );
+      console.log('response orders  ', response);
 
       return response;
     } catch (error) {
@@ -63,7 +64,7 @@ export const orderService = {
         throw new Error('Order ID is required');
       }
 
-      const response = await axiosInstance.get<Order>(
+      const response = await axiosInstance.get<object, Order>(
         `${API_URL}/orders/${id}`,
         {
           headers: {
@@ -91,7 +92,7 @@ export const orderService = {
         throw new Error('Order must contain at least one item');
       }
 
-      const response = await axiosInstance.post<Order>(
+      const response = await axiosInstance.post<object, Order>(
         `${API_URL}/orders`,
         orderData,
         {
@@ -120,7 +121,7 @@ export const orderService = {
         throw new Error('Order ID is required for update');
       }
 
-      const response = await axiosInstance.put<Order>(
+      const response = await axiosInstance.put<object, Order>(
         `${API_URL}/orders/${id}`,
         orderData,
         {
@@ -148,12 +149,15 @@ export const orderService = {
         throw new Error('No order IDs provided for deletion');
       }
 
-      const response = await axiosInstance.delete(`${API_URL}/orders`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        data: { ids },
-      });
+      const response = await axiosInstance.delete<object, { success: boolean }>(
+        `${API_URL}/orders`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          data: { ids },
+        }
+      );
 
       return response;
     } catch (error) {
@@ -191,7 +195,7 @@ export const orderService = {
   // Get order statistics
   async getOrderStats(token: string): Promise<OrderStats> {
     try {
-      const response = await axiosInstance.get<OrderStats>(
+      const response = await axiosInstance.get<object, OrderStats>(
         `${API_URL}/orders/stats`,
         {
           headers: {
@@ -230,7 +234,7 @@ export const orderService = {
         throw new Error('Invalid order status');
       }
 
-      const response = await axiosInstance.patch<Order>(
+      const response = await axiosInstance.patch<object, Order>(
         `${API_URL}/orders/${id}/status`,
         { status },
         {
@@ -257,7 +261,7 @@ export const orderService = {
         throw new Error('Order ID is required');
       }
 
-      const response = await axiosInstance.get<OrderHistoryItem[]>(
+      const response = await axiosInstance.get<object, OrderHistoryItem[]>(
         `${API_URL}/orders/${id}/history`,
         {
           headers: {
@@ -288,7 +292,7 @@ export const orderService = {
         throw new Error('Note content is required');
       }
 
-      const response = await axiosInstance.post<{ success: boolean }>(
+      const response = await axiosInstance.post<object, { success: boolean }>(
         `${API_URL}/orders/${id}/notes`,
         { content: note },
         {

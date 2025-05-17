@@ -91,12 +91,6 @@ interface PopularProductsProps {
   onAddToCart?: (productId: number) => void;
 }
 
-interface ProductStats {
-  totalProducts: number;
-  productInventory: number;
-  averagePrice: number;
-}
-
 interface CategoryForDisplay {
   id: number;
   name: string;

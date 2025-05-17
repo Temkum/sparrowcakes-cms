@@ -63,11 +63,23 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
-      customerId: review ? ('customerId' in review ? review.customerId : review.customer?.id) : undefined,
-      productId: review ? ('productId' in review ? review.productId : review.product?.id) : undefined,
+      customerId: review
+        ? 'customerId' in review
+          ? review.customerId
+          : review.customer?.id
+        : undefined,
+      productId: review
+        ? 'productId' in review
+          ? review.productId
+          : review.product?.id
+        : undefined,
       rating: review?.rating || 5,
       comment: review?.comment || '',
-      isActive: review ? ('isActive' in review ? review.isActive : (review.display === true)) : false,
+      isActive: review
+        ? 'isActive' in review
+          ? review.isActive
+          : review.display === true
+        : false,
     },
   });
 
@@ -128,11 +140,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {products.map((product) => (
-                    <SelectItem key={product.id} value={product.id.toString()}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
+                  {products &&
+                    products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <FormMessage />

@@ -83,11 +83,11 @@ const useOrderStore = create<OrderState>((set, get) => {
         };
 
         const response = await orderService.getOrders(cleanFilter, token);
-        console.log('response store', response);
+        console.log('all orders store  ', response);
 
         // Apply client-side filtering if API doesn't support it fully
         // This is a fallback if the API doesn't handle filtering properly
-        let filteredOrders = [...response];
+        let filteredOrders = response ? [...response.items] : [];
 
         // Apply status filter if set
         if (filter.status) {
