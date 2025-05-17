@@ -18,6 +18,9 @@ const breadcrumbItems = [
 const ProductDashboard = () => {
   const { stats, loadProducts, loadStats, loading } = useProductStore();
   const navigate = useNavigate();
+  // const totalProducts = stats?.totalProducts ?? 0;
+  // const activeProducts = stats?.activeProducts ?? 0;
+  // const averatePrice = Number(stats?.averagePrice || 0).toFixed(2);
 
   useEffect(() => {
     // Load both products and stats when component mounts
@@ -78,16 +81,18 @@ const ProductDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Total Products</h3>
-              <p className="text-2xl font-bold">{stats.totalProducts}</p>
+              <p className="text-2xl font-bold">{stats?.totalProducts}</p>
             </Card>
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Active Products</h3>
-              <p className="text-2xl font-bold">{stats.activeProducts}</p>
+              <p className="text-2xl font-bold">{stats?.activeProducts}</p>
+              {/* <p className="text-2xl font-bold">{activeProducts}</p> */}
             </Card>
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Average price</h3>
               <p className="text-2xl font-bold">
-                ${Number(stats.averagePrice || 0).toFixed(2)}
+                ${Number(stats?.averagePrice || 0).toFixed(2)}$
+                {/* {averatePrice} */}
               </p>
             </Card>
           </div>

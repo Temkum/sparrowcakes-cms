@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-// 1. Define valid image types
+// 1. Define valid image types - commented out as not currently used
+/*
 const validImageTypes = [
   'image/jpeg',
   'image/png',
@@ -11,14 +12,18 @@ const validImageTypes = [
   'image/tiff',
   'image/jpg',
 ] as const;
+*/
 
 // 2. File validator (for new uploads)
+// Commented out as it's not currently used
+/*
 const imageFileValidator = z.custom<File>((file) => {
   if (!(file instanceof File)) return false;
   return validImageTypes.includes(
     file.type as (typeof validImageTypes)[number]
   );
 }, 'Please upload a valid image file (JPEG, PNG, GIF, WEBP, BMP, SVG, TIFF, or JPG)');
+*/
 
 // Base schema without images
 const baseProductSchema = z.object({

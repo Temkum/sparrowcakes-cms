@@ -12,7 +12,6 @@ const api = axios.create({
 export const fetchHello = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}`);
-    console.log('RESPONSE', response);
 
     return response.data;
   } catch (error) {

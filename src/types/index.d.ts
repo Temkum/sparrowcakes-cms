@@ -31,7 +31,7 @@ interface BlogCardProps {
 }
 
 interface ProductCardProps {
-  title: number;
+  title: string;
   category: string;
   price: number;
   originalPrice: number;
@@ -46,29 +46,29 @@ interface UIProduct {
   id: number;
   title: string;
   category: string;
-  quantity: number;
+  quantity?: number;
   price: number;
   originalPrice: number;
   rating: number;
   image: string;
   display: boolean;
-  description: string;
-  discount: number;
+  description?: string;
+  discount?: number;
   costPerUnit?: number;
   slug?: string;
   isActive?: boolean;
   availability?: Date;
   categories?: { id: number; name: string }[];
-  images: string[];
+  images?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
 
 interface ProductGridProps {
   products: UIProduct[];
-  onAddToCart?: (productId: string) => void;
-  onAddToWishlist?: (productId: string) => void;
-  onQuickView?: (productId: string) => void;
+  onAddToCart?: (productId: number) => void;
+  onAddToWishlist?: (productId: number) => void;
+  onQuickView?: (productId: number) => void;
   className?: string;
 }
 
@@ -89,12 +89,6 @@ interface BannerProps {
 interface PopularProductsProps {
   products: UIProduct[];
   onAddToCart?: (productId: number) => void;
-}
-
-interface ProductStats {
-  totalProducts: number;
-  productInventory: number;
-  averagePrice: number;
 }
 
 interface CategoryForDisplay {
@@ -175,7 +169,7 @@ interface EditorProps {
 }
 
 interface OrdersProp {
-  id: string;
+  id: string | number;
   number: string;
   customer: string;
   status: 'Processing' | 'Delivered' | 'Shipped' | 'New' | 'Cancelled';

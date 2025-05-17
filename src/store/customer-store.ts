@@ -17,6 +17,7 @@ interface CustomerState {
     searchTerm: string;
   };
   totalCount: number;
+  error?: string;
   loadCustomers: () => Promise<void>;
   createCustomer: (customerData: Partial<Customer>) => Promise<Customer>;
   updateCustomer: (
@@ -28,7 +29,7 @@ interface CustomerState {
 }
 
 const useCustomerStore = create<CustomerState>((set, get) => ({
-  customers: [], // Initialize as empty array
+  customers: [],
   currentCustomer: null,
   loading: false,
   submitting: false,
@@ -52,6 +53,7 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
         sortBy: filter.sortBy,
         sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
       });
+      console.log('response customer store', response);
 
       set({
         customers: response.items,

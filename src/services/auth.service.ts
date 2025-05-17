@@ -31,9 +31,9 @@ export const register = async (
       throw new Error('No response from server');
     }
 
-    // Check if the response contains an error message
-    if (response.error) {
-      throw new Error(response.error);
+    // Check if the response data contains an error message
+    if (response.data && response.data.error) {
+      throw new Error(response.data.error);
     }
 
     return response;

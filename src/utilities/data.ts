@@ -97,9 +97,9 @@ export const blogPosts = [
   },
 ];
 
-export const products: ProductDisplay[] = [
+export const products: UIProduct[] = [
   {
-    id: '1',
+    id: 1,
     title: 'Best snakes with hazel nut mix pack 200gm',
     category: 'Snacks',
     price: 120.25,
@@ -107,9 +107,13 @@ export const products: ProductDisplay[] = [
     rating: 4.5,
     image: '/assets/images/10_1.jpg?height=400&width=400',
     display: true,
+    quantity: 100,
+    description: 'Delicious hazelnut mix perfect for snacking.',
+    discount: 3,
+    images: ['/assets/images/10_1.jpg?height=400&width=400'],
   },
   {
-    id: '2',
+    id: 2,
     title: 'Organic Mixed Nuts Premium Selection',
     category: 'Snacks',
     price: 89.99,
@@ -119,7 +123,7 @@ export const products: ProductDisplay[] = [
     display: true,
   },
   {
-    id: '3',
+    id: 3,
     title: 'Fresh Citrus Fruit Basket',
     category: 'Fruits',
     price: 45.5,
@@ -129,7 +133,7 @@ export const products: ProductDisplay[] = [
     display: false,
   },
   {
-    id: '4',
+    id: 4,
     title: 'Artisanal Dark Chocolate Collection',
     category: 'Sweets',
     price: 35.75,
@@ -139,7 +143,7 @@ export const products: ProductDisplay[] = [
     display: true,
   },
   {
-    id: '5',
+    id: 5,
     title: 'Premium Trail Mix Pack',
     category: 'Snacks',
     price: 67.5,
@@ -149,7 +153,7 @@ export const products: ProductDisplay[] = [
     display: false,
   },
   {
-    id: '6',
+    id: 6,
     title: 'Gourmet Coffee Beans Selection',
     category: 'Beverages',
     price: 95.0,
@@ -159,7 +163,7 @@ export const products: ProductDisplay[] = [
     display: true,
   },
   {
-    id: '7',
+    id: 7,
     title: 'Organic Dried Fruit Medley',
     category: 'Snacks',
     price: 28.99,
@@ -169,7 +173,7 @@ export const products: ProductDisplay[] = [
     display: true,
   },
   {
-    id: '8',
+    id: 8,
     title: 'Premium Assorted Tea Collection',
     category: 'Beverages',
     price: 55.25,
@@ -366,7 +370,7 @@ export const slides: Slide[] = [
 
 export const ordersData: OrdersProp[] = [
   {
-    id: '1',
+    id: 1,
     number: 'OR571702',
     customer: 'Dahlia Conroy',
     status: 'Processing',
@@ -376,7 +380,7 @@ export const ordersData: OrdersProp[] = [
     orderDate: 'Feb 29, 2024',
   },
   {
-    id: '2',
+    id: 2,
     number: 'OR323020',
     customer: 'Mitchel Moen',
     status: 'Delivered',

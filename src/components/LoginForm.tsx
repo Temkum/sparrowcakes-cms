@@ -14,8 +14,8 @@ import { LoginFormData, loginSchema } from '@/form-schema/LoginSchema';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
+// import axios from 'axios'; // Unused
+// import { toast } from 'react-hot-toast'; // Unused
 import { useAuthStore } from '@/store/auth';
 
 const LoginForm = ({
@@ -35,7 +35,7 @@ const LoginForm = ({
 
   const navigate = useNavigate();
 
-  const { loginUser, loading } = useAuthStore();
+  const { loginUser } = useAuthStore(); // loading is unused
 
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
     setIsLoading(true);

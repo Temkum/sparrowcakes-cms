@@ -7,7 +7,7 @@ import OrdersTable from './OrdersTable';
 import useOrderStore from '@/store/order-store';
 import { Loader2 } from 'lucide-react';
 import type { OrderStats } from '@/types/order';
-import { ErrorBoundary } from 'react-error-boundary';
+import ErrorBoundary from '@/components/error-boundary/ErrorBoundary';
 
 const breadcrumbItems = [
   { label: 'Dashboard', href: '/admin/dashboard' },
@@ -198,7 +198,7 @@ const OrdersPage: React.FC = () => {
           </Link>
         </div>
 
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ErrorBoundary fallback={<ErrorFallback error={new Error('Failed to load statistics')} />}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             {Object.entries(statCardContent).map(([key, content]) => (
               <React.Fragment key={key}>

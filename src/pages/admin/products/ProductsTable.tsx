@@ -102,7 +102,6 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
 
   const handleDelete = async (productId: number) => {
     try {
-      console.log('DELETEING HERE');
       setDeletingProductId(productId);
       const success = await deleteProduct(productId);
       if (success) {
@@ -134,13 +133,24 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
       } else {
         toast.error('Failed to delete selected products');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error bulk deleting products:', error);
-      toast.error(
-        error?.message ||
-          error?.response?.data?.message ||
-          'Failed to delete selected products'
-      );
+
+      let errorMessage = 'Failed to delete selected products';
+
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      } else if (typeof error === 'object' && error !== null) {
+        // Handle API error response structure
+        const apiError = error as {
+          response?: { data?: { message?: string } };
+        };
+        if (apiError.response?.data?.message) {
+          errorMessage = apiError.response.data.message;
+        }
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsBulkDeleting(false);
       setBulkDeleteDialogOpen(false);
@@ -294,9 +304,9 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                         />
                       </TableCell>
                       <TableCell>
-                        {product.image_urls && product.image_urls.length > 0 ? (
+                        {product.imageUrls && product.imageUrls.length > 0 ? (
                           <img
-                            src={product.image_urls[0]}
+                            src={product.imageUrls[0]}
                             alt={product.name}
                             className="w-10 h-10 rounded object-cover"
                             onError={(e) => {
@@ -328,15 +338,20 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                         </Link>
                       </TableCell>
                       <TableCell>
-                        {product.is_active ? (
+                        {product.isActive || product.isActive ? (
                           <CheckCircle className="h-5 w-5 text-green-500" />
                         ) : (
                           <XCircle className="h-5 w-5 text-red-500" />
                         )}
                       </TableCell>
                       <TableCell>
-                        {product.created_at
-                          ? format(new Date(product.created_at), 'MMM dd, yyyy')
+                        {product.createdAt || product.createdAt
+                          ? format(
+                              new Date(
+                                product.createdAt || product.createdAt || ''
+                              ),
+                              'MMM dd, yyyy'
+                            )
                           : '-'}
                       </TableCell>
                       <TableCell>

@@ -1,4 +1,5 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import ErrorBoundary from '@/components/error-boundary/ErrorBoundary';
 import BaseLayout from '@/pages/BaseLayout';
 import Register from '@/pages/Register';
 import Login from '@/pages/Login';
@@ -18,7 +19,11 @@ import { ProductDetails } from '@/pages/admin/products/ProductDetails';
 import ProductEdit from '@/pages/admin/products/ProductEdit';
 import ViewOrder from '@/pages/admin/orders/ViewOrder';
 import EditOrder from '@/pages/admin/orders/EditOrder';
-const Root = createBrowserRouter([
+import ReviewsPage from '@/pages/admin/reviews/Reviews';
+import NotFound from '@/pages/NotFound';
+import TestError from '@/pages/TestError';
+
+const router = createBrowserRouter([
   {
     path: '/',
     element: <BaseLayout />,
@@ -105,8 +110,27 @@ const Root = createBrowserRouter([
         path: '/admin/categories/new',
         element: <CategoriesPage />,
       },
+      {
+        path: '/admin/reviews',
+        element: <ReviewsPage />,
+      },
     ],
   },
+  {
+    path: '/test-error',
+    element: <TestError />,
+  },
+  {
+    path: '*',
+    element: <NotFound />,
+  },
 ]);
+
+// Create a component that renders the router
+const Root = () => (
+  <ErrorBoundary>
+    <RouterProvider router={router} />
+  </ErrorBoundary>
+);
 
 export default Root;

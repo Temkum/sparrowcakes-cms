@@ -124,7 +124,6 @@ const AdminDashboard = () => {
               size="icon"
               onClick={() => {
                 logout();
-                console.log('User logged out');
               }}
             >
               <LogOut className="h-4 w-4" />

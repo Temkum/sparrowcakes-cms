@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import customerFormSchema from '@/form-schema/customerFormSchema';
 import useCustomerStore from '@/store/customer-store';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { CustomerFormProps } from '@/types/customer';
 import toast, { Toaster } from 'react-hot-toast';
 import {
@@ -30,6 +30,11 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
+import ImageUploadField from '@/components/ImageUploadField';
+import { useAuthStore } from '@/store/auth';
+import axiosInstance from '@/services/axiosInstance';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function CreateCustomerModal({
   open,
@@ -39,7 +44,12 @@ export function CreateCustomerModal({
   customer,
 }: CustomerFormProps) {
   const [keepOpen, setKeepOpen] = useState(false);
-  const { createCustomer, updateCustomer, submitting } = useCustomerStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // We'll use direct API calls for file uploads instead of the store methods
+  useCustomerStore(); // Keep the store connection for future compatibility
+  const { token } = useAuthStore();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isImageRemoved, setIsImageRemoved] = useState(false);
 
   const form = useForm<z.infer<typeof customerFormSchema>>({
     resolver: zodResolver(customerFormSchema),
@@ -53,6 +63,7 @@ export function CreateCustomerModal({
       state: customer?.state || '',
       phone: customer?.phone || '',
       occupation: customer?.occupation || '',
+      image_url: customer?.image_url || '',
     },
   });
 
@@ -64,6 +75,11 @@ export function CreateCustomerModal({
         name: customer.name || '',
         phone: customer.phone || '',
         occupation: customer.occupation || '',
+        address: customer.address || '',
+        state: customer.state || '',
+        postal_code: customer.postal_code || '',
+        country: customer.country || '',
+        image_url: customer.image_url || '',
       });
     } else {
       form.reset({
@@ -76,6 +92,7 @@ export function CreateCustomerModal({
         country: '',
         phone: '',
         occupation: '',
+        image_url: '',
       });
     }
   }, [customer, mode, form]);
@@ -87,31 +104,67 @@ export function CreateCustomerModal({
 
   const onSubmit = async (values: z.infer<typeof customerFormSchema>) => {
     try {
-      if (mode === 'edit' && customer) {
-        await updateCustomer(customer.id, values);
-        toast.success('Customer updated successfully');
-        onOpenChange(false);
-      } else {
-        await createCustomer(values);
-        toast.success('Customer created successfully');
+      setIsSubmitting(true);
 
-        if (keepOpen) {
-          // Reset form for "Create & create another"
-          form.reset({
-            email: '',
-            city: '',
-            name: '',
-            address: '',
-            postal_code: '',
-            country: '',
-            state: '',
-            phone: '',
-            occupation: '',
-          });
-        } else {
-          // Close modal for normal "Create"
-          onOpenChange(false);
-        }
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('name', values.name);
+      formData.append('email', values.email || '');
+      formData.append('phone', values.phone);
+      formData.append('city', values.city || '');
+      formData.append('address', values.address || '');
+      formData.append('postal_code', values.postal_code || '');
+      formData.append('country', values.country || '');
+      formData.append('state', values.state || '');
+      formData.append('occupation', values.occupation || '');
+
+      // Handle image upload
+      if (isImageRemoved && mode === 'edit') {
+        formData.append('isImageDeleted', 'true');
+      } else if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      // API endpoint URL
+      const url =
+        mode === 'edit' && customer
+          ? `${API_BASE_URL}/customers/${customer.id}`
+          : `${API_BASE_URL}/customers`;
+
+      // HTTP method
+      const method = mode === 'edit' ? 'patch' : 'post';
+
+      // Send request to server
+      await axiosInstance[method](url, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success(
+        `Customer ${mode === 'edit' ? 'updated' : 'created'} successfully`
+      );
+
+      if (keepOpen && mode === 'create') {
+        // Reset form for "Create & create another"
+        form.reset({
+          email: '',
+          city: '',
+          name: '',
+          address: '',
+          postal_code: '',
+          country: '',
+          state: '',
+          phone: '',
+          occupation: '',
+          image_url: '',
+        });
+        setImageFile(null);
+        setIsImageRemoved(false);
+      } else {
+        // Close modal for normal "Create"
+        onOpenChange(false);
       }
 
       // Always call onSuccess to refresh the list
@@ -123,6 +176,8 @@ export function CreateCustomerModal({
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -282,6 +337,50 @@ export function CreateCustomerModal({
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="image_url"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Customer Image</FormLabel>
+                      <FormControl>
+                        <div className="space-y-4">
+                          {field.value ? (
+                            <div className="relative w-32 h-32 mx-auto">
+                              <img
+                                src={field.value}
+                                alt="Customer avatar"
+                                className="w-full h-full object-cover rounded-full border-2 border-gray-200"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  field.onChange('');
+                                  setImageFile(null);
+                                  setIsImageRemoved(true);
+                                }}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : null}
+
+                          <ImageUploadField
+                            onChange={field.onChange}
+                            value={field.value || ''}
+                            onFileChange={(file) => {
+                              setImageFile(file);
+                              setIsImageRemoved(false);
+                            }}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="flex gap-4">
@@ -289,9 +388,9 @@ export function CreateCustomerModal({
                   type="submit"
                   onClick={() => handleSubmit(false)}
                   className="bg-orange-500 hover:bg-orange-600"
-                  disabled={submitting}
+                  disabled={isSubmitting}
                 >
-                  {submitting && (
+                  {isSubmitting && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   {mode === 'edit' ? 'Update' : 'Create'}
@@ -302,9 +401,9 @@ export function CreateCustomerModal({
                     type="button"
                     variant="outline"
                     onClick={() => handleSubmit(true)}
-                    disabled={submitting}
+                    disabled={isSubmitting}
                   >
-                    {submitting && (
+                    {isSubmitting && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
                     Create & create another
@@ -315,7 +414,7 @@ export function CreateCustomerModal({
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
-                  disabled={submitting}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>

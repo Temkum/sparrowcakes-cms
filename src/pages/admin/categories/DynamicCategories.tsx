@@ -16,7 +16,7 @@ export function DynamicCategories({
   name,
   label,
   isRequired,
-}: DynamicCategoriesProps) {
+}: DynamicCategories) {
   const { control } = useFormContext();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);

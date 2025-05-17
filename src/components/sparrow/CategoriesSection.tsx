@@ -24,7 +24,6 @@ const CategoryList = ({
     try {
       const response = await axios.get(`${API_BASE_URL}/categories/all`);
       const categories = response.data;
-      console.log(categories);
       setCategories(categories);
     } catch (error) {
       console.error(error);

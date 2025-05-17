@@ -1,37 +1,23 @@
-// Product interfaces matching the schema
+// Product interface for frontend use (camelCase)
 export interface Product {
-  id?: number;
-  name: string;
-  slug?: string;
-  description: string;
-  isActive: boolean;
-  availability: Date | string; // Can be Date object or ISO string
-  categories: number[]; // Array of category IDs as numbers
-  images: (File | string)[]; // Can be File objects (for new uploads) or URLs (existing)
-  price: number;
-  discount: number; // Compare at price
-  costPerUnit: number; // Cost per item
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// For API operations
-export interface ProductResponse {
   id: number;
   name: string;
   slug: string;
   description: string;
   isActive: boolean;
-  availability: string; // ISO date string
+  availability: Date | string;
   categories: number[];
-  image_urls: string[]; // URLs of images
+  images: (File | string)[];
+  imageUrls: string[];
   price: number;
   discount: number;
   costPerUnit: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+  quantity?: number;
 }
 
+// API response interface (snake_case)
 export interface ProductAPIResponse {
   id: number;
   name: string;
@@ -47,6 +33,32 @@ export interface ProductAPIResponse {
   updated_at: string;
   availability: string;
   categories: Category[];
+}
+
+export interface ProductStatsUI {
+  totalProducts: number;
+  productInventory: number;
+  averagePrice: number;
+}
+
+export interface ProductStats {
+  totalProducts: number;
+  activeProducts: number;
+  averagePrice: number;
+}
+
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface ProductFilter {
+  searchTerm?: string;
+  categoryId?: number;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 // For API requests
@@ -77,7 +89,7 @@ export interface UpdateProductRequest {
 }
 
 // For product statistics
-export interface ProductStats {
+export interface ProductStatsOld {
   total: number;
   active: number;
   inactive: number;
@@ -98,13 +110,25 @@ export interface ProductFilters {
   limit?: number;
 }
 
+// Category interface
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 // For pagination
 export interface PaginatedProductsResponse {
-  data: ProductResponse[];
+  items: ProductAPIResponse[];
   meta: {
     currentPage: number;
     totalPages: number;
     totalItems: number;
     itemsPerPage: number;
   };
+}
+
+export interface BulkDeletionError extends Error {
+  responseData?: unknown;
+  status?: number;
 }

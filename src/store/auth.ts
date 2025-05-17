@@ -41,8 +41,8 @@ const isTokenExpired = (token: string): boolean => {
   }
 };
 
-export const useAuthStore: () => AuthStore = create<AuthStore>()(
-  persist(
+// Create the store instance
+const authStore = create<AuthStore>()(persist(
     (set, get) => ({
       token: getToken(),
       isAuthenticated: false,
@@ -53,7 +53,7 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
         set({ loading: true });
         try {
           const response = await register(name, email, password);
-          console.log('reg response', response);
+
           if (response?.data) {
             set({ loading: false });
             return true;
@@ -87,10 +87,16 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
             user: response.user,
           });
           return true;
-        } catch (error: any) {
+        } catch (error) {
           set({ loading: false });
-          const errorMessage =
-            error.response?.data?.message || 'Invalid email or password';
+          let errorMessage = 'Invalid email or password';
+          
+          if (axios.isAxiosError(error) && error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error instanceof Error) {
+            errorMessage = error.message;
+          }
+          
           toast.error(errorMessage, {
             position: 'bottom-center',
           });
@@ -142,3 +148,9 @@ export const useAuthStore: () => AuthStore = create<AuthStore>()(
     }
   )
 );
+
+// Export the hook for component usage
+export const useAuthStore = () => authStore();
+
+// Add getState method for direct state access in other stores
+useAuthStore.getState = authStore.getState;

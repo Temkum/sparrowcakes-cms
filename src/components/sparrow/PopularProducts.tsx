@@ -17,7 +17,7 @@ function ProductCard({
   rating,
   image,
   onAddToCart,
-}: Product & { onAddToCart?: () => void }) {
+}: UIProduct & { onAddToCart?: () => void }) {
   return (
     <Card className="group overflow-hidden">
       {/* Product Image */}

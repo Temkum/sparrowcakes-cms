@@ -22,7 +22,7 @@ import { useAuthStore } from '@/store/auth';
 
 const TopNav = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const logoutUser = useAuthStore((state) => state.logoutUser);
+  const logoutUser = useAuthStore.getState().logoutUser;
   const navigate = useNavigate();
 
   const handleLogout = () => {

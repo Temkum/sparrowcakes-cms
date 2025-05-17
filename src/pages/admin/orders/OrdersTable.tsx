@@ -291,9 +291,9 @@ const OrdersTable: React.FC = () => {
       toast.success(
         `Successfully exported ${exportType} as ${format.toUpperCase()}`
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to export orders:', error);
-      toast.error(error?.message || 'Failed to export orders');
+      toast.error((error as Error)?.message || 'Failed to export orders');
     } finally {
       setExporting(false);
     }

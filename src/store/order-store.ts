@@ -30,11 +30,11 @@ interface OrderState {
 }
 
 const useOrderStore = create<OrderState>((set, get) => {
-  const getAuthToken = () => {
+  const getAuthToken = (): string => {
     const persistedState = JSON.parse(
       localStorage.getItem('auth-storage') || '{}'
     );
-    return persistedState.state?.token || null;
+    return persistedState.state?.token || '';
   };
 
   return {
@@ -67,14 +67,12 @@ const useOrderStore = create<OrderState>((set, get) => {
     loadOrders: async () => {
       set({ loading: true });
       try {
-        const { filter } = get();
         const token = getAuthToken();
-
         if (!token) {
           throw new Error('No authentication token found');
         }
 
-        // Clean filter values before sending to API
+        const { filter } = get();
         const cleanFilter = {
           page: filter.page,
           limit: filter.pageSize,
@@ -88,7 +86,7 @@ const useOrderStore = create<OrderState>((set, get) => {
 
         // Apply client-side filtering if API doesn't support it fully
         // This is a fallback if the API doesn't handle filtering properly
-        let filteredOrders = [...response];
+        let filteredOrders = response?.items ?? [];
 
         // Apply status filter if set
         if (filter.status) {
@@ -148,17 +146,16 @@ const useOrderStore = create<OrderState>((set, get) => {
 
         set({
           orders: filteredOrders,
-          totalCount: response.length,
+          totalCount: filteredOrders.length,
           loading: false,
         });
       } catch (error) {
         console.error('Error loading orders:', error);
         set({ loading: false });
-        throw error;
       }
     },
 
-    createOrder: async (orderData) => {
+    createOrder: async (orderData: Partial<Order>) => {
       try {
         set({ submitting: true });
         const token = getAuthToken();
@@ -182,7 +179,7 @@ const useOrderStore = create<OrderState>((set, get) => {
       }
     },
 
-    updateOrder: async (id, orderData) => {
+    updateOrder: async (id: number, orderData: Partial<Order>) => {
       try {
         set({ submitting: true });
         const token = getAuthToken();
@@ -206,7 +203,7 @@ const useOrderStore = create<OrderState>((set, get) => {
       }
     },
 
-    deleteOrders: async (ids) => {
+    deleteOrders: async (ids: number[]) => {
       try {
         const token = getAuthToken();
         if (!token) {
@@ -226,11 +223,10 @@ const useOrderStore = create<OrderState>((set, get) => {
       } catch (error) {
         console.error('Failed to delete orders:', error);
         toast.error('Failed to delete orders');
-        throw error;
       }
     },
 
-    softDeleteOrders: async (ids: number[]): Promise<void> => {
+    softDeleteOrders: async (ids: number[]) => {
       try {
         const token = getAuthToken();
         if (!token) {
@@ -254,7 +250,6 @@ const useOrderStore = create<OrderState>((set, get) => {
       } catch (error) {
         console.error('Failed to soft delete orders:', error);
         toast.error('Failed to soft delete orders');
-        throw error;
       }
     },
 
@@ -295,15 +290,10 @@ const useOrderStore = create<OrderState>((set, get) => {
       set({ loading: true });
       try {
         const token = getAuthToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
         const stats = await orderService.getOrderStats(token);
         set({ stats, loading: false });
       } catch (error) {
         console.error('Error loading order stats:', error);
-        toast.error('Failed to load order statistics');
         set({ loading: false });
       }
     },

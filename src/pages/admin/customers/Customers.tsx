@@ -122,6 +122,12 @@ export default function Customers() {
 
     try {
       const { token } = useAuthStore.getState(); // Ensure token is available
+
+      if (!token) {
+        toast.error('Authentication token not found. Please log in again.');
+        return;
+      }
+
       await customerService.deleteCustomers(selectedCustomers, token);
       toast.success(
         `${selectedCustomers.length} ${
@@ -220,6 +226,7 @@ export default function Customers() {
                   />
                 </TableHead>
                 {/* Table Headers */}
+                <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Occupation</TableHead>
                 <TableHead>Phone</TableHead>
@@ -250,6 +257,17 @@ export default function Customers() {
                         onCheckedChange={(checked) =>
                           handleSelectCustomer(customer.id, checked as boolean)
                         }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <img
+                        src={customer.image_url || '/placeholder.svg'}
+                        alt={customer.name}
+                        className="w-10 h-10 rounded object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            '/placeholder.svg';
+                        }}
                       />
                     </TableCell>
                     <TableCell>{customer.name}</TableCell>

@@ -67,7 +67,8 @@ const initialUsers: User[] = [
 ];
 
 const Users = () => {
-  const [users, setUsers] = React.useState<User[]>(initialUsers);
+  // Using only users, setUsers is not currently used
+  const [users] = React.useState<User[]>(initialUsers);
 
   return (
     <>

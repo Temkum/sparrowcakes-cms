@@ -1,0 +1,95 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Senior-Level React TypeScript Guidelines
+
+## Component Architecture
+
+- Use functional components with TypeScript FC type definitions
+- Implement strict type checking for all props and state
+- Follow container/presenter pattern for complex components
+- Use React.memo for expensive renders
+- Implement proper children typing with React.PropsWithChildren
+
+## TypeScript Best Practices
+
+- Enable strict mode in tsconfig.json
+- Use discriminated unions for type-safe state management
+- Implement branded types for domain models
+- Use utility types (Partial, Readonly, Pick) for type manipulation
+- Define proper return types for all functions and callbacks
+
+## State Management
+
+- Use custom hooks for encapsulated logic
+- Implement proper typing for useState and useEffect
+- Use discriminated unions for action types in reducers
+- Implement proper error boundary patterns
+- Use React.useCallback and React.useMemo appropriately
+
+## Performance Optimization
+
+- Implement proper React key usage for lists
+- Use useMemo for expensive computations
+- Implement proper shouldComponentUpdate logic
+- Use React.lazy with Suspense for code splitting
+- Implement proper cleanup in useEffect hooks
+
+## Error Handling
+
+- Implement proper TypeScript error types
+- Use try/catch with proper error boundaries
+- Implement loading and error states
+- Use proper TypeScript null checks
+- Implement fallback UI components
+
+## Testing
+
+- Write type-safe tests with proper mock types
+- Implement proper test coverage
+- Use testing library with TypeScript support
+- Test error boundaries and loading states
+- Implement integration tests for complex flows
+
+## Code Organization
+
+- Use feature-based folder structure
+- Implement proper module separation
+- Use barrel files for clean imports
+- Implement proper dependency injection
+- Use TypeScript path aliases
+
+## Security
+
+- Sanitize all user input
+- Implement proper authentication typing
+- Use secure prop types
+- Implement proper CORS handling
+- Use environment variables securely
+
+## Documentation
+
+- Use JSDoc comments for complex functions
+- Implement proper TypeScript documentation
+- Use proper commit messages
+- Document component props and usage
+- Implement proper API documentation
+
+## Accessibility
+
+- Implement proper ARIA attributes
+- Use semantic HTML
+- Implement keyboard navigation
+- Use proper color contrast
+- Implement screen reader support
+- Make sure it's responsive on all screensizes
+
+## Performance Monitoring
+
+- Implement proper logging
+- Use React DevTools efficiently
+- Monitor render performance
+- Track error rates
+- Implement proper analytics

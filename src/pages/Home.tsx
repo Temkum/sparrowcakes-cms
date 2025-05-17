@@ -11,15 +11,15 @@ import Testimonials from '@/components/sparrow/Testimonials';
 import { products } from '@/utilities/data';
 
 const Home = () => {
-  const handleAddToCart = (productId: string) => {
+  const handleAddToCart = (productId: number) => {
     console.log(`Added product ${productId} to cart`);
   };
 
-  const handleAddToWishlist = (productId: string) => {
+  const handleAddToWishlist = (productId: number) => {
     console.log(`Added product ${productId} to wishlist`);
   };
 
-  const handleQuickView = (productId: string) => {
+  const handleQuickView = (productId: number) => {
     console.log(`Quick view for product ${productId}`);
   };
 
