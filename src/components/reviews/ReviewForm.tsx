@@ -142,7 +142,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
                 <SelectContent>
                   {products &&
                     products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
+                      <SelectItem key={product.id} value={String(product.id)}>
                         {product.name}
                       </SelectItem>
                     ))}

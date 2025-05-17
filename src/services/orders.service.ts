@@ -48,7 +48,7 @@ export const orderService = {
           },
         }
       );
-      console.log('response orders  ', response);
+      console.log('service response orders  ', response);
 
       return response;
     } catch (error) {

@@ -199,7 +199,9 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       validationErrors.forEach((error) => {
         console.error('Validation error:', error);
         // Convert field name to a valid form field key
-        const fieldName = error.field.toLowerCase() as keyof z.infer<ReturnType<typeof productFormSchema>>;
+        const fieldName = error.field.toLowerCase() as keyof z.infer<
+          ReturnType<typeof productFormSchema>
+        >;
         form.setError(fieldName, {
           type: 'server',
           message: error.message,
@@ -553,6 +555,8 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                   <DynamicCategories
                     name="categories"
                     label="Category"
+                    value={form.watch('categories')}
+                    onChange={(categories) => form.setValue('categories', categories)}
                     isRequired
                   />
                 </CardContent>

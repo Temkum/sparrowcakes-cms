@@ -4,20 +4,31 @@ import axios from 'axios';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-// This would come from your API or a dedicated categories service in a real application
+// Import the Category interface from the types
 interface Category {
-  id: number; // Changed to number to match schema
+  id: number;
   name: string;
+  slug?: string;
+  description?: string;
+  imageUrl?: string;
+  isActive?: boolean;
 }
 
+// Match the interface in types/category/index.d.ts
 interface DynamicCategoriesProps {
-  selectedCategories: number[]; // Changed to number[] to match schema
-  onChange: (categories: number[]) => void;
+  name: string;
+  label: string;
+  value: number[];
+  onChange: (value: number[]) => void;
+  isRequired?: boolean;
 }
 
 export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
-  selectedCategories = [],
+  name,
+  label,
+  value = [],
   onChange,
+  isRequired = false,
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,19 +40,38 @@ export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        // In a real app, replace with your actual API
-        const response = await axios.get('/api/categories');
-        setCategories(response.data);
+        // Use the proper API endpoint based on your environment
+        const API_URL = import.meta.env.VITE_API_BASE_URL || '';
+        const response = await axios.get(`${API_URL}/categories`);
+        
+        if (response.data && Array.isArray(response.data)) {
+          setCategories(response.data);
+        } else if (response.data && Array.isArray(response.data.categories)) {
+          // Handle case where categories might be nested in response
+          setCategories(response.data.categories);
+        } else {
+          console.error('Unexpected categories response format:', response.data);
+          // Fallback with mock data - only in development
+          if (import.meta.env.DEV) {
+            setCategories([
+              { id: 129, name: 'Classic Cakes' },
+              { id: 141, name: 'Fondant Cakes' },
+              { id: 142, name: 'Test category' },
+              { id: 143, name: 'Test category' },
+            ]);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch categories:', error);
-        // Fallback with mock data
-        setCategories([
-          { id: 1, name: 'Cakes' },
-          { id: 2, name: 'Cupcakes' },
-          { id: 3, name: 'Cookies' },
-          { id: 4, name: 'Pastries' },
-          { id: 5, name: 'Breads' },
-        ]);
+        // Fallback with mock data - only in development
+        if (import.meta.env.DEV) {
+          setCategories([
+            { id: 129, name: 'Classic Cakes' },
+            { id: 141, name: 'Fondant Cakes' },
+            { id: 142, name: 'Test category' },
+            { id: 143, name: 'Test category' },
+          ]);
+        }
       } finally {
         setLoading(false);
       }
@@ -51,7 +81,7 @@ export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
   }, []);
 
   const toggleCategory = (categoryId: number) => {
-    const currentCategories = [...selectedCategories];
+    const currentCategories = [...value];
     const index = currentCategories.indexOf(categoryId);
 
     if (index === -1) {
@@ -78,7 +108,7 @@ export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
       setCategories((prev) => [...prev, newCategoryObj]);
 
       // Select the new category
-      onChange([...selectedCategories, newCategoryObj.id]);
+      onChange([...value, newCategoryObj.id]);
 
       // Reset form
       setNewCategory('');
@@ -90,6 +120,12 @@ export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium text-gray-700">
+          {label} {isRequired && <span className="text-red-500">*</span>}
+        </label>
+      </div>
+      
       {loading ? (
         <div className="text-sm text-gray-500">Loading categories...</div>
       ) : (
@@ -99,8 +135,9 @@ export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  name={name}
                   className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                  checked={selectedCategories.includes(category.id)}
+                  checked={value.includes(category.id)}
                   onChange={() => toggleCategory(category.id)}
                 />
                 <span>{category.name}</span>

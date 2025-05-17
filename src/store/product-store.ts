@@ -12,7 +12,7 @@ import {
 } from '@/types/product';
 interface ProductState {
   products: Product[];
-  currentProduct: ProductAPIResponse | null | undefined;
+  currentProduct: ProductAPIResponse | null;
   stats: ProductStats;
   loading: boolean;
   submitting: boolean;
@@ -152,30 +152,33 @@ const useProductStore = create<ProductState>((set, get) => ({
     set({ loading: true });
 
     try {
-      const product = await productService.getProductById(id);
+      const response = await productService.getProductById(id);
+      console.log('product response', response);
 
-      // Check if response exists and has the expected structure
-      if (!product) {
+      // Check if response exists and has data
+      if (!response || !response.data) {
         set({ loading: false });
         toast.error('Product not found or invalid data received');
         return null;
       }
-
+      
+      const productData = response.data;
+      
       const transformedProduct: ProductAPIResponse = {
-        id: product.id,
-        name: product.name,
-        slug: product.slug,
-        description: product.description,
-        is_active: product.is_active,
-        availability: product.availability,
-        categories: product.categories,
-        image_urls: product.image_urls,
-        price: Number(product.price),
-        discount: Number(product.discount),
-        cost_per_unit: Number(product.cost_per_unit),
-        created_at: product.created_at,
-        updated_at: product.updated_at,
-        quantity: Number(product.quantity || 0),
+        id: productData.id,
+        name: productData.name,
+        slug: productData.slug,
+        description: productData.description,
+        price: Number(productData.price),
+        cost_per_unit: Number(productData.cost_per_unit),
+        discount: Number(productData.discount),
+        quantity: Number(productData.quantity || 0),
+        image_urls: productData.image_urls || [],
+        is_active: productData.is_active,
+        created_at: productData.created_at,
+        updated_at: productData.updated_at,
+        availability: productData.availability,
+        categories: productData.categories || [], // Store the complete category objects
       };
 
       set({
