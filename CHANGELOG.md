@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.1](https://github-personal/Temkum/sparrowcakes-cms/compare/v1.7.0...v1.7.1) (2025-05-17)
+
+
+### Bug Fixes
+
+* fix all typescript errors and build errors ([c149948](https://github-personal/Temkum/sparrowcakes-cms/commit/c1499482cd5476e6f238e6f72e76b1d85c08edec))
+* Review form and customer image display improvements ([e0b4149](https://github-personal/Temkum/sparrowcakes-cms/commit/e0b41490a5bd7e77e42c746791566ad73905b7ec))
+
 ## [1.7.0](https://github-personal/Temkum/sparrowcakes-cms/compare/v1.3.0...v1.7.0) (2025-05-10)
 
 
