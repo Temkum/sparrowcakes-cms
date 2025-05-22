@@ -63,6 +63,11 @@ const OrdersTable: React.FC = () => {
     softDeleteOrders,
   } = useOrderStore();
 
+  console.log('OrdersTable - Current orders:', orders);
+  console.log('OrdersTable - Loading state:', loading);
+  console.log('OrdersTable - Filter:', filter);
+  console.log('OrdersTable - Total count:', totalCount);
+
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [currentStatus, setCurrentStatus] = useState<StatusFilter>('all');
   const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
@@ -85,7 +90,9 @@ const OrdersTable: React.FC = () => {
   useEffect(() => {
     const loadOrdersData = async () => {
       try {
+        console.log('OrdersTable - Loading orders data...');
         await loadOrders();
+        console.log('OrdersTable - Orders loaded successfully');
       } catch (error) {
         console.error('Failed to load orders:', error);
         toast.error('Failed to load orders');

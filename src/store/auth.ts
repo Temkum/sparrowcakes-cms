@@ -42,7 +42,8 @@ const isTokenExpired = (token: string): boolean => {
 };
 
 // Create the store instance
-const authStore = create<AuthStore>()(persist(
+const authStore = create<AuthStore>()(
+  persist(
     (set, get) => ({
       token: getToken(),
       isAuthenticated: false,
@@ -54,7 +55,7 @@ const authStore = create<AuthStore>()(persist(
         try {
           const response = await register(name, email, password);
 
-          if (response?.data) {
+          if (response) {
             set({ loading: false });
             return true;
           }
@@ -90,13 +91,13 @@ const authStore = create<AuthStore>()(persist(
         } catch (error) {
           set({ loading: false });
           let errorMessage = 'Invalid email or password';
-          
+
           if (axios.isAxiosError(error) && error.response?.data?.message) {
             errorMessage = error.response.data.message;
           } else if (error instanceof Error) {
             errorMessage = error.message;
           }
-          
+
           toast.error(errorMessage, {
             position: 'bottom-center',
           });

@@ -161,9 +161,9 @@ const useProductStore = create<ProductState>((set, get) => ({
         toast.error('Product not found or invalid data received');
         return null;
       }
-      
+
       const productData = response.data;
-      
+
       const transformedProduct: ProductAPIResponse = {
         id: productData.id,
         name: productData.name,

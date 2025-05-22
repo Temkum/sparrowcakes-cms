@@ -82,11 +82,36 @@ const useOrderStore = create<OrderState>((set, get) => {
           status: filter.status,
         };
 
+        console.log('Order store - Loading orders with filter:', cleanFilter);
         const response = await orderService.getOrders(cleanFilter, token);
+        console.log('Order store - Received response:', response);
+
+        // Handle different response formats
+        let ordersArray: Order[] = [];
+        if (Array.isArray(response)) {
+          // If response is directly an array
+          ordersArray = response;
+        } else if (response && typeof response === 'object') {
+          // If response has items property
+          if ('items' in response && Array.isArray(response.items)) {
+            ordersArray = response.items;
+          } else if ('data' in response && Array.isArray(response.data)) {
+            // If response has data property
+            ordersArray = response.data;
+          } else if (
+            response &&
+            typeof response === 'object' &&
+            !('items' in response)
+          ) {
+            // If response is a single order object
+            ordersArray = [response as unknown as Order];
+          }
+        }
+
+        console.log('Order store - Processed orders array:', ordersArray);
 
         // Apply client-side filtering if API doesn't support it fully
-        // This is a fallback if the API doesn't handle filtering properly
-        let filteredOrders = response?.items ?? [];
+        let filteredOrders = ordersArray;
 
         // Apply status filter if set
         if (filter.status) {
@@ -144,6 +169,7 @@ const useOrderStore = create<OrderState>((set, get) => {
           return 0;
         });
 
+        console.log('Order store - Setting final orders:', filteredOrders);
         set({
           orders: filteredOrders,
           totalCount: filteredOrders.length,

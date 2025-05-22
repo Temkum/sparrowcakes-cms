@@ -39,6 +39,7 @@ export const orderService = {
         status,
       };
 
+      console.log('Orders service - Request params:', params);
       const response = await axiosInstance.get<object, { items: Order[] }>(
         `${API_URL}/orders`,
         {
@@ -48,7 +49,10 @@ export const orderService = {
           },
         }
       );
-      console.log('service response orders  ', response);
+      console.log('Orders service - Raw response:', response);
+      console.log('Orders service - Response type:', typeof response);
+      console.log('Orders service - Has items property:', 'items' in response);
+      console.log('Orders service - Response keys:', Object.keys(response));
 
       return response;
     } catch (error) {
