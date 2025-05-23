@@ -19,17 +19,34 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Search, AlertTriangle } from 'lucide-react';
+import { Search, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ReviewResponse } from '@/types/review';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ReviewsTableProps {
   reviews: ReviewResponse[];
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onEdit: (review: ReviewResponse) => void;
   onDelete: (reviewId: number) => void;
 }
 
 const ReviewsTable: React.FC<ReviewsTableProps> = ({
   reviews,
+  totalCount,
+  currentPage,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
   onEdit,
   onDelete,
 }) => {
@@ -73,6 +90,8 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
       setReviewToDelete(null);
     }
   };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div className="space-y-4">
@@ -176,6 +195,55 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
         </Table>
       </div>
 
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500">
+            Showing {reviews.length} of {totalCount} reviews
+            {pageSize < totalCount && (
+              <>
+                {' '}
+                (Page {currentPage} of {totalPages})
+              </>
+            )}
+          </span>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => onPageSizeChange(Number(value))}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={pageSize} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
       {/* View Review Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent>
@@ -257,15 +325,12 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Confirm Deletion
-            </DialogTitle>
+            <DialogTitle>Delete Review</DialogTitle>
           </DialogHeader>
-          <p>
-            Are you sure you want to delete this review? This action cannot be
-            undone.
-          </p>
+          <div className="flex items-center gap-2 text-yellow-600">
+            <AlertTriangle className="h-5 w-5" />
+            <p>Are you sure you want to delete this review?</p>
+          </div>
           <DialogFooter>
             <Button
               variant="outline"

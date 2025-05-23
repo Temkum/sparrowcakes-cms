@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { StarRating } from '@/components/sparrow/StarRating';
 import { Loader2 } from 'lucide-react';
-import { Review } from '@/types/review';
+import { ReviewResponse } from '@/types/review';
 import { Customer } from '@/types/customer';
 import {
   Select,
@@ -27,10 +27,10 @@ import {
 import { Product } from '@/types/product';
 
 const reviewFormSchema = z.object({
-  customerId: z.number({
+  customer_id: z.number({
     required_error: 'Please select a customer',
   }),
-  productId: z.number({
+  product_id: z.number({
     required_error: 'Please select a product',
   }),
   rating: z
@@ -40,14 +40,14 @@ const reviewFormSchema = z.object({
   comment: z
     .string()
     .min(1, { message: 'Comment must be at least 1 character' }),
-  isActive: z.boolean(),
+  display: z.boolean(),
 });
 
 type ReviewFormData = z.infer<typeof reviewFormSchema>;
 
 interface ReviewFormProps {
-  review?: Review;
-  onSubmit: (data: Partial<Review>) => void;
+  review?: ReviewResponse;
+  onSubmit: (data: Partial<ReviewResponse>) => void;
   submitting?: boolean;
   customers: Customer[];
   products: Product[];
@@ -63,11 +63,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
-      customerId: review?.customerId || undefined,
-      productId: review?.productId || undefined,
+      customer_id: review?.customer?.id || undefined,
+      product_id: review?.product?.id || undefined,
       rating: review?.rating || 5,
       comment: review?.comment || '',
-      isActive: review?.isActive ?? true,
+      display: review?.display ?? true,
     },
   });
 
@@ -75,11 +75,11 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   useEffect(() => {
     if (review) {
       form.reset({
-        customerId: review.customerId,
-        productId: review.productId,
+        customer_id: review.customer?.id,
+        product_id: review.product?.id,
         rating: review.rating,
         comment: review.comment,
-        isActive: review.isActive ?? true,
+        display: review.display ?? true,
       });
     }
   }, [review, form]);
@@ -96,7 +96,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       >
         <FormField
           control={form.control}
-          name="customerId"
+          name="customer_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Customer</FormLabel>
@@ -127,7 +127,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
         <FormField
           control={form.control}
-          name="productId"
+          name="product_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Product</FormLabel>
@@ -196,7 +196,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
         <FormField
           control={form.control}
-          name="isActive"
+          name="display"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">

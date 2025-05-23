@@ -4,6 +4,8 @@ import {
   BulkDeletionError,
   PaginatedProductsResponse,
   ProductStats,
+  ProductAPIResponse,
+  Product,
 } from '@/types/product';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -52,12 +54,10 @@ export const productService = {
     }
   },
 
-  async getProductStats() {
+  async getProductStats(): Promise<ProductStats> {
     try {
-      const response = await axiosInstance.get<ProductStats>(
-        `${API_URL}/products/stats`
-      );
-      return response.data;
+      const response = await axiosInstance.get(`${API_URL}/products/stats`);
+      return response as unknown as ProductStats;
     } catch (error) {
       console.error('Error fetching product stats:', error);
       throw error;
@@ -65,11 +65,10 @@ export const productService = {
   },
 
   // Get a single product by ID
-  async getProductById(id: number) {
+  async getProductById(id: number): Promise<ProductAPIResponse> {
     try {
       const response = await axiosInstance.get(`${API_URL}/products/${id}`);
-
-      return response;
+      return response as unknown as ProductAPIResponse;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
       throw error;
@@ -79,14 +78,18 @@ export const productService = {
   // Create a new product
   async createProduct(productData: FormData, token: string) {
     try {
-      const response = await axios.post(`${API_URL}/products`, productData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axiosInstance.post(
+        `${API_URL}/products`,
+        productData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
-      return response.data;
+      return response;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {
@@ -119,9 +122,13 @@ export const productService = {
     }
   },
 
-  async updateProduct(id: number, productData: FormData, token: string) {
+  async updateProduct(
+    id: number,
+    productData: FormData,
+    token: string
+  ): Promise<Product> {
     try {
-      const response = await axios.put(
+      const response = await axiosInstance.put(
         `${API_URL}/products/${id}`,
         productData,
         {
@@ -131,8 +138,7 @@ export const productService = {
           },
         }
       );
-
-      return response;
+      return response as unknown as Product;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {
@@ -165,7 +171,7 @@ export const productService = {
 
   async deleteProduct(id: number, token: string) {
     try {
-      const response = await axios.delete(`${API_URL}/products/${id}`, {
+      const response = await axiosInstance.delete(`${API_URL}/products/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

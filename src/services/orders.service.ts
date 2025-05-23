@@ -28,7 +28,7 @@ export const orderService = {
       status,
     }: OrderFilterProps,
     token: string
-  ): Promise<{ items: Order[] }> {
+  ): Promise<{ items: Order[]; total: number; page: number; limit: number }> {
     try {
       const params = {
         page,
@@ -40,21 +40,52 @@ export const orderService = {
       };
 
       console.log('Orders service - Request params:', params);
-      const response = await axiosInstance.get<object, { items: Order[] }>(
-        `${API_URL}/orders`,
-        {
-          params,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.get<
+        object,
+        Order[] | { items: Order[]; total: number; page: number; limit: number }
+      >(`${API_URL}/orders`, {
+        params,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       console.log('Orders service - Raw response:', response);
       console.log('Orders service - Response type:', typeof response);
-      console.log('Orders service - Has items property:', 'items' in response);
-      console.log('Orders service - Response keys:', Object.keys(response));
+      console.log('Orders service - Is array:', Array.isArray(response));
 
-      return response;
+      // If response is an array, wrap it in the expected format
+      if (Array.isArray(response)) {
+        return {
+          items: response,
+          total: response.length,
+          page: page,
+          limit: limit,
+        };
+      }
+
+      // If response is an object with items property
+      if (response && typeof response === 'object' && 'items' in response) {
+        const typedResponse = response as {
+          items: Order[];
+          total?: number;
+          page?: number;
+          limit?: number;
+        };
+        return {
+          items: typedResponse.items || [],
+          total: typedResponse.total || typedResponse.items.length,
+          page: typedResponse.page || page,
+          limit: typedResponse.limit || limit,
+        };
+      }
+
+      // Fallback for unexpected response format
+      return {
+        items: [],
+        total: 0,
+        page: page,
+        limit: limit,
+      };
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;

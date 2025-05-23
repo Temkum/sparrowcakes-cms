@@ -618,6 +618,13 @@ const OrdersTable: React.FC = () => {
         <div className="flex justify-between items-center p-4 border-t">
           <div className="text-sm text-gray-500">
             Showing {orders.length} of {totalCount} orders
+            {filter.pageSize < totalCount && (
+              <>
+                {' '}
+                (Page {filter.page} of {Math.ceil(totalCount / filter.pageSize)}
+                )
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

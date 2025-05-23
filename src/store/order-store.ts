@@ -86,27 +86,8 @@ const useOrderStore = create<OrderState>((set, get) => {
         const response = await orderService.getOrders(cleanFilter, token);
         console.log('Order store - Received response:', response);
 
-        // Handle different response formats
-        let ordersArray: Order[] = [];
-        if (Array.isArray(response)) {
-          // If response is directly an array
-          ordersArray = response;
-        } else if (response && typeof response === 'object') {
-          // If response has items property
-          if ('items' in response && Array.isArray(response.items)) {
-            ordersArray = response.items;
-          } else if ('data' in response && Array.isArray(response.data)) {
-            // If response has data property
-            ordersArray = response.data;
-          } else if (
-            response &&
-            typeof response === 'object' &&
-            !('items' in response)
-          ) {
-            // If response is a single order object
-            ordersArray = [response as unknown as Order];
-          }
-        }
+        // The response is already in the correct format from the service
+        const { items: ordersArray, total: totalCount } = response;
 
         console.log('Order store - Processed orders array:', ordersArray);
 
@@ -172,7 +153,7 @@ const useOrderStore = create<OrderState>((set, get) => {
         console.log('Order store - Setting final orders:', filteredOrders);
         set({
           orders: filteredOrders,
-          totalCount: filteredOrders.length,
+          totalCount: totalCount,
           loading: false,
         });
       } catch (error) {

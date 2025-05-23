@@ -86,10 +86,17 @@ const useProductStore = create<ProductState>((set, get) => ({
     try {
       set({ loading: true });
       const stats = await productService.getProductStats();
-      console.log('store Stats', stats);
       set({ stats, loading: false });
     } catch (error) {
       console.error('Error loading product stats:', error);
+      set({ loading: false });
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.message || 'Failed to load product stats';
+        toast.error(message);
+      } else {
+        toast.error('Failed to load product stats');
+      }
     }
   },
   // Load products with pagination and filtering
@@ -155,30 +162,26 @@ const useProductStore = create<ProductState>((set, get) => ({
       const response = await productService.getProductById(id);
       console.log('product response', response);
 
-      // Check if response exists and has data
-      if (!response || !response.data) {
+      if (!response) {
         set({ loading: false });
-        toast.error('Product not found or invalid data received');
         return null;
       }
 
-      const productData = response.data;
-
       const transformedProduct: ProductAPIResponse = {
-        id: productData.id,
-        name: productData.name,
-        slug: productData.slug,
-        description: productData.description,
-        price: Number(productData.price),
-        cost_per_unit: Number(productData.cost_per_unit),
-        discount: Number(productData.discount),
-        quantity: Number(productData.quantity || 0),
-        image_urls: productData.image_urls || [],
-        is_active: productData.is_active,
-        created_at: productData.created_at,
-        updated_at: productData.updated_at,
-        availability: productData.availability,
-        categories: productData.categories || [], // Store the complete category objects
+        id: response.id,
+        name: response.name,
+        slug: response.slug,
+        description: response.description,
+        price: Number(response.price),
+        cost_per_unit: Number(response.cost_per_unit),
+        discount: Number(response.discount),
+        quantity: Number(response.quantity || 0),
+        image_urls: response.image_urls || [],
+        is_active: response.is_active,
+        created_at: response.created_at,
+        updated_at: response.updated_at,
+        availability: response.availability,
+        categories: response.categories || [],
       };
 
       set({
@@ -190,7 +193,6 @@ const useProductStore = create<ProductState>((set, get) => ({
     } catch (error) {
       console.error('Error loading product:', error);
       toast.error('Failed to load product details');
-
       set({ loading: false });
       return null;
     }
@@ -265,35 +267,31 @@ const useProductStore = create<ProductState>((set, get) => ({
       const response = await productService.updateProduct(id, formData, token);
       console.log('response update product', response);
 
-      if (!response.data) {
+      if (!response) {
         toast.error('Failed to update product');
         set({ submitting: false });
         return null;
       }
 
-      const updatedProductData = response.data;
-
-      // Transform API response to Product type
       const updatedProduct: Product = {
-        id: updatedProductData.id,
-        name: updatedProductData.name,
-        slug: updatedProductData.slug,
-        description: updatedProductData.description,
-        isActive: updatedProductData.is_active,
-        availability: updatedProductData.availability,
+        id: response.id,
+        name: response.name,
+        slug: response.slug,
+        description: response.description,
+        isActive: response.is_active,
+        availability: response.availability,
         categories:
-          updatedProductData.categories?.map((cat: Category) => cat.id) || [],
-        images: updatedProductData.image_urls || [],
-        imageUrls: updatedProductData.image_urls || [],
-        price: Number(updatedProductData.price),
-        discount: Number(updatedProductData.discount),
-        costPerUnit: Number(updatedProductData.cost_per_unit),
-        createdAt: updatedProductData.created_at,
-        updatedAt: updatedProductData.updated_at,
-        quantity: Number(updatedProductData.quantity || 0),
+          response.categories?.map((cat: { id: number }) => cat.id) || [],
+        images: response.image_urls || [],
+        imageUrls: response.image_urls || [],
+        price: Number(response.price),
+        discount: Number(response.discount),
+        costPerUnit: Number(response.cost_per_unit),
+        createdAt: response.created_at,
+        updatedAt: response.updated_at,
+        quantity: Number(response.quantity || 0),
       };
 
-      // Update products list
       set((state) => ({
         products: state.products.map((p) =>
           p.id === updatedProduct.id ? updatedProduct : p

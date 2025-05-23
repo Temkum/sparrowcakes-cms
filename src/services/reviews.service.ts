@@ -1,31 +1,81 @@
 import axiosInstance from '@/services/axiosInstance';
-import { Review } from '@/types/review';
+import { ReviewResponse } from '@/types/review';
+import { useAuthStore } from '@/store/auth';
 
+// Helper function to get auth token
 const getAuthHeader = () => {
-  const token = localStorage.getItem('token');
+  const { token } = useAuthStore.getState();
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 export const createReview = async (
-  review: Partial<Review>
-): Promise<Review> => {
+  review: Partial<ReviewResponse>
+): Promise<ReviewResponse> => {
   try {
     const response = await axiosInstance.post('/reviews', review, {
       headers: getAuthHeader(),
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error creating review:', error);
     throw error;
   }
 };
 
-export const getReviews = async (): Promise<Review[]> => {
+export const getReviews = async ({
+  page = 1,
+  limit = 10,
+  searchTerm = '',
+  sortBy = 'created_at',
+  sortDirection = 'DESC',
+}: {
+  page?: number;
+  limit?: number;
+  searchTerm?: string;
+  sortBy?: string;
+  sortDirection?: 'ASC' | 'DESC';
+} = {}): Promise<{
+  items: ReviewResponse[];
+  total: number;
+  page: number;
+  limit: number;
+}> => {
   try {
-    const response = await axiosInstance.get('/reviews', {
+    const params = {
+      page,
+      limit,
+      searchTerm: searchTerm?.trim(),
+      sortBy,
+      sortDirection,
+    };
+
+    console.log('Reviews service - Request params:', params);
+    const response = await axiosInstance.get<
+      | ReviewResponse[]
+      | { items: ReviewResponse[]; total: number; page: number; limit: number }
+    >('/reviews', {
+      params,
       headers: getAuthHeader(),
     });
-    return response.data;
+    console.log('Reviews service - Raw response:', response);
+
+    // If response is an array, wrap it in the expected format
+    if (Array.isArray(response)) {
+      return {
+        items: response,
+        total: response.length,
+        page: page,
+        limit: limit,
+      };
+    }
+
+    // Fallback for unexpected response format
+    return {
+      items: [],
+      total: 0,
+      page: page,
+      limit: limit,
+    };
   } catch (error) {
     console.error('Error fetching reviews:', error);
     throw error;
@@ -34,12 +84,9 @@ export const getReviews = async (): Promise<Review[]> => {
 
 export const updateReview = async (
   id: number,
-  review: Partial<Review>
-): Promise<Review> => {
+  review: Partial<ReviewResponse>
+): Promise<ReviewResponse> => {
   try {
-    if (!id) {
-      throw new Error('Review ID is required for update');
-    }
     const response = await axiosInstance.put(`/reviews/${id}`, review, {
       headers: getAuthHeader(),
     });
@@ -52,9 +99,6 @@ export const updateReview = async (
 
 export const deleteReview = async (id: number): Promise<void> => {
   try {
-    if (!id) {
-      throw new Error('Review ID is required for deletion');
-    }
     await axiosInstance.delete(`/reviews/${id}`, {
       headers: getAuthHeader(),
     });

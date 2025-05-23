@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { X, Plus } from 'lucide-react';
-import axios from 'axios';
+import axiosInstance from '@/services/axiosInstance';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
 
 // Import the Category interface from the types
 interface Category {
@@ -18,8 +19,8 @@ interface Category {
 interface DynamicCategoriesProps {
   name: string;
   label: string;
-  value: number[];
-  onChange: (value: number[]) => void;
+  value?: number[];
+  onChange: (categories: number[]) => void;
   isRequired?: boolean;
 }
 
@@ -40,38 +41,17 @@ export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        // Use the proper API endpoint based on your environment
-        const API_URL = import.meta.env.VITE_API_BASE_URL || '';
-        const response = await axios.get(`${API_URL}/categories`);
-        
-        if (response.data && Array.isArray(response.data)) {
+        const response = await axiosInstance.get('/categories');
+
+        if (response && Array.isArray(response.data)) {
           setCategories(response.data);
-        } else if (response.data && Array.isArray(response.data.categories)) {
-          // Handle case where categories might be nested in response
-          setCategories(response.data.categories);
         } else {
-          console.error('Unexpected categories response format:', response.data);
-          // Fallback with mock data - only in development
-          if (import.meta.env.DEV) {
-            setCategories([
-              { id: 129, name: 'Classic Cakes' },
-              { id: 141, name: 'Fondant Cakes' },
-              { id: 142, name: 'Test category' },
-              { id: 143, name: 'Test category' },
-            ]);
-          }
+          console.error('Unexpected categories response format:', response);
+          toast.error('Failed to load categories');
         }
       } catch (error) {
         console.error('Failed to fetch categories:', error);
-        // Fallback with mock data - only in development
-        if (import.meta.env.DEV) {
-          setCategories([
-            { id: 129, name: 'Classic Cakes' },
-            { id: 141, name: 'Fondant Cakes' },
-            { id: 142, name: 'Test category' },
-            { id: 143, name: 'Test category' },
-          ]);
-        }
+        toast.error('Failed to load categories');
       } finally {
         setLoading(false);
       }
@@ -98,23 +78,25 @@ export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
     if (!newCategory.trim()) return;
 
     try {
-      // In a real app, this would be an API call to create a new category
-      const newCategoryObj = {
-        id: Date.now(), // Generate temporary numeric ID
+      const response = await axiosInstance.post('/categories', {
         name: newCategory.trim(),
-      };
+      });
 
-      // Add to local state
-      setCategories((prev) => [...prev, newCategoryObj]);
+      if (response && response.data) {
+        // Add to local state
+        setCategories((prev) => [...prev, response.data]);
 
-      // Select the new category
-      onChange([...value, newCategoryObj.id]);
+        // Select the new category
+        onChange([...value, response.data.id]);
 
-      // Reset form
-      setNewCategory('');
-      setShowAddForm(false);
+        // Reset form
+        setNewCategory('');
+        setShowAddForm(false);
+        toast.success('Category added successfully');
+      }
     } catch (error) {
       console.error('Failed to add category:', error);
+      toast.error('Failed to add category');
     }
   };
 
@@ -125,7 +107,7 @@ export const DynamicCategories: React.FC<DynamicCategoriesProps> = ({
           {label} {isRequired && <span className="text-red-500">*</span>}
         </label>
       </div>
-      
+
       {loading ? (
         <div className="text-sm text-gray-500">Loading categories...</div>
       ) : (
