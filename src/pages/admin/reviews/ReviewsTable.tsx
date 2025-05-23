@@ -28,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import useProductStore from '@/store/product-store';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ReviewsTableProps {
   reviews: ReviewResponse[];
@@ -57,6 +59,11 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState<number | null>(null);
+  const {
+    loadProduct,
+    currentProduct,
+    loading: productLoading,
+  } = useProductStore();
 
   const filteredReviews = reviews?.filter((review) => {
     const searchTermLower = searchTerm.toLowerCase();
@@ -73,9 +80,12 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
     );
   });
 
-  const handleViewReview = (review: ReviewResponse) => {
+  const handleViewReview = async (review: ReviewResponse) => {
     setSelectedReview(review);
     setIsViewDialogOpen(true);
+    if (review.product?.id) {
+      await loadProduct(review.product.id);
+    }
   };
 
   const confirmDelete = (reviewId: number) => {
@@ -246,13 +256,13 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
 
       {/* View Review Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Review Details</DialogTitle>
           </DialogHeader>
           {selectedReview && (
-            <div className="space-y-4">
-              <div>
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-200">
                   <img
                     src={
@@ -265,17 +275,52 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                     }}
                   />
                 </div>
+                <div>
+                  <h3 className="font-semibold text-lg">
+                    {selectedReview.customer?.name || 'Unknown Customer'}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {selectedReview.customer?.email}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold">Customer</h3>
-                <p>{selectedReview.customer?.name || 'Unknown Customer'}</p>
+
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2">Product</h3>
+                {productLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[200px]" />
+                    <Skeleton className="h-4 w-[150px]" />
+                  </div>
+                ) : currentProduct ? (
+                  <div className="flex items-start gap-4">
+                    {currentProduct.image_urls?.[0] && (
+                      <div className="w-20 h-20 rounded border overflow-hidden">
+                        <img
+                          src={currentProduct.image_urls[0]}
+                          alt={currentProduct.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              '/placeholder.svg';
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-medium">{currentProduct.name}</h4>
+                      <p className="text-sm text-gray-500">
+                        ${currentProduct.price}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Product not found</p>
+                )}
               </div>
-              <div>
-                <h3 className="font-semibold">Product</h3>
-                <p>{selectedReview.product?.name || 'Unknown Product'}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Rating</h3>
+
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2">Rating</h3>
                 <div className="flex items-center gap-2">
                   <StarRating rating={selectedReview.rating} />
                   <span className="text-sm text-gray-500">
@@ -283,41 +328,78 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                   </span>
                 </div>
               </div>
-              <div>
-                <h3 className="font-semibold">Comment</h3>
-                <p className="whitespace-pre-wrap">{selectedReview.comment}</p>
+
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2">Comment</h3>
+                <p className="whitespace-pre-wrap text-gray-700">
+                  {selectedReview.comment}
+                </p>
               </div>
-              <div>
-                <h3 className="font-semibold">Status</h3>
-                <Badge
-                  variant={selectedReview.display ? 'default' : 'outline'}
-                  className={
-                    selectedReview.display ? 'bg-green-500' : 'bg-gray-300'
-                  }
+
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2">Status</h3>
+                <div className="flex gap-2">
+                  <Badge
+                    variant={selectedReview.display ? 'default' : 'outline'}
+                  >
+                    {selectedReview.display ? 'Active' : 'Inactive'}
+                  </Badge>
+                  {selectedReview.is_reported && (
+                    <Badge variant="destructive">Reported</Badge>
+                  )}
+                  {selectedReview.is_approved && (
+                    <Badge variant="default" className="bg-green-500">
+                      Approved
+                    </Badge>
+                  )}
+                  {selectedReview.is_rejected && (
+                    <Badge variant="destructive">Rejected</Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2">Dates</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Created</p>
+                    <p>
+                      {format(
+                        new Date(selectedReview.created_at),
+                        'MMM dd, yyyy'
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Updated</p>
+                    <p>
+                      {format(
+                        new Date(selectedReview.updated_at),
+                        'MMM dd, yyyy'
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsViewDialogOpen(false)}
                 >
-                  {selectedReview.display ? 'Active' : 'Inactive'}
-                </Badge>
-              </div>
-              <div>
-                <h3 className="font-semibold">Date Created</h3>
-                <p>{format(new Date(selectedReview.created_at), 'PPP')}</p>
-              </div>
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsViewDialogOpen(false);
+                    onEdit(selectedReview);
+                  }}
+                >
+                  Edit Review
+                </Button>
+              </DialogFooter>
             </div>
           )}
-          <DialogFooter>
-            <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
-            {selectedReview && (
-              <Button
-                onClick={() => {
-                  setIsViewDialogOpen(false);
-                  onEdit(selectedReview);
-                }}
-                className="bg-orange-500"
-              >
-                Edit
-              </Button>
-            )}
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

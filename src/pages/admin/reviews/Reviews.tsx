@@ -45,8 +45,19 @@ const Reviews: React.FC = () => {
     loadCustomers();
   }, [currentPage, pageSize, fetchReviews, loadProducts, loadCustomers]);
 
-  const handleEdit = (review: ReviewResponse) => {
+  const handleEdit = async (review: ReviewResponse) => {
     setSelectedReview(review);
+    if (products.length === 0) {
+      await loadProducts();
+    }
+    setIsFormOpen(true);
+  };
+
+  const handleAddReview = async () => {
+    setSelectedReview(null);
+    if (products.length === 0) {
+      await loadProducts();
+    }
     setIsFormOpen(true);
   };
 
@@ -85,12 +96,7 @@ const Reviews: React.FC = () => {
       <div className="container mx-auto py-6 space-y-6 px-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Reviews</h1>
-          <Button
-            onClick={() => {
-              setSelectedReview(null);
-              setIsFormOpen(true);
-            }}
-          >
+          <Button onClick={handleAddReview}>
             <Plus className="w-4 h-4 mr-2" />
             Add Review
           </Button>

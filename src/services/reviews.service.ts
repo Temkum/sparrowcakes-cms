@@ -15,7 +15,7 @@ export const createReview = async (
     const response = await axiosInstance.post('/reviews', review, {
       headers: getAuthHeader(),
     });
-    return response;
+    return response as unknown as ReviewResponse;
   } catch (error) {
     console.error('Error creating review:', error);
     throw error;

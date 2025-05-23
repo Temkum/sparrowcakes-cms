@@ -5,7 +5,6 @@ import {
   PaginatedProductsResponse,
   ProductStats,
   ProductAPIResponse,
-  Product,
 } from '@/types/product';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -76,7 +75,13 @@ export const productService = {
   },
 
   // Create a new product
-  async createProduct(productData: FormData, token: string) {
+  async createProduct(
+    productData: FormData,
+    token: string
+  ): Promise<
+    | ProductAPIResponse
+    | { success: boolean; errors: { field: string; message: string }[] }
+  > {
     try {
       const response = await axiosInstance.post(
         `${API_URL}/products`,
@@ -89,7 +94,7 @@ export const productService = {
         }
       );
 
-      return response;
+      return response as unknown as ProductAPIResponse;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {
@@ -126,7 +131,7 @@ export const productService = {
     id: number,
     productData: FormData,
     token: string
-  ): Promise<Product> {
+  ): Promise<ProductAPIResponse> {
     try {
       const response = await axiosInstance.put(
         `${API_URL}/products/${id}`,
@@ -138,7 +143,7 @@ export const productService = {
           },
         }
       );
-      return response as unknown as Product;
+      return response as unknown as ProductAPIResponse;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {

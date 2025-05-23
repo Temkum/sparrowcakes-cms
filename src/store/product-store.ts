@@ -211,22 +211,69 @@ const useProductStore = create<ProductState>((set, get) => ({
         return null;
       }
 
-      const response = await productService.createProduct(formData, token);
-
-      // Update products list
+      const response:
+        | ProductAPIResponse
+        | { success: boolean; errors: { field: string; message: string }[] } =
+        await productService.createProduct(formData, token);
+      // Type guard for error response
+      function isErrorResponse(resp: unknown): resp is {
+        success: boolean;
+        errors: { field: string; message: string }[];
+      } {
+        if (!resp || typeof resp !== 'object') return false;
+        const obj = resp as Record<string, unknown>;
+        return (
+          typeof obj.success === 'boolean' &&
+          Array.isArray(obj.errors) &&
+          obj.errors.every(
+            (err): err is { field: string; message: string } =>
+              typeof err === 'object' &&
+              err !== null &&
+              typeof (err as Record<string, unknown>).field === 'string' &&
+              typeof (err as Record<string, unknown>).message === 'string'
+          )
+        );
+      }
+      if (isErrorResponse(response)) {
+        set({
+          validationErrors: response.errors.map(
+            (err: { field: string; message: string }) => ({
+              field: err.field,
+              message: err.message,
+            })
+          ),
+        });
+        return null;
+      }
+      // Transform API response to Product type
+      const newProduct: Product = {
+        id: response.id,
+        name: response.name,
+        slug: response.slug,
+        description: response.description,
+        isActive: response.is_active,
+        availability: response.availability,
+        categories:
+          response.categories?.map((cat: { id: number }) => cat.id) || [],
+        images: response.image_urls || [],
+        imageUrls: response.image_urls || [],
+        price: Number(response.price),
+        discount: Number(response.discount),
+        costPerUnit: Number(response.cost_per_unit),
+        createdAt: response.created_at,
+        updatedAt: response.updated_at,
+        quantity: Number(response.quantity || 0),
+      };
       set((state) => ({
-        products: [...state.products],
+        products: [...state.products, newProduct],
         submitting: false,
       }));
-
       toast.success('Product created successfully');
-      return response;
+      return newProduct;
     } catch (error) {
       set({ submitting: false });
-
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data;
-
         if (errorData?.validation) {
           set({
             validationErrors: errorData.validation.map(
@@ -242,7 +289,6 @@ const useProductStore = create<ProductState>((set, get) => ({
       } else {
         toast.error('Failed to create product');
       }
-
       console.error('Error creating product:', error);
       return null;
     }
@@ -254,25 +300,19 @@ const useProductStore = create<ProductState>((set, get) => ({
     formData: FormData
   ): Promise<Product | null> => {
     set({ submitting: true, validationErrors: [] });
-
     try {
       const { token } = useAuthStore.getState();
-
       if (!token) {
         toast.error('Authentication token is missing');
         set({ submitting: false });
         return null;
       }
-
-      const response = await productService.updateProduct(id, formData, token);
-      console.log('response update product', response);
-
-      if (!response) {
-        toast.error('Failed to update product');
-        set({ submitting: false });
-        return null;
-      }
-
+      const response: ProductAPIResponse = await productService.updateProduct(
+        id,
+        formData,
+        token
+      );
+      // Transform API response to Product type
       const updatedProduct: Product = {
         id: response.id,
         name: response.name,
@@ -291,22 +331,17 @@ const useProductStore = create<ProductState>((set, get) => ({
         updatedAt: response.updated_at,
         quantity: Number(response.quantity || 0),
       };
-
       set((state) => ({
         products: state.products.map((p) =>
           p.id === updatedProduct.id ? updatedProduct : p
         ),
         submitting: false,
       }));
-
-      toast.success('Product updated successfully');
       return updatedProduct;
     } catch (error) {
       set({ submitting: false });
-
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data;
-
         if (errorData?.validation) {
           set({
             validationErrors: errorData.validation.map(
@@ -322,7 +357,6 @@ const useProductStore = create<ProductState>((set, get) => ({
       } else {
         toast.error('Failed to update product');
       }
-
       console.error('Error updating product:', error);
       return null;
     }
