@@ -2,10 +2,8 @@ import axiosInstance from './axiosInstance';
 import {
   Order,
   OrderFilterProps,
-  OrderResponse,
   OrderStats,
   OrderStatus,
-  ApiOrderResponse,
 } from '@/types/order';
 import { AxiosResponse } from 'axios';
 
@@ -18,54 +16,50 @@ interface OrderHistoryItem {
   notes?: string;
 }
 
-export const orderService = {
+export interface OrderFilter {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  status?: string;
+}
+
+export interface OrderResponse {
+  data: Order[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+class OrderService {
   // Get all orders with pagination and filtering
-  async getOrders(
-    {
-      page = 1,
-      limit = 10,
-      searchTerm = '',
-      sortBy = 'created_at',
-      sortDirection = 'DESC',
-      status,
-    }: OrderFilterProps,
-    token: string
-  ): Promise<OrderResponse> {
-    try {
-      const params = {
-        page,
-        limit,
-        searchTerm: searchTerm?.trim(),
-        sortBy,
-        sortDirection,
-        status,
-      };
+  async getOrders(filter: OrderFilter, token: string): Promise<OrderResponse> {
+    const queryParams = new URLSearchParams();
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, String(value));
+      }
+    });
 
-      // Since axiosInstance already extracts the data, we get ApiOrderResponse directly
-      const response = await axiosInstance.get<ApiOrderResponse>(
-        `${API_URL}/orders`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log('response raw', response);
+    const response = await fetch(`${API_URL}/orders?${queryParams}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      // response is already ApiOrderResponse because axiosInstance extracts the data
-      const { data, meta } = response as unknown as ApiOrderResponse;
-      return {
-        items: data,
-        total: meta.total,
-        page: meta.page,
-        limit: meta.limit,
-        totalPages: meta.totalPages,
-      };
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      throw error;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to fetch orders');
     }
-  },
+
+    return response.json();
+  }
 
   // Get a single order by ID
   async getOrderById(id: string, token: string): Promise<Order> {
@@ -88,7 +82,7 @@ export const orderService = {
       console.error(`Error fetching order with ID ${id}:`, error);
       throw error;
     }
-  },
+  }
 
   // Create a new order
   async createOrder(orderData: Partial<Order>, token: string): Promise<Order> {
@@ -118,7 +112,7 @@ export const orderService = {
       console.error('Error creating order:', error);
       throw error;
     }
-  },
+  }
 
   // Update an existing order
   async updateOrder(
@@ -147,7 +141,7 @@ export const orderService = {
       console.error(`Error updating order with ID ${id}:`, error);
       throw error;
     }
-  },
+  }
 
   // Delete multiple orders
   async deleteOrders(
@@ -174,7 +168,7 @@ export const orderService = {
       console.error('Error deleting orders:', error);
       throw error;
     }
-  },
+  }
 
   // Soft delete one or more orders
   async softDeleteOrders(ids: number[], token: string): Promise<void> {
@@ -200,7 +194,7 @@ export const orderService = {
       console.error('Error soft deleting orders:', error);
       throw error;
     }
-  },
+  }
 
   // Get order statistics
   async getOrderStats(token: string): Promise<OrderStats> {
@@ -219,7 +213,7 @@ export const orderService = {
       console.error('Error fetching order stats:', error);
       throw error;
     }
-  },
+  }
 
   // Update order status
   async updateOrderStatus(
@@ -259,7 +253,7 @@ export const orderService = {
       console.error(`Error updating status for order with ID ${id}:`, error);
       throw error;
     }
-  },
+  }
 
   // Get order history/timeline
   async getOrderHistory(
@@ -285,7 +279,7 @@ export const orderService = {
       console.error(`Error fetching history for order with ID ${id}:`, error);
       throw error;
     }
-  },
+  }
 
   // Add a note to an order
   async addOrderNote(
@@ -317,7 +311,7 @@ export const orderService = {
       console.error(`Error adding note to order with ID ${id}:`, error);
       throw error;
     }
-  },
+  }
 
   // Generate invoice for an order
   async generateInvoice(
@@ -344,7 +338,7 @@ export const orderService = {
       console.error(`Error generating invoice for order with ID ${id}:`, error);
       throw error;
     }
-  },
+  }
 
   // Export orders in different formats
   async exportOrders(
@@ -385,7 +379,7 @@ export const orderService = {
       console.error('Error exporting orders:', error);
       throw error;
     }
-  },
+  }
 
   // Send order confirmation email
   async sendOrderConfirmation(
@@ -423,5 +417,7 @@ export const orderService = {
       );
       throw error;
     }
-  },
-};
+  }
+}
+
+export const orderService = new OrderService();

@@ -30,15 +30,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Filter,
   Columns3,
-  CircleCheck,
   Loader2,
   ArrowDown,
   ArrowUp,
   Download,
+  X,
 } from 'lucide-react';
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
@@ -60,6 +59,7 @@ const OrdersTable: React.FC = () => {
     setFilter,
     loadOrders,
     deleteOrders,
+    resetFilter,
   } = useOrderStore();
 
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
@@ -132,9 +132,6 @@ const OrdersTable: React.FC = () => {
     }
   };
 
-  // Only allow soft delete if at least one order is selected
-  const canSoftDelete = selectedOrders.length > 0;
-
   const handleSoftDelete = async () => {
     if (selectedOrders.length === 0) return;
     setDeleting(true);
@@ -183,23 +180,30 @@ const OrdersTable: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(
-        `/api/orders/export?format=${format}${
-          selectedOrders.length > 0
-            ? `&ids=${selectedOrders.join(',')}`
-            : filter.searchTerm || currentStatus !== 'all'
-            ? '&filtered=true'
-            : ''
-        }`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Build query parameters
+      const queryParams = new URLSearchParams({
+        format,
+        ...(selectedOrders.length > 0
+          ? { ids: selectedOrders.join(',') }
+          : {
+              searchTerm: filter.searchTerm || '',
+              status: filter.status || '',
+              sortBy: filter.sortBy,
+              sortDirection: filter.sortDirection.toUpperCase(),
+              page: '1',
+              limit: '1000', // Export more records when no specific IDs are selected
+            }),
+      });
+
+      const response = await fetch(`/api/orders/export?${queryParams}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
-        throw new Error('Export failed');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Export failed');
       }
 
       const blob = await response.blob();
@@ -215,19 +219,33 @@ const OrdersTable: React.FC = () => {
       toast.success(
         `Successfully exported ${
           selectedOrders.length > 0
-            ? 'selected orders'
-            : filter.searchTerm || currentStatus !== 'all'
+            ? `${selectedOrders.length} selected orders`
+            : filter.searchTerm || filter.status
             ? 'filtered orders'
             : 'all orders'
         }`
       );
     } catch (error) {
       console.error('Export failed:', error);
-      toast.error('Failed to export orders');
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to export orders'
+      );
     } finally {
       setExporting(false);
     }
   };
+
+  const handleClearFilters = () => {
+    resetFilter();
+    setSearchValue('');
+    setCurrentStatus('all');
+  };
+
+  const hasActiveFilters =
+    filter.searchTerm ||
+    filter.status ||
+    filter.sortBy !== 'created_at' ||
+    filter.sortDirection !== 'desc';
 
   return (
     <>
@@ -281,56 +299,27 @@ const OrdersTable: React.FC = () => {
 
       {/* Orders Table and Controls */}
       <Card>
-        <div className="flex justify-between items-center mb-4 p-3">
-          {/* Table Controls */}
-          <div className="flex items-center gap-2">
-            {selectedOrders.length > 0 && (
-              <AlertDialog
-                open={showDeleteDialog}
-                onOpenChange={setShowDeleteDialog}
-              >
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    className="mr-2"
-                    type="button"
-                    disabled={!canSoftDelete}
-                  >
-                    Delete Selected ({selectedOrders.length})
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Delete {selectedOrders.length} order
-                      {selectedOrders.length > 1 ? 's' : ''}?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will delete {selectedOrders.length} orders. This
-                      action is not reversible.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={deleting}>
-                      No, keep
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-red-600 hover:bg-red-700"
-                      onClick={handleSoftDelete}
-                      disabled={deleting}
-                    >
-                      {deleting ? 'Deleting...' : 'Yes, delete'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+        <div className="p-4 flex justify-between items-center">
+          <div className="flex items-center gap-4">
             <Input
               placeholder="Search orders..."
               className="w-[300px]"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
             />
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                className="text-gray-500"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear Filters
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -477,24 +466,20 @@ const OrdersTable: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium
-                        ${
-                          order.status === 'Processing'
-                            ? 'bg-yellow-100 text-orange-600'
-                            : order.status === 'Delivered'
-                            ? 'bg-green-100 text-green-600'
-                            : order.status === 'Shipped'
-                            ? 'bg-blue-100 text-blue-800'
-                            : order.status === 'Cancelled'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          ${
+                            order.status === 'Processing'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : order.status === 'Cancelled'
+                              ? 'bg-red-100 text-red-800'
+                              : order.status === 'Shipped'
+                              ? 'bg-green-100 text-green-800'
+                              : order.status === 'Delivered'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
                       >
-                        {order.status === 'Processing' && '⌛'}
-                        {order.status === 'Delivered' && (
-                          <CircleCheck className="h-4 w-4 mr-1" color="green" />
-                        )}
-                        {order.status === 'Shipped' && '🚚'} {order.status}
+                        {order.status}
                       </span>
                     </TableCell>
                     <TableCell>{order.currency}</TableCell>
@@ -575,6 +560,37 @@ const OrdersTable: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Orders</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedOrders.length} selected
+              order{selectedOrders.length > 1 ? 's' : ''}? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSoftDelete}
+              disabled={deleting}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

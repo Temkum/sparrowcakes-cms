@@ -27,7 +27,16 @@ interface OrderState {
   softDeleteOrders: (ids: number[]) => Promise<void>;
   setFilter: (filter: Partial<OrderState['filter']>) => void;
   loadStats: () => Promise<void>;
+  resetFilter: () => void;
 }
+
+const DEFAULT_FILTER = {
+  page: 1,
+  pageSize: 10,
+  sortBy: 'created_at',
+  sortDirection: 'desc' as const,
+  searchTerm: '',
+};
 
 const useOrderStore = create<OrderState>((set, get) => {
   const getAuthToken = (): string => {
@@ -43,13 +52,7 @@ const useOrderStore = create<OrderState>((set, get) => {
     loading: false,
     submitting: false,
     totalCount: 0,
-    filter: {
-      page: 1,
-      pageSize: 10,
-      sortBy: 'created_at',
-      sortDirection: 'desc',
-      searchTerm: '',
-    },
+    filter: { ...DEFAULT_FILTER },
     stats: {
       totalOrders: 0,
       activeOrders: 0,
@@ -76,90 +79,68 @@ const useOrderStore = create<OrderState>((set, get) => {
         const cleanFilter = {
           page: filter.page,
           limit: filter.pageSize,
-          searchTerm: filter.searchTerm?.trim() || undefined,
+          search: filter.searchTerm?.trim() || undefined,
           sortBy: filter.sortBy,
-          sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+          sortOrder: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
           status: filter.status,
         };
 
-        console.log('Order store - Loading orders with filter:', cleanFilter);
         const response = await orderService.getOrders(cleanFilter, token);
-        console.log('Order store - Received response:', response);
+        const { data: ordersArray, meta } = response;
 
-        // The response is already in the correct format from the service
-        const { items: ordersArray, total: totalCount } = response;
-
-        console.log('Order store - Processed orders array:', ordersArray);
-
-        // Apply client-side filtering if API doesn't support it fully
-        let filteredOrders = ordersArray;
-
-        // Apply status filter if set
-        if (filter.status) {
-          filteredOrders = filteredOrders.filter(
-            (order) => order.status === filter.status
-          );
-        }
-
-        // Apply search filter if set
-        if (filter.searchTerm) {
-          const searchLower = filter.searchTerm.toLowerCase();
-          filteredOrders = filteredOrders.filter(
-            (order) =>
-              order.order_number.toLowerCase().includes(searchLower) ||
-              (order.customer?.name &&
-                order.customer.name.toLowerCase().includes(searchLower)) ||
-              String(order.id).includes(searchLower) ||
-              (order.notes && order.notes.toLowerCase().includes(searchLower))
-          );
-        }
-
-        // Apply sorting
-        filteredOrders.sort((a, b) => {
-          const sortField = filter.sortBy as keyof Order;
-          let aValue = a[sortField];
-          let bValue = b[sortField];
-
-          // Handle special cases for complex fields
-          if (sortField === 'customer' && a.customer && b.customer) {
-            aValue = a.customer.name;
-            bValue = b.customer.name;
-          }
-
-          // Compare values based on their types
-          if (typeof aValue === 'string' && typeof bValue === 'string') {
-            return filter.sortDirection === 'asc'
-              ? aValue.localeCompare(bValue)
-              : bValue.localeCompare(aValue);
-          }
-
-          // Handle dates
-          if (aValue instanceof Date && bValue instanceof Date) {
-            return filter.sortDirection === 'asc'
-              ? aValue.getTime() - bValue.getTime()
-              : bValue.getTime() - aValue.getTime();
-          }
-
-          // Default numeric comparison
-          if (aValue !== undefined && bValue !== undefined) {
-            return filter.sortDirection === 'asc'
-              ? Number(aValue) - Number(bValue)
-              : Number(bValue) - Number(aValue);
-          }
-
-          return 0;
-        });
-
-        console.log('Order store - Setting final orders:', filteredOrders);
         set({
-          orders: filteredOrders,
-          totalCount: totalCount,
+          orders: ordersArray,
+          totalCount: meta.total,
           loading: false,
         });
       } catch (error) {
         console.error('Error loading orders:', error);
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to load orders'
+        );
         set({ loading: false });
       }
+    },
+
+    setFilter: (newFilter) => {
+      set((state) => {
+        // Create a new filter object
+        const updatedFilter = {
+          ...state.filter,
+          ...newFilter,
+        };
+
+        // Handle special case for 'all' status
+        if (newFilter.status === 'all') {
+          updatedFilter.status = undefined;
+        }
+
+        // Ensure search term is always a string
+        updatedFilter.searchTerm =
+          newFilter.searchTerm ?? state.filter.searchTerm;
+
+        // Reset to page 1 if filter criteria change (except page itself)
+        if (
+          newFilter.page === undefined &&
+          (newFilter.status !== undefined ||
+            newFilter.searchTerm !== undefined ||
+            newFilter.sortBy !== undefined ||
+            newFilter.sortDirection !== undefined ||
+            newFilter.pageSize !== undefined)
+        ) {
+          updatedFilter.page = 1;
+        }
+
+        return { filter: updatedFilter };
+      });
+
+      // Trigger a new load after filter update
+      get().loadOrders();
+    },
+
+    resetFilter: () => {
+      set({ filter: { ...DEFAULT_FILTER } });
+      get().loadOrders();
     },
 
     createOrder: async (orderData: Partial<Order>) => {
@@ -258,39 +239,6 @@ const useOrderStore = create<OrderState>((set, get) => {
         console.error('Failed to soft delete orders:', error);
         toast.error('Failed to soft delete orders');
       }
-    },
-
-    setFilter: (newFilter) => {
-      set((state) => {
-        // Create a new filter object
-        const updatedFilter = {
-          ...state.filter,
-          ...newFilter,
-        };
-
-        // Handle special case for 'all' status
-        if (newFilter.status === 'all') {
-          updatedFilter.status = undefined;
-        }
-
-        // Ensure search term is always a string
-        updatedFilter.searchTerm =
-          newFilter.searchTerm ?? state.filter.searchTerm;
-
-        // Reset to page 1 if filter criteria change (except page itself)
-        if (
-          newFilter.page === undefined &&
-          (newFilter.status !== undefined ||
-            newFilter.searchTerm !== undefined ||
-            newFilter.sortBy !== undefined ||
-            newFilter.sortDirection !== undefined ||
-            newFilter.pageSize !== undefined)
-        ) {
-          updatedFilter.page = 1;
-        }
-
-        return { filter: updatedFilter };
-      });
     },
 
     loadStats: async () => {
