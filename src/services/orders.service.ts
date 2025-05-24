@@ -2,8 +2,10 @@ import axiosInstance from './axiosInstance';
 import {
   Order,
   OrderFilterProps,
+  OrderResponse,
   OrderStats,
   OrderStatus,
+  ApiOrderResponse,
 } from '@/types/order';
 import { AxiosResponse } from 'axios';
 
@@ -28,7 +30,7 @@ export const orderService = {
       status,
     }: OrderFilterProps,
     token: string
-  ): Promise<{ items: Order[]; total: number; page: number; limit: number }> {
+  ): Promise<OrderResponse> {
     try {
       const params = {
         page,
@@ -39,52 +41,25 @@ export const orderService = {
         status,
       };
 
-      console.log('Orders service - Request params:', params);
-      const response = await axiosInstance.get<
-        object,
-        Order[] | { items: Order[]; total: number; page: number; limit: number }
-      >(`${API_URL}/orders`, {
-        params,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log('Orders service - Raw response:', response);
-      console.log('Orders service - Response type:', typeof response);
-      console.log('Orders service - Is array:', Array.isArray(response));
+      // Since axiosInstance already extracts the data, we get ApiOrderResponse directly
+      const response = await axiosInstance.get<ApiOrderResponse>(
+        `${API_URL}/orders`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log('response raw', response);
 
-      // If response is an array, wrap it in the expected format
-      if (Array.isArray(response)) {
-        return {
-          items: response,
-          total: response.length,
-          page: page,
-          limit: limit,
-        };
-      }
-
-      // If response is an object with items property
-      if (response && typeof response === 'object' && 'items' in response) {
-        const typedResponse = response as {
-          items: Order[];
-          total?: number;
-          page?: number;
-          limit?: number;
-        };
-        return {
-          items: typedResponse.items || [],
-          total: typedResponse.total || typedResponse.items.length,
-          page: typedResponse.page || page,
-          limit: typedResponse.limit || limit,
-        };
-      }
-
-      // Fallback for unexpected response format
+      // response is already ApiOrderResponse because axiosInstance extracts the data
+      const { data, meta } = response as unknown as ApiOrderResponse;
       return {
-        items: [],
-        total: 0,
-        page: page,
-        limit: limit,
+        items: data,
+        total: meta.total,
+        page: meta.page,
+        limit: meta.limit,
+        totalPages: meta.totalPages,
       };
     } catch (error) {
       console.error('Error fetching orders:', error);

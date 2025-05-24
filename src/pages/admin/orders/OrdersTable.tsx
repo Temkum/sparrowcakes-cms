@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useDebounce } from '@/hooks/useDebounce';
-import useOrderStore from '@/store/order-store';
 import { useAuthStore } from '@/store/auth';
-import { orderService } from '@/services/orders.service';
 import { OrderStatus, Order } from '@/types/order';
 import { toast } from 'react-hot-toast';
+import useOrderStore from '@/store/order-store';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -56,17 +55,12 @@ const OrdersTable: React.FC = () => {
   const {
     orders,
     loading,
-    filter,
     totalCount,
+    filter,
     setFilter,
     loadOrders,
-    softDeleteOrders,
+    deleteOrders,
   } = useOrderStore();
-
-  console.log('OrdersTable - Current orders:', orders);
-  console.log('OrdersTable - Loading state:', loading);
-  console.log('OrdersTable - Filter:', filter);
-  console.log('OrdersTable - Total count:', totalCount);
 
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
   const [currentStatus, setCurrentStatus] = useState<StatusFilter>('all');
@@ -88,17 +82,7 @@ const OrdersTable: React.FC = () => {
   }, [debouncedSearch, filter.searchTerm, setFilter]);
 
   useEffect(() => {
-    const loadOrdersData = async () => {
-      try {
-        console.log('OrdersTable - Loading orders data...');
-        await loadOrders();
-        console.log('OrdersTable - Orders loaded successfully');
-      } catch (error) {
-        console.error('Failed to load orders:', error);
-        toast.error('Failed to load orders');
-      }
-    };
-    loadOrdersData();
+    loadOrders();
   }, [filter, loadOrders]);
 
   // Update status filter state when filter changes from outside this component
@@ -111,6 +95,7 @@ const OrdersTable: React.FC = () => {
     setCurrentStatus(status);
     setFilter({
       status: status === 'all' ? undefined : status,
+      page: 1,
     });
   };
 
@@ -154,12 +139,11 @@ const OrdersTable: React.FC = () => {
     if (selectedOrders.length === 0) return;
     setDeleting(true);
     try {
-      // Send all selected order IDs for soft delete
-      await softDeleteOrders(selectedOrders);
+      await deleteOrders(selectedOrders);
       setSelectedOrders([]);
+      toast.success('Orders deleted successfully');
     } catch (error) {
-      // error toast handled in store
-      console.error('Failed to soft delete orders:', error);
+      console.error('Failed to delete orders:', error);
       toast.error('Failed to delete orders');
     } finally {
       setDeleting(false);
@@ -191,116 +175,55 @@ const OrdersTable: React.FC = () => {
     );
   };
 
-  // Enhanced search filter for client-side fallback (if needed)
-  const filteredOrders = React.useMemo(() => {
-    if (!filter.searchTerm) return orders;
-    const search = filter.searchTerm.toLowerCase();
-    return orders.filter((order) => {
-      // Customer name
-      const customerName = order.customer?.name?.toLowerCase() ?? '';
-      // Order number
-      const orderNumber = String(order.order_number).toLowerCase();
-      // Price (total amount)
-      const totalAmount = (() => {
-        if (!order.items) return '';
-        const itemsTotal = order.items.reduce(
-          (sum, item) => sum + (item.total || item.quantity * item.unit_price),
-          0
-        );
-        const shipping =
-          typeof order.shipping_cost === 'string'
-            ? parseFloat(order.shipping_cost)
-            : order.shipping_cost || 0;
-        return (itemsTotal + shipping).toFixed(2);
-      })();
-      // Shipping cost
-      const shippingCost =
-        typeof order.shipping_cost === 'string'
-          ? order.shipping_cost
-          : order.shipping_cost?.toString() ?? '';
-      // Date
-      const createdAt = order.created_at
-        ? format(new Date(order.created_at), 'yyyy-MM-dd').toLowerCase()
-        : '';
-
-      return (
-        customerName.includes(search) ||
-        orderNumber.includes(search) ||
-        totalAmount.includes(search) ||
-        shippingCost.includes(search) ||
-        createdAt.includes(search)
-      );
-    });
-  }, [orders, filter.searchTerm]);
-
   const handleExport = async (format: 'csv' | 'excel' | 'pdf') => {
     setExporting(true);
     try {
-      // Prepare filter parameters
-      const exportFilter = {
-        searchTerm: filter.searchTerm || undefined,
-        status: currentStatus === 'all' ? undefined : currentStatus,
-        sortBy: filter.sortBy,
-        sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
-        ids: selectedOrders.length > 0 ? selectedOrders : undefined,
-      };
-
-      // Get token from auth store
       const { token } = useAuthStore.getState();
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      const response = await orderService.exportOrders(
-        exportFilter,
-        format,
-        token
+      const response = await fetch(
+        `/api/orders/export?format=${format}${
+          selectedOrders.length > 0
+            ? `&ids=${selectedOrders.join(',')}`
+            : filter.searchTerm || currentStatus !== 'all'
+            ? '&filtered=true'
+            : ''
+        }`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      // Defensive: check if response.data is a Blob
-      if (!(response instanceof Blob)) {
-        throw new Error('Export failed: response is not a file');
+      if (!response.ok) {
+        throw new Error('Export failed');
       }
 
-      // Check for error response masquerading as Blob (e.g. JSON error)
-      if (response.type && response.type.includes('application/json')) {
-        const text = await response.text();
-        const errorJson = JSON.parse(text);
-        throw new Error(errorJson.message || 'Export failed');
-      }
-
-      const blob = response;
-      const filename = `orders_${format === 'excel' ? 'xlsx' : format}_${
-        selectedOrders.length > 0
-          ? 'selected'
-          : filter.searchTerm || currentStatus !== 'all'
-          ? 'filtered'
-          : 'all'
-      }_${new Date().toISOString().split('T')[0]}.${
-        format === 'excel' ? 'xlsx' : format
-      }`;
-
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename;
+      a.download = `orders-${format}-${new Date().toISOString()}.${format}`;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
-      const exportType =
-        selectedOrders.length > 0
-          ? 'selected orders'
-          : filter.searchTerm || currentStatus !== 'all'
-          ? 'filtered orders'
-          : 'all orders';
       toast.success(
-        `Successfully exported ${exportType} as ${format.toUpperCase()}`
+        `Successfully exported ${
+          selectedOrders.length > 0
+            ? 'selected orders'
+            : filter.searchTerm || currentStatus !== 'all'
+            ? 'filtered orders'
+            : 'all orders'
+        }`
       );
     } catch (error) {
-      console.error('Failed to export orders:', error);
-      toast.error((error as Error)?.message || 'Failed to export orders');
+      console.error('Export failed:', error);
+      toast.error('Failed to export orders');
     } finally {
       setExporting(false);
     }
@@ -513,7 +436,7 @@ const OrdersTable: React.FC = () => {
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                 </TableCell>
               </TableRow>
-            ) : filteredOrders.length === 0 ? (
+            ) : orders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center py-8">
                   No orders found
@@ -532,7 +455,7 @@ const OrdersTable: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredOrders.map((order) => {
+              orders.map((order) => {
                 const totalAmount = calculateOrderTotal(order);
                 return (
                   <TableRow key={order.id}>
@@ -638,18 +561,13 @@ const OrdersTable: React.FC = () => {
             </Button>
 
             <div className="text-sm">
-              Page {filter.page} of{' '}
-              {Math.ceil(totalCount / filter.pageSize) || 1}
+              Page {filter.page} of {Math.ceil(totalCount / filter.pageSize)}
             </div>
 
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setFilter({
-                  page: filter.page + 1,
-                })
-              }
+              onClick={() => setFilter({ page: filter.page + 1 })}
               disabled={filter.page >= Math.ceil(totalCount / filter.pageSize)}
             >
               Next

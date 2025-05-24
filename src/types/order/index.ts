@@ -57,7 +57,19 @@ export interface OrderFilterProps {
   ids?: number[];
 }
 
-export interface PaginatedOrdersResponse {
+export interface ApiOrderResponse {
+  data: Order[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+export interface OrderResponse {
   items: Order[];
   total: number;
   page: number;
