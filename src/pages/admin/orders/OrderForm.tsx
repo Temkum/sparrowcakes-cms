@@ -35,15 +35,15 @@ import { ProductSelector } from '../products/productSelector';
 
 const generateOrderNumber = () => {
   const date = new Date();
-  const year = date.getFullYear().toString().slice(-2); // Get last 2 digits of year
-  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month with leading zero
-  const day = date.getDate().toString().padStart(2, '0'); // Day with leading zero
-  const random = Math.floor(Math.random() * 9999)
-    .toString()
-    .padStart(4, '0'); // 4-digit random number
+  const year = date.getFullYear().toString().slice(-2);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
 
-  // Format: ORD-YYMMDD-XXXX (e.g., ORD-250425-0001)
-  return `ORD-${year}${month}${day}-${random}`;
+  // Generate a random 4-digit number
+  const random = Math.floor(1000 + Math.random() * 9000);
+
+  // Format: ORD-YYMMDD-XXXX (e.g., ORD-250425-1234)
+  return `ORD-${day}${month}${year}-${random}`;
 };
 
 interface OrderFormProps {
@@ -111,9 +111,10 @@ export function OrderForm({
     },
   });
 
+  const customerId = form.watch('customer');
+
   // Autofill address fields when customer is selected
   useEffect(() => {
-    const customerId = form.watch('customer');
     if (!customerId) return;
     const selectedCustomer = customers.find((c) => c.id === customerId);
     if (selectedCustomer) {
@@ -121,39 +122,22 @@ export function OrderForm({
       const currentAddress = form.getValues('address');
       const currentCity = form.getValues('city');
       const currentState = form.getValues('state');
-      if (
-        !currentAddress ||
-        currentAddress === '' ||
-        currentAddress === selectedCustomer.address
-      ) {
+      const currentCountry = form.getValues('country');
+
+      if (!currentAddress || currentAddress === '') {
         form.setValue('address', selectedCustomer.address || '');
       }
-      if (
-        !currentCity ||
-        currentCity === '' ||
-        currentCity === selectedCustomer.city
-      ) {
+      if (!currentCity || currentCity === '') {
         form.setValue('city', selectedCustomer.city || '');
       }
-      // If you store state/region in customer, use it; else leave as is
-      if (
-        'state' in selectedCustomer &&
-        (!currentState || currentState === '')
-      ) {
-        // state may not exist on all customer types
+      if (!currentState || currentState === '') {
         form.setValue('state', selectedCustomer.state || '');
       }
-
-      // If you store country in customer, use it; else leave as is
-      if (
-        'country' in selectedCustomer &&
-        (!form.getValues('country') || form.getValues('country') === '')
-      ) {
+      if (!currentCountry || currentCountry === '') {
         form.setValue('country', selectedCustomer.country || '');
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.watch('customer'), customers]);
+  }, [customerId, customers, form]);
 
   const handleSubmit: SubmitHandler<OrderFormValues> = async (data) => {
     try {
