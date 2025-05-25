@@ -343,7 +343,7 @@ class OrderService {
   // Export orders in different formats
   async exportOrders(
     filter: OrderFilterProps,
-    format: 'csv' | 'excel' | 'pdf',
+    format: 'csv' | 'xlsx' | 'pdf',
     token: string
   ): Promise<AxiosResponse<Blob>> {
     try {
@@ -367,7 +367,7 @@ class OrderService {
             Accept:
               format === 'csv'
                 ? 'text/csv'
-                : format === 'excel'
+                : format === 'xlsx'
                 ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 : 'application/pdf',
           },
@@ -381,7 +381,6 @@ class OrderService {
     }
   }
 
-  // Send order confirmation email
   async sendOrderConfirmation(
     id: number,
     emailData: {

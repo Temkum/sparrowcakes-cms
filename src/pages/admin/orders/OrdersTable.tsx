@@ -46,6 +46,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
+import { orderService } from '@/services/orders.service';
 
 type StatusFilter = OrderStatus | 'all';
 
@@ -151,9 +152,9 @@ const OrdersTable: React.FC = () => {
   // Handle sorting
   const handleSort = (columnName: string) => {
     const newDirection =
-      filter.sortBy === columnName && filter.sortDirection === 'asc'
-        ? 'desc'
-        : 'asc';
+      filter.sortBy === columnName && filter.sortDirection === 'ASC'
+        ? 'DESC'
+        : 'ASC';
 
     setFilter({
       sortBy: columnName,
@@ -165,14 +166,14 @@ const OrdersTable: React.FC = () => {
   const renderSortIndicator = (columnName: string) => {
     if (filter.sortBy !== columnName) return null;
 
-    return filter.sortDirection === 'asc' ? (
+    return filter.sortDirection === 'ASC' ? (
       <ArrowUp className="h-4 w-4 inline ml-1" />
     ) : (
       <ArrowDown className="h-4 w-4 inline ml-1" />
     );
   };
 
-  const handleExport = async (format: 'csv' | 'excel' | 'pdf') => {
+  const handleExport = async (format: 'csv' | 'xlsx' | 'pdf') => {
     setExporting(true);
     try {
       const { token } = useAuthStore.getState();
@@ -180,37 +181,35 @@ const OrdersTable: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      // Build query parameters
-      const queryParams = new URLSearchParams({
+      // Prepare filter for export
+      const exportFilter = {
+        ...filter,
+        ids: selectedOrders.length > 0 ? selectedOrders : undefined,
+        limit: selectedOrders.length > 0 ? selectedOrders.length : 1000,
+        page: 1,
+      };
+
+      const response = await orderService.exportOrders(
+        exportFilter,
         format,
-        ...(selectedOrders.length > 0
-          ? { ids: selectedOrders.join(',') }
-          : {
-              searchTerm: filter.searchTerm || '',
-              status: filter.status || '',
-              sortBy: filter.sortBy,
-              sortDirection: filter.sortDirection.toUpperCase(),
-              page: '1',
-              limit: '1000', // Export more records when no specific IDs are selected
-            }),
-      });
-
-      const response = await fetch(`/api/orders/export?${queryParams}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Export failed');
+        token
+      );
+      if (!response || !response.data) {
+        throw new Error('Export failed - no data received');
       }
 
-      const blob = await response.blob();
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'],
+      });
+      const filename = response.headers['content-disposition']
+        ? response.headers['content-disposition']
+            .split('filename=')[1]
+            .replace(/["']/g, '')
+        : `orders-${format}-${new Date().toISOString()}.${format}`;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `orders-${format}-${new Date().toISOString()}.${format}`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -245,7 +244,7 @@ const OrdersTable: React.FC = () => {
     filter.searchTerm ||
     filter.status ||
     filter.sortBy !== 'created_at' ||
-    filter.sortDirection !== 'desc';
+    filter.sortDirection === 'ASC';
 
   return (
     <>
@@ -332,7 +331,7 @@ const OrdersTable: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleExport('excel')}
+              onClick={() => handleExport('xlsx')}
               disabled={exporting}
             >
               <Download className="mr-2 h-4 w-4" />

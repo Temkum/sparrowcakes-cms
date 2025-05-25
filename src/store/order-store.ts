@@ -13,7 +13,7 @@ interface OrderState {
     page: number;
     pageSize: number;
     sortBy: string;
-    sortDirection: 'asc' | 'desc';
+    sortDirection: 'ASC' | 'DESC';
     searchTerm: string;
     status?: OrderStatus;
   };
@@ -34,7 +34,7 @@ const DEFAULT_FILTER = {
   page: 1,
   pageSize: 10,
   sortBy: 'created_at',
-  sortDirection: 'desc' as const,
+  sortDirection: 'DESC' as const,
   searchTerm: '',
 };
 
@@ -81,7 +81,7 @@ const useOrderStore = create<OrderState>((set, get) => {
           limit: filter.pageSize,
           search: filter.searchTerm?.trim() || undefined,
           sortBy: filter.sortBy,
-          sortOrder: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
+          sortOrder: filter.sortDirection,
           status: filter.status,
         };
 
