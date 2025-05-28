@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { orderService } from '@/services/orders.service';
-import { Order, OrderStats, OrderStatus } from '@/types/order';
+import {
+  Order,
+  OrderFilterProps,
+  OrderStats,
+  OrderStatus,
+} from '@/types/order';
 import { toast } from 'react-hot-toast';
 
 interface OrderState {
@@ -18,6 +23,7 @@ interface OrderState {
     status?: OrderStatus;
   };
   stats: OrderStats;
+  selectedOrders: number[];
 
   // Actions
   loadOrders: () => Promise<void>;
@@ -28,6 +34,10 @@ interface OrderState {
   setFilter: (filter: Partial<OrderState['filter']>) => void;
   loadStats: () => Promise<void>;
   resetFilter: () => void;
+  exportOrders: (
+    format: 'csv' | 'xlsx' | 'pdf',
+    selectedIds?: number[]
+  ) => Promise<boolean>;
 }
 
 const DEFAULT_FILTER = {
@@ -52,6 +62,7 @@ const useOrderStore = create<OrderState>((set, get) => {
     loading: false,
     submitting: false,
     totalCount: 0,
+    selectedOrders: [],
     filter: { ...DEFAULT_FILTER },
     stats: {
       totalOrders: 0,
@@ -99,6 +110,97 @@ const useOrderStore = create<OrderState>((set, get) => {
           error instanceof Error ? error.message : 'Failed to load orders'
         );
         set({ loading: false });
+      }
+    },
+
+    exportOrders: async (
+      format: 'csv' | 'xlsx' | 'pdf',
+      selectedIds: number[] = []
+    ) => {
+      console.log('selectedIds store', selectedIds);
+      try {
+        set({ loading: true });
+
+        // Get ALL filtered IDs if nothing is selected
+        const idsToExport =
+          selectedIds.length > 0
+            ? selectedIds
+            : await orderService.getAllFilteredOrdersIds(
+                get().filter,
+                getAuthToken()
+              );
+
+        const blob = await orderService.exportOrders(
+          format,
+          getAuthToken(),
+          idsToExport
+        );
+
+        // Generate filename
+        const filename = `orders_export_${
+          new Date().toISOString().split('T')[0]
+        }.${format}`;
+
+        // Trigger download
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast.success(
+          selectedIds.length > 0
+            ? `Exported ${selectedIds.length} selected orders`
+            : 'Exported all filtered orders'
+        );
+
+        return true;
+      } catch (error) {
+        console.error('Export failed:', error);
+        toast.error('Failed to export orders');
+        return false;
+      } finally {
+        set({ loading: false });
+      }
+    },
+
+    // Add this if you want a "select all" feature
+    selectAllFiltered: async () => {
+      try {
+        const ids = await orderService.getAllFilteredOrdersIds(
+          get().filter,
+          getAuthToken()
+        );
+        set({ selectedOrders: ids });
+        return ids;
+      } catch (error) {
+        console.error('Failed to select all:', error);
+        return [];
+      }
+    },
+
+    getAllFilteredOrdersIds: async (filter: OrderFilterProps) => {
+      try {
+        const token = getAuthToken();
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await orderService.getAllFilteredOrdersIds(
+          filter,
+          token
+        );
+
+        return response;
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to fetch orders'
+        );
+        throw error;
       }
     },
 

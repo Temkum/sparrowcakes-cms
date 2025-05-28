@@ -84,6 +84,56 @@ class OrderService {
     }
   }
 
+  // Get all orders IDs with pagination and filtering
+  async getAllFilteredOrdersIds(
+    filter: OrderFilterProps,
+    token: string
+  ): Promise<number[]> {
+    try {
+      // Convert numeric values to proper types and map to expected parameter names
+      const params: Record<string, string | number | undefined> = {};
+
+      // Map store's filter to API's expected parameters
+      if (filter.page) params.page = Number(filter.page);
+
+      // Use pageSize or fall back to limit
+      const pageSize = filter.pageSize ?? filter.limit;
+      if (pageSize) params.limit = Number(pageSize);
+
+      // Use searchTerm or search
+      const search = filter.searchTerm ?? filter.search;
+      if (search) params.search = search;
+
+      if (filter.sortBy) params.sortBy = filter.sortBy;
+
+      // Map sortDirection to sortOrder
+      const sortOrder = filter.sortOrder ?? filter.sortDirection;
+      if (sortOrder) params.sortOrder = sortOrder;
+
+      if (filter.status) params.status = filter.status;
+
+      // Remove undefined values
+      const cleanParams = Object.fromEntries(
+        Object.entries(params).filter((entry) => entry[1] !== undefined)
+      ) as Record<string, string | number>;
+
+      const response = await axiosInstance.get<number[]>(
+        `${API_URL}/orders/ids`,
+        {
+          params: cleanParams,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      throw error;
+    }
+  }
+
   // Create a new order
   async createOrder(orderData: Partial<Order>, token: string): Promise<Order> {
     try {
@@ -347,21 +397,37 @@ class OrderService {
     token: string
   ): Promise<AxiosResponse<Blob>> {
     try {
-      // Prepare query params
-      const params: Record<string, string> = {
-        format,
+      // Prepare the filter object
+      const exportFilter = {
+        searchTerm: filter.searchTerm?.trim() || undefined,
+        sortBy: filter.sortBy || undefined,
+        sortDirection: filter.sortDirection || undefined,
+        status: filter.status === 'all' ? undefined : filter.status,
+        selectedIds: filter.ids?.length
+          ? filter.ids.map((id) => Number(id)).filter((id) => !isNaN(id))
+          : undefined,
       };
-      if (filter.searchTerm) params.searchTerm = filter.searchTerm.trim();
-      if (filter.sortBy) params.sortBy = filter.sortBy;
-      if (filter.sortDirection) params.sortDirection = filter.sortDirection;
-      if (filter.status) params.status = filter.status;
-      if (filter.ids && filter.ids.length > 0)
-        params.ids = filter.ids.join(',');
 
-      const response = await axiosInstance.get<Blob>(
+      // Remove undefined values
+      const cleanFilter = Object.fromEntries(
+        Object.entries(exportFilter).filter(([, value]) => value !== undefined)
+      );
+
+      const exportRequest = {
+        format,
+        filter: cleanFilter,
+      };
+
+      // Log the export request for debugging
+      console.log(
+        'Export request (frontend):',
+        JSON.stringify(exportRequest, null, 2)
+      );
+
+      const response = await axiosInstance.post<Blob>(
         `${API_URL}/orders/export`,
+        exportRequest,
         {
-          params,
           headers: {
             Authorization: `Bearer ${token}`,
             Accept:
@@ -374,6 +440,7 @@ class OrderService {
           responseType: 'blob',
         }
       );
+
       return response;
     } catch (error) {
       console.error('Error exporting orders:', error);

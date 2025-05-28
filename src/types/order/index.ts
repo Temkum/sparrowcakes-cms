@@ -48,13 +48,18 @@ export interface Order {
 }
 
 export interface OrderFilterProps {
-  page?: number;
-  limit?: number;
-  searchTerm?: string;
+  page: number;
+  pageSize?: number;
+  limit?: number; // Alias for pageSize
+  searchTerm?: string; // For client-side filtering
+  search?: string; // For API requests
   sortBy?: string;
-  sortDirection?: 'ASC' | 'DESC';
+  sortDirection?: 'ASC' | 'DESC'; // Client-side
+  sortOrder?: 'ASC' | 'DESC'; // API parameter
   status?: OrderStatus;
   ids?: number[];
+  startDate?: string | Date;
+  endDate?: string | Date;
 }
 
 export interface ApiOrderResponse {

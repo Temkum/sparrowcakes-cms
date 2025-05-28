@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useAuthStore } from '@/store/auth';
 import { OrderStatus, Order } from '@/types/order';
 import { toast } from 'react-hot-toast';
 import useOrderStore from '@/store/order-store';
@@ -27,15 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Filter,
-  Columns3,
-  Loader2,
-  ArrowDown,
-  ArrowUp,
-  Download,
-  X,
-} from 'lucide-react';
+import { Loader2, ArrowDown, ArrowUp, Download, X } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -46,7 +37,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { orderService } from '@/services/orders.service';
+
 
 type StatusFilter = OrderStatus | 'all';
 
@@ -176,59 +167,11 @@ const OrdersTable: React.FC = () => {
   const handleExport = async (format: 'csv' | 'xlsx' | 'pdf') => {
     setExporting(true);
     try {
-      const { token } = useAuthStore.getState();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Prepare filter for export
-      const exportFilter = {
-        ...filter,
-        ids: selectedOrders.length > 0 ? selectedOrders : undefined,
-        limit: selectedOrders.length > 0 ? selectedOrders.length : 1000,
-        page: 1,
-      };
-
-      const response = await orderService.exportOrders(
-        exportFilter,
-        format,
-        token
-      );
-      if (!response || !response.data) {
-        throw new Error('Export failed - no data received');
-      }
-
-      const blob = new Blob([response.data], {
-        type: response.headers['content-type'],
-      });
-      const filename = response.headers['content-disposition']
-        ? response.headers['content-disposition']
-            .split('filename=')[1]
-            .replace(/["']/g, '')
-        : `orders-${format}-${new Date().toISOString()}.${format}`;
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success(
-        `Successfully exported ${
-          selectedOrders.length > 0
-            ? `${selectedOrders.length} selected orders`
-            : filter.searchTerm || filter.status
-            ? 'filtered orders'
-            : 'all orders'
-        }`
-      );
+          // Use the store's exportOrders method which handles everything
+      await useOrderStore.getState().exportOrders(format, selectedOrders);
     } catch (error) {
       console.error('Export failed:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to export orders'
-      );
+      // Error is already handled in the store
     } finally {
       setExporting(false);
     }
@@ -326,7 +269,7 @@ const OrdersTable: React.FC = () => {
               disabled={exporting}
             >
               <Download className="mr-2 h-4 w-4" />
-              {exporting ? 'Exporting...' : 'Export CSV'}
+              {exporting ? 'Exporting...' : 'CSV'}
             </Button>
             <Button
               variant="outline"
@@ -335,7 +278,7 @@ const OrdersTable: React.FC = () => {
               disabled={exporting}
             >
               <Download className="mr-2 h-4 w-4" />
-              {exporting ? 'Exporting...' : 'Export Excel'}
+              {exporting ? 'Exporting...' : 'Excel'}
             </Button>
             <Button
               variant="outline"
@@ -344,13 +287,7 @@ const OrdersTable: React.FC = () => {
               disabled={exporting}
             >
               <Download className="mr-2 h-4 w-4" />
-              {exporting ? 'Exporting...' : 'Export PDF'}
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Columns3 className="h-4 w-4" />
+              {exporting ? 'Exporting...' : 'PDF'}
             </Button>
           </div>
           <Select
