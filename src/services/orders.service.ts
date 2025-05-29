@@ -392,41 +392,45 @@ class OrderService {
 
   // Export orders in different formats
   async exportOrders(
-    filter: OrderFilterProps,
     format: 'csv' | 'xlsx' | 'pdf',
-    token: string
-  ): Promise<AxiosResponse<Blob>> {
+    token: string,
+    selectedIds?: number[]
+  ): Promise<Blob> {
     try {
-      // Prepare the filter object
-      const exportFilter = {
-        searchTerm: filter.searchTerm?.trim() || undefined,
-        sortBy: filter.sortBy || undefined,
-        sortDirection: filter.sortDirection || undefined,
-        status: filter.status === 'all' ? undefined : filter.status,
-        selectedIds: filter.ids?.length
-          ? filter.ids.map((id) => Number(id)).filter((id) => !isNaN(id))
-          : undefined,
-      };
+      // Prepare the filters object
+      const filters: Record<string, number[] | string | undefined> = {};
 
-      // Remove undefined values
-      const cleanFilter = Object.fromEntries(
-        Object.entries(exportFilter).filter(([, value]) => value !== undefined)
-      );
+      // Add selected IDs if provided
+      if (selectedIds && selectedIds.length > 0) {
+        filters.ids = selectedIds;
+      }
 
-      const exportRequest = {
+      const exportDto = {
         format,
-        filter: cleanFilter,
+        filters,
       };
 
       // Log the export request for debugging
       console.log(
         'Export request (frontend):',
-        JSON.stringify(exportRequest, null, 2)
+        JSON.stringify(exportDto, null, 2)
       );
 
-      const response = await axiosInstance.post<Blob>(
-        `${API_URL}/orders/export`,
-        exportRequest,
+      // First, request the export to be generated
+      const exportResponse = await axiosInstance.post<{
+        success: boolean;
+        fileName: string;
+        downloadUrl: string;
+      }>(`${API_URL}/export/orders`, exportDto, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Then download the file using the provided URL
+      const downloadResponse = await axiosInstance.get<Blob>(
+        exportResponse.data.downloadUrl,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -441,7 +445,7 @@ class OrderService {
         }
       );
 
-      return response;
+      return downloadResponse.data;
     } catch (error) {
       console.error('Error exporting orders:', error);
       throw error;

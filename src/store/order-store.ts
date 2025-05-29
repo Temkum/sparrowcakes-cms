@@ -121,19 +121,20 @@ const useOrderStore = create<OrderState>((set, get) => {
       try {
         set({ loading: true });
 
-        // Get ALL filtered IDs if nothing is selected
-        const idsToExport =
-          selectedIds.length > 0
-            ? selectedIds
-            : await orderService.getAllFilteredOrdersIds(
-                get().filter,
-                getAuthToken()
-              );
+        // Get ALL filtered IDs if nothing is selected and we need them
+        let idsToExport = selectedIds;
+        if (selectedIds.length === 0 && get().filter.searchTerm) {
+          idsToExport = await orderService.getAllFilteredOrdersIds(
+            get().filter,
+            getAuthToken()
+          );
+        }
 
+        // Call the updated service method
         const blob = await orderService.exportOrders(
           format,
           getAuthToken(),
-          idsToExport
+          idsToExport.length > 0 ? idsToExport : undefined
         );
 
         // Generate filename

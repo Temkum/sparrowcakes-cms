@@ -26,7 +26,16 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, ArrowDown, ArrowUp, Download, X } from 'lucide-react';
+import {
+  Loader2,
+  ArrowDown,
+  ArrowUp,
+  Download,
+  X,
+  FileText,
+  FileSpreadsheet,
+  FileSpreadsheetIcon,
+} from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -37,7 +46,13 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Progress } from '@/components/ui/progress';
 
 type StatusFilter = OrderStatus | 'all';
 
@@ -52,6 +67,7 @@ const OrdersTable: React.FC = () => {
     loadOrders,
     deleteOrders,
     resetFilter,
+    exportOrders,
   } = useOrderStore();
 
   const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
@@ -62,6 +78,10 @@ const OrdersTable: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportFormat, setExportFormat] = useState<
+    'csv' | 'xlsx' | 'pdf' | null
+  >(null);
 
   // Effect for debounced search
   useEffect(() => {
@@ -164,16 +184,49 @@ const OrdersTable: React.FC = () => {
     );
   };
 
+  // Enhanced export handler with progress tracking
   const handleExport = async (format: 'csv' | 'xlsx' | 'pdf') => {
     setExporting(true);
+    setExportFormat(format);
+    setExportProgress(0);
+
     try {
-          // Use the store's exportOrders method which handles everything
-      await useOrderStore.getState().exportOrders(format, selectedOrders);
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setExportProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      // Use the store's exportOrders method
+      const success = await exportOrders(format, selectedOrders);
+
+      clearInterval(progressInterval);
+      setExportProgress(100);
+
+      if (success) {
+        toast.success(
+          `Successfully exported ${
+            selectedOrders.length > 0
+              ? `${selectedOrders.length} selected orders`
+              : 'all filtered orders'
+          } as ${format.toUpperCase()}`
+        );
+      }
     } catch (error) {
       console.error('Export failed:', error);
-      // Error is already handled in the store
+      toast.error(`Failed to export orders as ${format.toUpperCase()}`);
     } finally {
-      setExporting(false);
+      // Reset export state after a short delay
+      setTimeout(() => {
+        setExporting(false);
+        setExportProgress(0);
+        setExportFormat(null);
+      }, 1500);
     }
   };
 
@@ -189,6 +242,30 @@ const OrdersTable: React.FC = () => {
     filter.sortBy !== 'created_at' ||
     filter.sortDirection === 'ASC';
 
+  /*   const getExportButtonText = (format: 'csv' | 'xlsx' | 'pdf') => {
+    if (exporting && exportFormat === format) {
+      return `Exporting... ${exportProgress}%`;
+    }
+    return format.toUpperCase();
+  };
+
+  const getExportIcon = (format: 'csv' | 'xlsx' | 'pdf') => {
+    if (exporting && exportFormat === format) {
+      return <Loader2 className="mr-2 h-4 w-4 animate-spin" />;
+    }
+
+    switch (format) {
+      case 'csv':
+        return <FileText className="mr-2 h-4 w-4" />;
+      case 'xlsx':
+        return <FileSpreadsheetIcon className="mr-2 h-4 w-4" />;
+      case 'pdf':
+        return <FileText className="mr-2 h-4 w-4" />;
+      default:
+        return <Download className="mr-2 h-4 w-4" />;
+    }
+  };
+ */
   return (
     <>
       {/* Status Filters */}
@@ -251,62 +328,120 @@ const OrdersTable: React.FC = () => {
             />
             {hasActiveFilters && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={handleClearFilters}
                 className="text-gray-500"
               >
-                <X className="h-4 w-4 mr-2" />
+                <X className="h-4 w-4 mr-1" />
                 Clear Filters
               </Button>
             )}
           </div>
+
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExport('csv')}
-              disabled={exporting}
+            {/* Export Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exporting}
+                  className="flex items-center gap-2"
+                >
+                  {exporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Export
+                      {selectedOrders.length > 0 && (
+                        <span className="ml-1 bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded-full">
+                          {selectedOrders.length}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => handleExport('csv')}
+                  disabled={exporting}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleExport('xlsx')}
+                  disabled={exporting}
+                  className="flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Export as Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleExport('pdf')}
+                  disabled={exporting}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Bulk Actions for Selected Orders */}
+            {selectedOrders.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                className="flex items-center gap-2"
+              >
+                Delete ({selectedOrders.length})
+              </Button>
+            )}
+
+            <Select
+              value={String(filter.pageSize)}
+              onValueChange={(value) =>
+                setFilter({ pageSize: Number(value), page: 1 })
+              }
             >
-              <Download className="mr-2 h-4 w-4" />
-              {exporting ? 'Exporting...' : 'CSV'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExport('xlsx')}
-              disabled={exporting}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              {exporting ? 'Exporting...' : 'Excel'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExport('pdf')}
-              disabled={exporting}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              {exporting ? 'Exporting...' : 'PDF'}
-            </Button>
+              <SelectTrigger className="w-[70px]">
+                <SelectValue placeholder="Per page" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Select
-            value={String(filter.pageSize)}
-            onValueChange={(value) =>
-              setFilter({ pageSize: Number(value), page: 1 })
-            }
-          >
-            <SelectTrigger className="w-[70px]">
-              <SelectValue placeholder="Per page" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
+
+        {/* Export Progress Bar */}
+        {exporting && (
+          <div className="px-4 pb-4">
+            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+              <span>
+                Exporting{' '}
+                {selectedOrders.length > 0
+                  ? `${selectedOrders.length} selected orders`
+                  : 'all filtered orders'}{' '}
+                as {exportFormat?.toUpperCase()}...
+              </span>
+              <span>{exportProgress}%</span>
+            </div>
+            <Progress value={exportProgress} className="h-2" />
+          </div>
+        )}
 
         <Table>
           <TableHeader>
@@ -409,9 +544,9 @@ const OrdersTable: React.FC = () => {
                               : order.status === 'Cancelled'
                               ? 'bg-red-100 text-red-800'
                               : order.status === 'Shipped'
-                              ? 'bg-green-100 text-green-800'
-                              : order.status === 'Delivered'
                               ? 'bg-blue-100 text-blue-800'
+                              : order.status === 'Delivered'
+                              ? 'bg-green-100 text-green-800'
                               : 'bg-gray-100 text-gray-800'
                           }`}
                       >
@@ -462,6 +597,11 @@ const OrdersTable: React.FC = () => {
         <div className="flex justify-between items-center p-4 border-t">
           <div className="text-sm text-gray-500">
             Showing {orders.length} of {totalCount} orders
+            {selectedOrders.length > 0 && (
+              <span className="ml-2 text-orange-600 font-medium">
+                ({selectedOrders.length} selected)
+              </span>
+            )}
             {filter.pageSize < totalCount && (
               <>
                 {' '}

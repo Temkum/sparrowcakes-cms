@@ -198,7 +198,11 @@ const OrdersPage: React.FC = () => {
           </Link>
         </div>
 
-        <ErrorBoundary fallback={<ErrorFallback error={new Error('Failed to load statistics')} />}>
+        <ErrorBoundary
+          fallback={
+            <ErrorFallback error={new Error('Failed to load statistics')} />
+          }
+        >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             {Object.entries(statCardContent).map(([key, content]) => (
               <React.Fragment key={key}>
@@ -208,7 +212,7 @@ const OrdersPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card className="p-4">
+            <Card className="p-4 max-h-[200px] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4" id="top-products">
                 Top Products
               </h3>
@@ -226,7 +230,7 @@ const OrdersPage: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-4">
+            <Card className="p-4 max-h-[200px] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4" id="top-customers">
                 Top Customers
               </h3>
