@@ -7,8 +7,6 @@ import {
 } from '@/types/order';
 import { AxiosResponse } from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
-
 interface OrderHistoryItem {
   timestamp: string;
   status: OrderStatus;
@@ -39,45 +37,32 @@ export interface OrderResponse {
 
 class OrderService {
   // Get all orders with pagination and filtering
-  async getOrders(filter: OrderFilter, token: string): Promise<OrderResponse> {
-    const queryParams = new URLSearchParams();
-    Object.entries(filter).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') {
-        queryParams.append(key, String(value));
-      }
-    });
+  async getOrders(filter: OrderFilter): Promise<OrderResponse> {
+    try {
+      const queryParams = Object.entries(filter)
+        .filter(([, value]) => value !== undefined && value !== '')
+        .reduce((params, [key, value]) => {
+          params[key] = String(value);
+          return params;
+        }, {} as Record<string, string>);
 
-    const response = await fetch(`${API_URL}/orders?${queryParams}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch orders');
+      return await axiosInstance.get<object, OrderResponse>('/orders', {
+        params: queryParams,
+      });
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      throw error;
     }
-
-    return response.json();
   }
 
   // Get a single order by ID
-  async getOrderById(id: string, token: string): Promise<Order> {
+  async getOrderById(id: string): Promise<Order> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
       }
 
-      const response = await axiosInstance.get<object, Order>(
-        `${API_URL}/orders/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      return response;
+      return await axiosInstance.get<object, Order>(`/orders/${id}`);
     } catch (error) {
       console.error(`Error fetching order with ID ${id}:`, error);
       throw error;
@@ -85,10 +70,7 @@ class OrderService {
   }
 
   // Get all orders IDs with pagination and filtering
-  async getAllFilteredOrdersIds(
-    filter: OrderFilterProps,
-    token: string
-  ): Promise<number[]> {
+  async getAllFilteredOrdersIds(filter: OrderFilterProps): Promise<number[]> {
     try {
       // Convert numeric values to proper types and map to expected parameter names
       const params: Record<string, string | number | undefined> = {};
@@ -117,17 +99,9 @@ class OrderService {
         Object.entries(params).filter((entry) => entry[1] !== undefined)
       ) as Record<string, string | number>;
 
-      const response = await axiosInstance.get<number[]>(
-        `${API_URL}/orders/ids`,
-        {
-          params: cleanParams,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      return response.data;
+      return await axiosInstance.get<object, number[]>('/orders/ids', {
+        params: cleanParams,
+      });
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;
@@ -135,7 +109,7 @@ class OrderService {
   }
 
   // Create a new order
-  async createOrder(orderData: Partial<Order>, token: string): Promise<Order> {
+  async createOrder(orderData: Partial<Order>): Promise<Order> {
     try {
       // Validate required fields
       if (!orderData.order_number) {
@@ -146,18 +120,7 @@ class OrderService {
         throw new Error('Order must contain at least one item');
       }
 
-      const response = await axiosInstance.post<object, Order>(
-        `${API_URL}/orders`,
-        orderData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      return response;
+      return await axiosInstance.post<object, Order>('/orders', orderData);
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -165,28 +128,16 @@ class OrderService {
   }
 
   // Update an existing order
-  async updateOrder(
-    id: number,
-    orderData: Partial<Order>,
-    token: string
-  ): Promise<Order> {
+  async updateOrder(id: number, orderData: Partial<Order>): Promise<Order> {
     try {
       if (!id) {
         throw new Error('Order ID is required for update');
       }
 
-      const response = await axiosInstance.put<object, Order>(
-        `${API_URL}/orders/${id}`,
-        orderData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      return await axiosInstance.patch<object, Order>(
+        `/orders/${id}`,
+        orderData
       );
-
-      return response;
     } catch (error) {
       console.error(`Error updating order with ID ${id}:`, error);
       throw error;
@@ -194,26 +145,18 @@ class OrderService {
   }
 
   // Delete multiple orders
-  async deleteOrders(
-    ids: number[],
-    token: string
-  ): Promise<{ success: boolean }> {
+  async deleteOrders(ids: number[]): Promise<{ success: boolean }> {
     try {
       if (!ids.length) {
         throw new Error('No order IDs provided for deletion');
       }
 
-      const response = await axiosInstance.delete<object, { success: boolean }>(
-        `${API_URL}/orders`,
+      return await axiosInstance.delete<object, { success: boolean }>(
+        '/orders',
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
           data: { ids },
         }
       );
-
-      return response;
     } catch (error) {
       console.error('Error deleting orders:', error);
       throw error;
@@ -221,23 +164,18 @@ class OrderService {
   }
 
   // Soft delete one or more orders
-  async softDeleteOrders(ids: number[], token: string): Promise<void> {
-    // Convert all ids to integers and filter out invalid ones
-    const validIds = ids
-      .map((id) => Number(id))
-      .filter((id) => Number.isInteger(id) && id > 0);
-
-    if (!Array.isArray(validIds) || validIds.length === 0) {
-      throw new Error('No valid order IDs provided for soft delete');
-    }
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
+  async softDeleteOrders(ids: number[]): Promise<void> {
     try {
-      await axiosInstance.delete(`${API_URL}/orders`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      // Convert all ids to integers and filter out invalid ones
+      const validIds = ids
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id > 0);
+
+      if (!Array.isArray(validIds) || validIds.length === 0) {
+        throw new Error('No valid order IDs provided for soft delete');
+      }
+
+      await axiosInstance.delete('/orders', {
         data: { ids: validIds },
       });
     } catch (error) {
@@ -247,18 +185,9 @@ class OrderService {
   }
 
   // Get order statistics
-  async getOrderStats(token: string): Promise<OrderStats> {
+  async getOrderStats(): Promise<OrderStats> {
     try {
-      const response = await axiosInstance.get<object, OrderStats>(
-        `${API_URL}/orders/stats`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      return response;
+      return await axiosInstance.get<object, OrderStats>('/orders/stats');
     } catch (error) {
       console.error('Error fetching order stats:', error);
       throw error;
@@ -266,11 +195,7 @@ class OrderService {
   }
 
   // Update order status
-  async updateOrderStatus(
-    id: number,
-    status: OrderStatus,
-    token: string
-  ): Promise<Order> {
+  async updateOrderStatus(id: number, status: OrderStatus): Promise<Order> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
@@ -288,17 +213,9 @@ class OrderService {
         throw new Error('Invalid order status');
       }
 
-      const response = await axiosInstance.patch<object, Order>(
-        `${API_URL}/orders/${id}/status`,
-        { status },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      return response;
+      return await axiosInstance.patch<object, Order>(`/orders/${id}/status`, {
+        status,
+      });
     } catch (error) {
       console.error(`Error updating status for order with ID ${id}:`, error);
       throw error;
@@ -306,25 +223,15 @@ class OrderService {
   }
 
   // Get order history/timeline
-  async getOrderHistory(
-    id: number,
-    token: string
-  ): Promise<OrderHistoryItem[]> {
+  async getOrderHistory(id: number): Promise<OrderHistoryItem[]> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
       }
 
-      const response = await axiosInstance.get<object, OrderHistoryItem[]>(
-        `${API_URL}/orders/${id}/history`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      return await axiosInstance.get<object, OrderHistoryItem[]>(
+        `/orders/${id}/history`
       );
-
-      return response;
     } catch (error) {
       console.error(`Error fetching history for order with ID ${id}:`, error);
       throw error;
@@ -332,11 +239,7 @@ class OrderService {
   }
 
   // Add a note to an order
-  async addOrderNote(
-    id: number,
-    note: string,
-    token: string
-  ): Promise<{ success: boolean }> {
+  async addOrderNote(id: number, note: string): Promise<{ success: boolean }> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
@@ -346,17 +249,10 @@ class OrderService {
         throw new Error('Note content is required');
       }
 
-      const response = await axiosInstance.post<object, { success: boolean }>(
-        `${API_URL}/orders/${id}/notes`,
-        { content: note },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      return await axiosInstance.post<object, { success: boolean }>(
+        `/orders/${id}/notes`,
+        { content: note }
       );
-
-      return response;
     } catch (error) {
       console.error(`Error adding note to order with ID ${id}:`, error);
       throw error;
@@ -364,26 +260,15 @@ class OrderService {
   }
 
   // Generate invoice for an order
-  async generateInvoice(
-    id: number,
-    token: string
-  ): Promise<AxiosResponse<Blob>> {
+  async generateInvoice(id: number): Promise<AxiosResponse<Blob>> {
     try {
       if (!id) {
         throw new Error('Order ID is required');
       }
 
-      const response = await axiosInstance.get<Blob>(
-        `${API_URL}/orders/${id}/invoice`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          responseType: 'blob',
-        }
-      );
-
-      return response;
+      return await axiosInstance.get<Blob>(`/orders/${id}/invoice`, {
+        responseType: 'blob',
+      });
     } catch (error) {
       console.error(`Error generating invoice for order with ID ${id}:`, error);
       throw error;
@@ -393,7 +278,6 @@ class OrderService {
   // Export orders in different formats
   async exportOrders(
     format: 'csv' | 'xlsx' | 'pdf',
-    token: string,
     selectedIds?: number[]
   ): Promise<Blob> {
     try {
@@ -417,23 +301,22 @@ class OrderService {
       );
 
       // First, request the export to be generated
-      const exportResponse = await axiosInstance.post<{
-        success: boolean;
-        fileName: string;
-        downloadUrl: string;
-      }>(`${API_URL}/export/orders`, exportDto, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const exportResponse = await axiosInstance.post<
+        object,
+        {
+          success: boolean;
+          fileName: string;
+          downloadUrl: string;
+        }
+      >('/export/orders', exportDto);
+
+      console.log('Export response:', exportResponse);
 
       // Then download the file using the provided URL
       const downloadResponse = await axiosInstance.get<Blob>(
-        exportResponse.data.downloadUrl,
+        exportResponse.downloadUrl,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             Accept:
               format === 'csv'
                 ? 'text/csv'
@@ -444,6 +327,7 @@ class OrderService {
           responseType: 'blob',
         }
       );
+      console.log('Download response:', downloadResponse);
 
       return downloadResponse.data;
     } catch (error) {
@@ -458,8 +342,7 @@ class OrderService {
       to: string;
       cc?: string[];
       template?: string;
-    },
-    token: string
+    }
   ): Promise<AxiosResponse<{ success: boolean; messageId?: string }>> {
     try {
       if (!id) {
@@ -470,16 +353,10 @@ class OrderService {
         throw new Error('Recipient email is required');
       }
 
-      const response = await axiosInstance.post<{
+      return await axiosInstance.post<{
         success: boolean;
         messageId?: string;
-      }>(`${API_URL}/orders/${id}/send-confirmation`, emailData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      return response;
+      }>(`/orders/${id}/send-confirmation`, emailData);
     } catch (error) {
       console.error(
         `Error sending confirmation for order with ID ${id}:`,

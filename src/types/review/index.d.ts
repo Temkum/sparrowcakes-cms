@@ -15,7 +15,17 @@ export interface ReviewProps {
   onDelete: (reviewId: number) => void;
 }
 
-export interface ReviewResponse {
+export interface ReviewsResponse {
+  items: ReviewResponseProps[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface ReviewResponseProps {
   id: number;
   rating: number;
   comment: string;
@@ -44,14 +54,17 @@ export interface Customer {
 export interface Product {
   id: number;
   name: string;
+  slug: string;
   description: string;
   price: number;
+  cost_per_unit: number;
   discount: number;
   quantity: number;
+  image_urls: string[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  deleted_at: string | null;
-  image_urls: string[];
-  categories: number[];
+  availability?: string;
+  deleted_at?: string | null;
+  categories?: number[];
 }

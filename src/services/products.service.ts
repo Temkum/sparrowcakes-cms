@@ -7,8 +7,6 @@ import {
   ProductAPIResponse,
 } from '@/types/product';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
-
 export const productService = {
   // Get all products with optional pagination
   async getProducts(
@@ -27,7 +25,7 @@ export const productService = {
       const response = await axiosInstance.get<
         object,
         PaginatedProductsResponse
-      >(`${API_URL}/products`, {
+      >('/products', {
         params: {
           page: Number(page),
           limit: Number(limit),
@@ -55,8 +53,7 @@ export const productService = {
 
   async getProductStats(): Promise<ProductStats> {
     try {
-      const response = await axiosInstance.get(`${API_URL}/products/stats`);
-      return response as unknown as ProductStats;
+      return await axiosInstance.get<object, ProductStats>('/products/stats');
     } catch (error) {
       console.error('Error fetching product stats:', error);
       throw error;
@@ -66,8 +63,7 @@ export const productService = {
   // Get a single product by ID
   async getProductById(id: number): Promise<ProductAPIResponse> {
     try {
-      const response = await axiosInstance.get(`${API_URL}/products/${id}`);
-      return response as unknown as ProductAPIResponse;
+      return await axiosInstance.get<object, ProductAPIResponse>(`/products/${id}`);
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
       throw error;
@@ -76,25 +72,21 @@ export const productService = {
 
   // Create a new product
   async createProduct(
-    productData: FormData,
-    token: string
+    productData: FormData
   ): Promise<
     | ProductAPIResponse
     | { success: boolean; errors: { field: string; message: string }[] }
   > {
     try {
-      const response = await axiosInstance.post(
-        `${API_URL}/products`,
+      return await axiosInstance.post<object, ProductAPIResponse>(
+        '/products',
         productData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
           },
         }
       );
-
-      return response as unknown as ProductAPIResponse;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {
@@ -129,21 +121,18 @@ export const productService = {
 
   async updateProduct(
     id: number,
-    productData: FormData,
-    token: string
+    productData: FormData
   ): Promise<ProductAPIResponse> {
     try {
-      const response = await axiosInstance.put(
-        `${API_URL}/products/${id}`,
+      return await axiosInstance.put<object, ProductAPIResponse>(
+        `/products/${id}`,
         productData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
           },
         }
       );
-      return response as unknown as ProductAPIResponse;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {
@@ -174,15 +163,9 @@ export const productService = {
     }
   },
 
-  async deleteProduct(id: number, token: string) {
+  async deleteProduct(id: number): Promise<{ success: boolean }> {
     try {
-      const response = await axiosInstance.delete(`${API_URL}/products/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      return response;
+      return await axiosInstance.delete<object, { success: boolean }>(`/products/${id}`);
     } catch (error) {
       console.error(`Error deleting product with ID ${id}:`, error);
       throw error;
@@ -190,7 +173,7 @@ export const productService = {
   },
 
   // Bulk delete products
-  async bulkDeleteProducts(ids: number[], token: string) {
+  async bulkDeleteProducts(ids: number[]): Promise<{ success: boolean; deleted: number; errors?: BulkDeletionError[] }> {
     if (!Array.isArray(ids) || ids.length === 0) {
       throw new Error('Invalid input: ids should be a non-empty array.');
     }
@@ -205,15 +188,15 @@ export const productService = {
       }
 
       // Try the most common API format first
-      const response = await axiosInstance.delete(
-        `${API_URL}/products/bulk-delete`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          data: { ids },
-        }
-      );
-
-      return response;
+      return await axiosInstance.delete<
+        object, 
+        { success: boolean; deleted: number; errors?: BulkDeletionError[] }
+      >('/products', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: { ids: validatedIds },
+      });
     } catch (error) {
       console.error('Error in bulkDeleteProducts service:', error);
 

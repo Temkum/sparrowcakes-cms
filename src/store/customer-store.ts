@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { customerService } from '@/services/customers.service';
 import { Customer } from '@/types/customer';
-import { useAuthStore } from './auth';
 import { toast } from 'react-hot-toast';
 
 interface CustomerState {
@@ -53,7 +52,6 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
         sortBy: filter.sortBy,
         sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
       });
-      console.log('response customer store', response);
 
       set({
         customers: response.items,
@@ -75,16 +73,7 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
   createCustomer: async (customerData) => {
     try {
       set({ submitting: true });
-      const { token } = useAuthStore.getState();
-
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await customerService.createCustomer(
-        customerData,
-        token
-      );
+      const response = await customerService.createCustomer(customerData);
 
       const createdCustomer: Customer = response;
 
@@ -108,17 +97,8 @@ const useCustomerStore = create<CustomerState>((set, get) => ({
   updateCustomer: async (id, customerData): Promise<Customer> => {
     try {
       set({ submitting: true });
-      const { token } = useAuthStore.getState();
 
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await customerService.updateCustomer(
-        id,
-        customerData,
-        token
-      );
+      const response = await customerService.updateCustomer(id, customerData);
       const updatedCustomer = response;
 
       set((state) => ({

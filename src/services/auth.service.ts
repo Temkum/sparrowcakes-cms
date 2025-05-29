@@ -1,27 +1,56 @@
 import axios from 'axios';
 import axiosInstance from './axiosInstance';
 
+// Define types for auth responses
+interface LoginResponse {
+  token: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
+interface RegisterResponse {
+  success: boolean;
+  message: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+interface FirebaseLoginResponse {
+  token: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+}
+
 // import from .env file since I'm using vite
-const API_URL = import.meta.env.VITE_API_BASE_URL;
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-export const login = async (data: { email: string; password: string }) => {
-  const response = await axios.post(`${API_URL}/auth/login`, data, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  return response.data;
+export const login = async (data: { email: string; password: string }): Promise<LoginResponse> => {
+  try {
+    return await axiosInstance.post<object, LoginResponse>('/auth/login', data);
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
 };
 
 export const register = async (
   name: string,
   email: string,
   password: string
-) => {
+): Promise<RegisterResponse> => {
   try {
-    const response = await axiosInstance.post(`${API_URL}/auth/register`, {
+    const response = await axiosInstance.post<object, RegisterResponse>('/auth/register', {
       name,
       email,
       password,
@@ -43,14 +72,21 @@ export const register = async (
   }
 };
 
-export const firebaseLogin = async (idToken: string) => {
-  const response = await axios.post(`${API_URL}/firebase`, { idToken });
-  localStorage.setItem('token', response.data.token);
-  return response.data;
+export const firebaseLogin = async (idToken: string): Promise<FirebaseLoginResponse> => {
+  try {
+    const response = await axiosInstance.post<object, FirebaseLoginResponse>('/firebase', { idToken });
+    localStorage.setItem('token', response.token);
+    return response;
+  } catch (error) {
+    console.error('Firebase login error:', error);
+    throw error;
+  }
 };
 
 export const googleLogin = () => {
-  window.location.href = `${API_URL}/google`;
+  // For redirects, we need the full URL from the axiosInstance baseURL
+  const baseURL = axiosInstance.defaults.baseURL || '';
+  window.location.href = `${baseURL}/google`;
 };
 
 export const logout = () => {

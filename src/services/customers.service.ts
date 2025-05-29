@@ -7,8 +7,6 @@ import axiosInstance from './axiosInstance';
 import { Customer } from '@/types/customer';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
-
 export const customerService = {
   // Get all customers with pagination and filtering
   async getCustomers({
@@ -29,23 +27,23 @@ export const customerService = {
       };
 
       // Fetch customers with pagination
-      const response = await axiosInstance.get<object, PaginatedCustomersResponse>(
-        `${API_URL}/customers`,
-        {
-          params: cleanParams,
-          paramsSerializer: (params) => {
-            return Object.entries(params)
-              .filter(
-                ([, value]) =>
-                  value !== undefined && value !== null && value !== ''
-              )
-              .map(
-                ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
-              )
-              .join('&');
-          },
-        }
-      );
+      const response = await axiosInstance.get<
+        object,
+        PaginatedCustomersResponse
+      >('/customers', {
+        params: cleanParams,
+        paramsSerializer: (params) => {
+          return Object.entries(params)
+            .filter(
+              ([, value]) =>
+                value !== undefined && value !== null && value !== ''
+            )
+            .map(
+              ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
+            )
+            .join('&');
+        },
+      });
 
       if (!response) {
         throw new Error('No data received from server');
@@ -64,10 +62,9 @@ export const customerService = {
   },
 
   // Get a single customer by ID
-  async getCustomerById(id: number) {
+  async getCustomerById(id: number): Promise<Customer> {
     try {
-      const response = await axiosInstance.get(`${API_URL}/customers/${id}`);
-      return response.data;
+      return await axiosInstance.get<object, Customer>(`/customers/${id}`);
     } catch (error) {
       console.error(`Error fetching customer with ID ${id}:`, error);
       throw error;
@@ -75,26 +72,15 @@ export const customerService = {
   },
 
   // Create a new customer
-  async createCustomer(customerData: Partial<Customer>, token: string) {
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    // Check if the token is valid
+  async createCustomer(customerData: Partial<Customer>): Promise<Customer> {
     if (!customerData) {
       throw new Error('Invalid customer data');
     }
     try {
-      const response = await axiosInstance.post(
-        `${API_URL}/customers`,
-        customerData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      return await axiosInstance.post<object, Customer>(
+        '/customers',
+        customerData
       );
-      return response.data;
     } catch (error) {
       console.error('Error creating customer:', error);
       throw error;
@@ -104,21 +90,13 @@ export const customerService = {
   // Update an existing customer
   async updateCustomer(
     id: number,
-    customerData: Partial<Customer>,
-    token: string
-  ) {
+    customerData: Partial<Customer>
+  ): Promise<Customer> {
     try {
-      const response = await axiosInstance.put(
-        `${API_URL}/customers/${id}`,
-        customerData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      return await axiosInstance.put<object, Customer>(
+        `/customers/${id}`,
+        customerData
       );
-      return response.data;
     } catch (error) {
       console.error(`Error updating customer with ID ${id}:`, error);
       throw error;
@@ -126,21 +104,17 @@ export const customerService = {
   },
 
   // Delete multiple customers
-  async deleteCustomers(ids: number[], token: string) {
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
+  async deleteCustomers(ids: number[]): Promise<{ success: boolean }> {
     if (!Array.isArray(ids) || ids.length === 0) {
       throw new Error('Invalid customer IDs');
     }
     try {
-      const response = await axiosInstance.delete(`${API_URL}/customers`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        data: { ids },
-      });
-      return response.data;
+      return await axiosInstance.delete<object, { success: boolean }>(
+        '/customers',
+        {
+          data: { ids },
+        }
+      );
     } catch (error) {
       console.error('Error deleting customers:', error);
       throw error;
@@ -150,10 +124,7 @@ export const customerService = {
   // Get customer statistics
   async getCustomerStats(): Promise<CustomerStats> {
     try {
-      const response = await axiosInstance.get<CustomerStats>(
-        `${API_URL}/customers/stats`
-      );
-      return response.data;
+      return await axiosInstance.get<object, CustomerStats>('/customers/stats');
     } catch (error) {
       console.error('Error fetching customer stats:', error);
       throw error;

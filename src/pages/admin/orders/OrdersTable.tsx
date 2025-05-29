@@ -34,7 +34,6 @@ import {
   X,
   FileText,
   FileSpreadsheet,
-  FileSpreadsheetIcon,
 } from 'lucide-react';
 import {
   AlertDialog,
