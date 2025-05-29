@@ -128,7 +128,7 @@ export default function Customers() {
         return;
       }
 
-      await customerService.deleteCustomers(selectedCustomers, token);
+      await customerService.deleteCustomers(selectedCustomers);
       toast.success(
         `${selectedCustomers.length} ${
           selectedCustomers.length > 1 ? 'customers' : 'customer'

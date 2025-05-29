@@ -96,7 +96,7 @@ const useOrderStore = create<OrderState>((set, get) => {
           status: filter.status,
         };
 
-        const response = await orderService.getOrders(cleanFilter, token);
+        const response = await orderService.getOrders(cleanFilter);
         const { data: ordersArray, meta } = response;
 
         set({
@@ -125,15 +125,13 @@ const useOrderStore = create<OrderState>((set, get) => {
         let idsToExport = selectedIds;
         if (selectedIds.length === 0 && get().filter.searchTerm) {
           idsToExport = await orderService.getAllFilteredOrdersIds(
-            get().filter,
-            getAuthToken()
+            get().filter
           );
         }
 
         // Call the updated service method
         const blob = await orderService.exportOrders(
           format,
-          getAuthToken(),
           idsToExport.length > 0 ? idsToExport : undefined
         );
 
@@ -171,10 +169,7 @@ const useOrderStore = create<OrderState>((set, get) => {
     // Add this if you want a "select all" feature
     selectAllFiltered: async () => {
       try {
-        const ids = await orderService.getAllFilteredOrdersIds(
-          get().filter,
-          getAuthToken()
-        );
+        const ids = await orderService.getAllFilteredOrdersIds(get().filter);
         set({ selectedOrders: ids });
         return ids;
       } catch (error) {
@@ -190,10 +185,7 @@ const useOrderStore = create<OrderState>((set, get) => {
           throw new Error('No authentication token found');
         }
 
-        const response = await orderService.getAllFilteredOrdersIds(
-          filter,
-          token
-        );
+        const response = await orderService.getAllFilteredOrdersIds(filter);
 
         return response;
       } catch (error) {
@@ -255,7 +247,7 @@ const useOrderStore = create<OrderState>((set, get) => {
           throw new Error('No authentication token found');
         }
 
-        const response = await orderService.createOrder(orderData, token);
+        const response = await orderService.createOrder(orderData);
 
         await get().loadOrders();
         await get().loadStats();
@@ -279,7 +271,7 @@ const useOrderStore = create<OrderState>((set, get) => {
           throw new Error('No authentication token found');
         }
 
-        const response = await orderService.updateOrder(id, orderData, token);
+        const response = await orderService.updateOrder(id, orderData);
 
         await get().loadOrders();
         await get().loadStats();
@@ -301,7 +293,7 @@ const useOrderStore = create<OrderState>((set, get) => {
           throw new Error('No authentication token found');
         }
 
-        await orderService.deleteOrders(ids, token);
+        await orderService.deleteOrders(ids);
 
         set((state) => ({
           orders: state.orders.filter((order) => !ids.includes(order.id)),
@@ -327,7 +319,7 @@ const useOrderStore = create<OrderState>((set, get) => {
           throw new Error('No order IDs provided for soft delete');
         }
 
-        await orderService.softDeleteOrders(ids, token);
+        await orderService.softDeleteOrders(ids);
 
         // Refresh orders and stats to get latest data
         await get().loadOrders();
@@ -347,8 +339,7 @@ const useOrderStore = create<OrderState>((set, get) => {
     loadStats: async () => {
       set({ loading: true });
       try {
-        const token = getAuthToken();
-        const stats = await orderService.getOrderStats(token);
+        const stats = await orderService.getOrderStats();
         set({ stats, loading: false });
       } catch (error) {
         console.error('Error loading order stats:', error);

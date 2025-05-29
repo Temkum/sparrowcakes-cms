@@ -5,6 +5,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { OrderStatus, Order } from '@/types/order';
 import { toast } from 'react-hot-toast';
 import useOrderStore from '@/store/order-store';
+import { orderService } from '@/services/orders.service';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -51,7 +52,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Progress } from '@/components/ui/progress';
+// Loader2 already imported above
 
 type StatusFilter = OrderStatus | 'all';
 
@@ -77,7 +78,6 @@ const OrdersTable: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(0);
   const [exportFormat, setExportFormat] = useState<
     'csv' | 'xlsx' | 'pdf' | null
   >(null);
@@ -183,49 +183,111 @@ const OrdersTable: React.FC = () => {
     );
   };
 
-  // Enhanced export handler with progress tracking
+  // Client-side export handler similar to customers export
   const handleExport = async (format: 'csv' | 'xlsx' | 'pdf') => {
     setExporting(true);
     setExportFormat(format);
-    setExportProgress(0);
-
+    
     try {
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setExportProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      // Use the store's exportOrders method
-      const success = await exportOrders(format, selectedOrders);
-
-      clearInterval(progressInterval);
-      setExportProgress(100);
-
-      if (success) {
-        toast.success(
-          `Successfully exported ${
-            selectedOrders.length > 0
-              ? `${selectedOrders.length} selected orders`
-              : 'all filtered orders'
-          } as ${format.toUpperCase()}`
-        );
+      // Get orders to export (either selected or all filtered)
+      let ordersToExport: Order[] = [];
+      
+      if (selectedOrders.length > 0) {
+        // Export only selected orders
+        ordersToExport = orders.filter(order => selectedOrders.includes(order.id));
+      } else {
+        // Export all orders from database regardless of pagination
+        try {
+          // Create a filter without pagination limits to get all orders
+          const exportFilter = {
+            // Keep current filters but remove pagination
+            search: filter.searchTerm?.trim() || undefined,
+            sortBy: filter.sortBy,
+            sortOrder: filter.sortDirection,
+            status: filter.status,
+            // Set a very large limit to get all records
+            limit: 10000
+          };
+          
+          // Show loading toast
+          const loadingToast = toast.loading('Loading all orders for export...');
+          
+          // Fetch all orders directly from the service
+          const response = await orderService.getOrders(exportFilter);
+          ordersToExport = response.data;
+          
+          toast.dismiss(loadingToast);
+          toast.success(`Loaded ${ordersToExport.length} orders for export`);
+        } catch (error) {
+          console.error('Error loading all orders for export:', error);
+          toast.error('Failed to load all orders for export');
+          // Fallback to current page orders if loading all fails
+          ordersToExport = orders;
+        }
+      }
+      
+      if (ordersToExport.length === 0) {
+        toast.error('No orders to export');
+        return;
+      }
+      
+      if (format === 'csv') {
+        // Prepare data for CSV export
+        const csvData = ordersToExport.map(order => ({
+          order_number: order.order_number,
+          customer_info: order.customer ? `${order.customer.name} (${order.customer.email})` : 'N/A',
+          status: order.status,
+          total: calculateOrderTotal(order).toFixed(2),
+          items_count: order.items?.length || 0,
+          shipping_cost: typeof order.shipping_cost === 'string' ? order.shipping_cost : order.shipping_cost.toFixed(2),
+          address: order.address,
+          city: order.city,
+          state: order.state,
+          country: order.country,
+          notes: order.notes || 'N/A',
+          created_at: new Date(order.created_at).toLocaleDateString(),
+        }));
+        
+        // Create CSV string
+        const csvString = [
+          Object.keys(csvData[0]).join(','),
+          ...csvData.map(row => Object.values(row).join(','))
+        ].join('\n');
+        
+        // Create and download blob
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        toast.success(`Successfully exported ${ordersToExport.length} orders as CSV`);
+      } else {
+        // For XLSX and PDF, we still need to use the server-side export
+        // as these formats are more complex to generate client-side
+        const success = await exportOrders(format, selectedOrders);
+        
+        if (success) {
+          toast.success(
+            `Successfully exported ${
+              selectedOrders.length > 0
+                ? `${selectedOrders.length} selected orders`
+                : 'all filtered orders'
+            } as ${format.toUpperCase()}`
+          );
+        }
       }
     } catch (error) {
       console.error('Export failed:', error);
       toast.error(`Failed to export orders as ${format.toUpperCase()}`);
     } finally {
-      // Reset export state after a short delay
-      setTimeout(() => {
-        setExporting(false);
-        setExportProgress(0);
-        setExportFormat(null);
-      }, 1500);
+      // Reset export state
+      setExporting(false);
+      setExportFormat(null);
     }
   };
 
@@ -427,18 +489,15 @@ const OrdersTable: React.FC = () => {
 
         {/* Export Progress Bar */}
         {exporting && (
-          <div className="px-4 pb-4">
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-              <span>
-                Exporting{' '}
-                {selectedOrders.length > 0
-                  ? `${selectedOrders.length} selected orders`
-                  : 'all filtered orders'}{' '}
-                as {exportFormat?.toUpperCase()}...
-              </span>
-              <span>{exportProgress}%</span>
-            </div>
-            <Progress value={exportProgress} className="h-2" />
+          <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>
+              Exporting{' '}
+              {selectedOrders.length > 0
+                ? `${selectedOrders.length} selected orders`
+                : 'all filtered orders'}{' '}
+              as {exportFormat?.toUpperCase()}...
+            </span>
           </div>
         )}
 

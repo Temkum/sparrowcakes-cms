@@ -280,18 +280,21 @@ class OrderService {
     format: 'csv' | 'xlsx' | 'pdf',
     selectedIds?: number[]
   ): Promise<Blob> {
+    console.log('Exporting orders with format:', format);
+    console.log('Selected IDs:', selectedIds);
     try {
-      // Prepare the filters object
-      const filters: Record<string, number[] | string | undefined> = {};
+      // Create a filter object with selectedIds if provided
+      const filter: Record<string, number[] | string | undefined> = {};
 
       // Add selected IDs if provided
       if (selectedIds && selectedIds.length > 0) {
-        filters.ids = selectedIds;
+        filter.selectedIds = selectedIds;
       }
 
+      // Create the export DTO that matches the server's expected format
       const exportDto = {
-        format,
-        filters,
+        format, // Include format in the body as well
+        filter,
       };
 
       // Log the export request for debugging
@@ -308,7 +311,7 @@ class OrderService {
           fileName: string;
           downloadUrl: string;
         }
-      >('/export/orders', exportDto);
+      >(`/orders/export/${format}`, exportDto);
 
       console.log('Export response:', exportResponse);
 
@@ -316,14 +319,6 @@ class OrderService {
       const downloadResponse = await axiosInstance.get<Blob>(
         exportResponse.downloadUrl,
         {
-          headers: {
-            Accept:
-              format === 'csv'
-                ? 'text/csv'
-                : format === 'xlsx'
-                ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                : 'application/pdf',
-          },
           responseType: 'blob',
         }
       );
