@@ -12,7 +12,7 @@ const isDevelopment = import.meta.env.ENV === 'development';
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: isDevelopment ? 30000 : 15000, // Longer timeout in dev for debugging
+  timeout: isDevelopment ? 30000 : 15000,
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',

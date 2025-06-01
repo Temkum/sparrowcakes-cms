@@ -53,7 +53,7 @@ const CategoryFormModal = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      isActive: true,
+      isActive: false,
       description: '',
       name: '',
       slug: '',
@@ -69,13 +69,13 @@ const CategoryFormModal = ({
         slug: category.slug,
         description: category.description || '',
         isActive: category.isActive,
-        image: null, // We'll handle the image separately
+        image: null,
       });
       setImagePreview(category.imageUrl || null);
     } else {
       // Reset to defaults for create mode
       form.reset({
-        isActive: true,
+        isActive: false,
         description: '',
         name: '',
         slug: '',
@@ -127,7 +127,7 @@ const CategoryFormModal = ({
 
   const resetForm = () => {
     form.reset({
-      isActive: true,
+      isActive: false,
       description: '',
       name: '',
       slug: '',
@@ -148,23 +148,22 @@ const CategoryFormModal = ({
       }
 
       const values = form.getValues();
-      console.log('Form values:', values);
 
       const formData = new FormData();
       formData.append('name', values.name);
       formData.append('slug', values.slug);
       formData.append('description', values.description || '');
-      formData.append('isActive', String(values.isActive));
+      formData.append('isActive', values.isActive === true ? 'true' : 'false');
 
       if (mode === 'edit') {
         if (isImageRemoved) {
-          formData.append('isImageDeleted', 'true');
-          console.log('Image marked for deletion');
+          formData.append('imageUrl', '');
         } else if (values.image instanceof File) {
+          setIsImageRemoved(false);
           formData.append('image', values.image);
-          console.log('New image attached:', values.image.name);
         }
       } else if (values.image instanceof File) {
+        setIsImageRemoved(false);
         formData.append('image', values.image);
       }
 

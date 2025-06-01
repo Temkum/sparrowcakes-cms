@@ -30,7 +30,7 @@ const baseProductSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   slug: z.string(),
   description: z.string().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
   availability: z.date(),
   categories: z
     .array(z.number())

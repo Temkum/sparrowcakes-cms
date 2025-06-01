@@ -2,18 +2,18 @@ import { z } from 'zod';
 
 export const formSchema = z.object({
   name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
+    message: 'Name cannot be empty.',
   }),
   slug: z
     .string()
     .min(2, {
-      message: 'Slug must be at least 2 characters.',
+      message: 'Slug is required',
     })
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
       message: 'Slug must contain only lowercase letters, numbers, and hyphens',
     }),
   description: z.string().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
   image: z
     .any()
     .refine(

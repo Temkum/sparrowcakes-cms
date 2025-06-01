@@ -53,8 +53,8 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
         data: categories,
         timestamp: Date.now(),
       });
-
       set({ categories, loading: false });
+
       return categories;
     } catch (error) {
       const errorMessage =
@@ -68,32 +68,14 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
   createCategory: async (categoryData: FormData) => {
     set({ loading: true });
 
-    // Create optimistic update with temporary data
-    const optimisticCategory: CategoryResponse = {
-      id: -Date.now(), // temporary negative ID to avoid conflicts
-      name: categoryData.get('name') as string,
-      slug: (categoryData.get('slug') as string) || '',
-      description: (categoryData.get('description') as string) || '',
-      isActive: categoryData.get('isActive') === 'true',
-      imageUrl: '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // Apply optimistic update
-    set({ categories: [...get().categories, optimisticCategory] });
-
     try {
       const category = await retryOperation(
         () => categoryService.createCategory(categoryData),
         3
       );
 
-      // Update with real data
       set({
-        categories: get().categories.map((c) =>
-          c.id === optimisticCategory.id ? category : c
-        ),
+        categories: [...get().categories, category],
         loading: false,
       });
 
@@ -102,18 +84,13 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
 
       return category;
     } catch (error) {
-      // Revert optimistic update
-      set({
-        categories: get().categories.filter(
-          (c) => c.id !== optimisticCategory.id
-        ),
-        loading: false,
-        error:
-          error instanceof Error ? error.message : 'Failed to create category',
-      });
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to create category';
       console.error('Error creating category:', error);
-      toast.error('Failed to create category');
+      toast.error(errorMessage);
       throw error;
+    } finally {
+      set({ loading: false });
     }
   },
 
@@ -123,57 +100,18 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
   ): Promise<CategoryResponse> => {
     set({ loading: true });
 
-    // Store previous state for rollback
-    const previousCategories = get().categories;
-    const existingCategory = previousCategories.find(
-      (c: CategoryResponse) => c.id === id
-    );
-
-    if (!existingCategory) {
-      set({ loading: false });
-      const error = new Error('Category not found');
-      toast.error(error.message);
-      throw error;
-    }
-
-    // Create updated category for optimistic update
-    const updatedCategory: CategoryResponse = {
-      ...existingCategory,
-      name: categoryData.get('name')?.toString() || '',
-      slug: categoryData.get('slug')?.toString() || '',
-      description: categoryData.get('description')?.toString() || '',
-      isActive: categoryData.get('isActive') === 'true',
-      imageUrl: categoryData.get('image')
-        ? undefined
-        : existingCategory.imageUrl,
-      updated_at: new Date().toISOString(),
-    } as CategoryResponse;
-
-    // Apply optimistic update
-    set({
-      categories: previousCategories.map((c) =>
-        c.id === id ? updatedCategory : c
-      ),
-    });
-
     try {
-      // Send request with FormData directly
-      const category = await retryOperation(
-        () => categoryService.updateCategory(id, categoryData),
-        3
-      );
+      const category = await categoryService.updateCategory(id, categoryData);
 
       return category;
     } catch (error: unknown) {
-      // Revert optimistic update
-      set({ categories: previousCategories, loading: false });
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to update category';
       console.error('Error updating category:', error);
       toast.error(errorMessage);
       throw error;
     } finally {
-      // Invalidate cache
+      set({ loading: false });
       get().cache.clear();
     }
   },
@@ -225,9 +163,7 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     });
 
     try {
-      await retryOperation(async () => {
-        await categoryService.deleteCategories(ids);
-      }, 3);
+      await categoryService.deleteCategories(ids);
 
       // Invalidate cache
       get().cache.clear();

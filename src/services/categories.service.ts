@@ -31,7 +31,7 @@ const categoryService = {
         name: categoryData.get('name') as string,
         slug: categoryData.get('slug') as string,
         description: (categoryData.get('description') as string) || '',
-        isActive: categoryData.get('isActive') === 'true',
+        isActive: categoryData.get('isActive') as unknown as boolean,
         image: categoryData.get('image') as File,
       };
 
@@ -41,7 +41,6 @@ const categoryService = {
       transformedData.append('slug', values.slug);
       transformedData.append('description', values.description);
       transformedData.append('isActive', values.isActive.toString());
-
       // Only append image if it exists
       if (values.image) {
         transformedData.append('image', values.image);
@@ -67,25 +66,14 @@ const categoryService = {
     categoryData: FormData
   ): Promise<CategoryResponse> {
     try {
-      console.log('Updating category with ID:', id);
-      console.log('FormData contents:');
-      for (const [key, value] of categoryData.entries()) {
+      // Log FormData contents for debugging
+      /* for (const [key, value] of categoryData.entries()) {
         console.log(`${key}:`, value);
-      }
-
-      // Transform FormData to handle image deletion
-      const transformedData = new FormData();
-      for (const [key, value] of categoryData.entries()) {
-        if (key === 'imageUrl' && value === '') {
-          transformedData.append('imageUrl', '');
-        } else {
-          transformedData.append(key, value);
-        }
-      }
+      } */
 
       const response = await axiosInstance.patch(
         `${CATEGORIES_ENDPOINT}/${id}`,
-        transformedData,
+        categoryData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -93,7 +81,6 @@ const categoryService = {
         }
       );
 
-      console.log('Update response:', response);
       return response as unknown as CategoryResponse;
     } catch (error) {
       console.error('Service error:', error);
