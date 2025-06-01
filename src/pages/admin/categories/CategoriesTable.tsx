@@ -90,7 +90,16 @@ const CategoriesTable = () => {
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
-      const categories = await useCategoriesStore.getState().loadCategories();
+      const categories = await useCategoriesStore
+        .getState()
+        .getCategoriesPaginated({
+          categories: [],
+          page,
+          limit,
+          search: debouncedSearchTerm,
+          sortBy: sortConfig.field,
+          sortOrder: sortConfig.direction,
+        });
       setTotal(categories.length);
       setCategories(categories);
     } catch (error) {
@@ -99,7 +108,7 @@ const CategoriesTable = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [debouncedSearchTerm, limit, page, sortConfig]);
 
   useEffect(() => {
     fetchCategories();

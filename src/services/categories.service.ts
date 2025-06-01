@@ -112,12 +112,19 @@ const categoryService = {
     search?: string;
     sortBy?: string;
     sortOrder?: 'ASC' | 'DESC';
+    isActive?: boolean;
   }): Promise<CategoryListResponse> {
     try {
-      const response = await axiosInstance.get(
-        `${CATEGORIES_ENDPOINT}/paginated`,
-        { params }
-      );
+      const response = await axiosInstance.get(CATEGORIES_ENDPOINT, {
+        params: {
+          page: params.page || 1,
+          limit: params.limit || 10,
+          search: params.search || undefined,
+          sortBy: params.sortBy || 'name',
+          sortOrder: params.sortOrder || 'ASC',
+          isActive: params.isActive,
+        },
+      });
       return response as unknown as CategoryListResponse;
     } catch (error) {
       throw handleAxiosError(error, 'Error fetching categories');

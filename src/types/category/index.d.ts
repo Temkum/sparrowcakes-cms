@@ -39,6 +39,15 @@ export interface CategoryState {
   ) => Promise<CategoryResponse>;
   deleteCategory: (id: number) => Promise<void>;
   deleteCategories: (ids: number[]) => Promise<void>;
+  getCategoriesPaginated: (params: {
+    categories: CategoryResponse[];
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC';
+    isActive?: boolean;
+  }) => Promise<CategoryResponse[]>;
 }
 
 export interface CategoryRequest {

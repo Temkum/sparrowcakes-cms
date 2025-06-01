@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { CategoryResponse, CategoryState } from '@/types/category';
 
 // Helper function to retry failed operations
-const retryOperation = async <T>(
+/* const retryOperation = async <T>(
   operation: () => Promise<T>,
   maxAttempts = 1,
   delay = 1000
@@ -22,7 +22,7 @@ const retryOperation = async <T>(
   }
 
   throw lastError;
-};
+}; */
 
 const useCategoriesStore = create<CategoryState>((set, get) => ({
   categories: [],
@@ -43,10 +43,7 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
         return cachedData.data;
       }
 
-      const categories = await retryOperation(
-        () => categoryService.getCategories(),
-        3
-      );
+      const categories = await categoryService.getCategories();
 
       // Update cache
       get().cache.set(cacheKey, {
@@ -69,10 +66,7 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     set({ loading: true });
 
     try {
-      const category = await retryOperation(
-        () => categoryService.createCategory(categoryData),
-        3
-      );
+      const category = await categoryService.createCategory(categoryData);
 
       set({
         categories: [...get().categories, category],
@@ -128,9 +122,7 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     });
 
     try {
-      await retryOperation(async () => {
-        await categoryService.deleteCategory(id);
-      }, 3);
+      await categoryService.deleteCategory(id);
 
       // Invalidate cache
       get().cache.clear();
@@ -183,6 +175,30 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
       console.error('Error deleting categories:', error);
       toast.error('Failed to delete categories');
       throw error;
+    }
+  },
+
+  getCategoriesPaginated: async (params: {
+    categories: CategoryResponse[];
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC';
+    isActive?: boolean;
+  }) => {
+    set({ loading: true });
+    try {
+      const categories = await categoryService.getCategoriesPaginated(params);
+      set({ categories: categories.data, loading: false });
+
+      return categories.data;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to load categories';
+      console.error('Error loading categories:', error);
+      set({ loading: false, error: errorMessage });
+      return [];
     }
   },
 }));
