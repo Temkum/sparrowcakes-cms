@@ -35,9 +35,17 @@ interface FirebaseLoginResponse {
 // import from .env file since I'm using vite
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-export const login = async (data: { email: string; password: string }): Promise<LoginResponse> => {
+export const login = async (data: {
+  email: string;
+  password: string;
+}): Promise<LoginResponse> => {
   try {
-    return await axiosInstance.post<object, LoginResponse>('/auth/login', data);
+    const response = await axiosInstance.post<object, LoginResponse>(
+      '/auth/login',
+      data
+    );
+    console.log(response);
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     throw error;
@@ -50,11 +58,14 @@ export const register = async (
   password: string
 ): Promise<RegisterResponse> => {
   try {
-    const response = await axiosInstance.post<object, RegisterResponse>('/auth/register', {
-      name,
-      email,
-      password,
-    });
+    const response = await axiosInstance.post<object, RegisterResponse>(
+      '/auth/register',
+      {
+        name,
+        email,
+        password,
+      }
+    );
 
     if (!response) {
       throw new Error('No response from server');
@@ -72,9 +83,14 @@ export const register = async (
   }
 };
 
-export const firebaseLogin = async (idToken: string): Promise<FirebaseLoginResponse> => {
+export const firebaseLogin = async (
+  idToken: string
+): Promise<FirebaseLoginResponse> => {
   try {
-    const response = await axiosInstance.post<object, FirebaseLoginResponse>('/firebase', { idToken });
+    const response = await axiosInstance.post<object, FirebaseLoginResponse>(
+      '/firebase',
+      { idToken }
+    );
     localStorage.setItem('token', response.token);
     return response;
   } catch (error) {

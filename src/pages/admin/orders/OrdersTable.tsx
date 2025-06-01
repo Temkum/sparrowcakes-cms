@@ -52,7 +52,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-// Loader2 already imported above
 
 type StatusFilter = OrderStatus | 'all';
 
@@ -187,14 +186,16 @@ const OrdersTable: React.FC = () => {
   const handleExport = async (format: 'csv' | 'xlsx' | 'pdf') => {
     setExporting(true);
     setExportFormat(format);
-    
+
     try {
       // Get orders to export (either selected or all filtered)
       let ordersToExport: Order[] = [];
-      
+
       if (selectedOrders.length > 0) {
         // Export only selected orders
-        ordersToExport = orders.filter(order => selectedOrders.includes(order.id));
+        ordersToExport = orders.filter((order) =>
+          selectedOrders.includes(order.id)
+        );
       } else {
         // Export all orders from database regardless of pagination
         try {
@@ -206,16 +207,18 @@ const OrdersTable: React.FC = () => {
             sortOrder: filter.sortDirection,
             status: filter.status,
             // Set a very large limit to get all records
-            limit: 10000
+            limit: 10000,
           };
-          
+
           // Show loading toast
-          const loadingToast = toast.loading('Loading all orders for export...');
-          
+          const loadingToast = toast.loading(
+            'Loading all orders for export...'
+          );
+
           // Fetch all orders directly from the service
           const response = await orderService.getOrders(exportFilter);
           ordersToExport = response.data;
-          
+
           toast.dismiss(loadingToast);
           toast.success(`Loaded ${ordersToExport.length} orders for export`);
         } catch (error) {
@@ -225,21 +228,26 @@ const OrdersTable: React.FC = () => {
           ordersToExport = orders;
         }
       }
-      
+
       if (ordersToExport.length === 0) {
         toast.error('No orders to export');
         return;
       }
-      
+
       if (format === 'csv') {
         // Prepare data for CSV export
-        const csvData = ordersToExport.map(order => ({
+        const csvData = ordersToExport.map((order) => ({
           order_number: order.order_number,
-          customer_info: order.customer ? `${order.customer.name} (${order.customer.email})` : 'N/A',
+          customer_info: order.customer
+            ? `${order.customer.name} (${order.customer.email})`
+            : 'N/A',
           status: order.status,
           total: calculateOrderTotal(order).toFixed(2),
           items_count: order.items?.length || 0,
-          shipping_cost: typeof order.shipping_cost === 'string' ? order.shipping_cost : order.shipping_cost.toFixed(2),
+          shipping_cost:
+            typeof order.shipping_cost === 'string'
+              ? order.shipping_cost
+              : order.shipping_cost.toFixed(2),
           address: order.address,
           city: order.city,
           state: order.state,
@@ -247,30 +255,34 @@ const OrdersTable: React.FC = () => {
           notes: order.notes || 'N/A',
           created_at: new Date(order.created_at).toLocaleDateString(),
         }));
-        
+
         // Create CSV string
         const csvString = [
           Object.keys(csvData[0]).join(','),
-          ...csvData.map(row => Object.values(row).join(','))
+          ...csvData.map((row) => Object.values(row).join(',')),
         ].join('\n');
-        
+
         // Create and download blob
         const blob = new Blob([csvString], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `orders-export-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `orders-export-${
+          new Date().toISOString().split('T')[0]
+        }.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        
-        toast.success(`Successfully exported ${ordersToExport.length} orders as CSV`);
+
+        toast.success(
+          `Successfully exported ${ordersToExport.length} orders as CSV`
+        );
       } else {
         // For XLSX and PDF, we still need to use the server-side export
         // as these formats are more complex to generate client-side
         const success = await exportOrders(format, selectedOrders);
-        
+
         if (success) {
           toast.success(
             `Successfully exported ${

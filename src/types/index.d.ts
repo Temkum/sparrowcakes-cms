@@ -1,16 +1,18 @@
-interface InputProps {
+import { Category } from './category/index';
+
+export interface InputProps {
   type: string;
   placeholder: string;
   className?: string;
   icon?: React.ReactNode;
 }
 
-interface StarRatingProps {
+export interface StarRatingProps {
   rating: number;
   className?: string;
 }
 
-interface TestimonialCardProps {
+export interface TestimonialCardProps {
   image: string;
   name: string;
   role: string;
@@ -18,7 +20,7 @@ interface TestimonialCardProps {
   rating: number;
 }
 
-interface BlogCardProps {
+export interface BlogCardProps {
   author: string;
   category: string;
   title: string;
@@ -30,7 +32,7 @@ interface BlogCardProps {
   slug: string;
 }
 
-interface ProductCardProps {
+export interface ProductCardProps {
   title: string;
   category: string;
   price: number;
@@ -42,7 +44,7 @@ interface ProductCardProps {
   onQuickView?: () => void;
 }
 
-interface UIProduct {
+export interface UIProduct {
   id: number;
   title: string;
   category: string;
@@ -64,7 +66,7 @@ interface UIProduct {
   updatedAt?: string;
 }
 
-interface ProductGridProps {
+export interface ProductGridProps {
   products: UIProduct[];
   onAddToCart?: (productId: number) => void;
   onAddToWishlist?: (productId: number) => void;
@@ -72,13 +74,13 @@ interface ProductGridProps {
   className?: string;
 }
 
-interface Service {
+export interface Service {
   icon: JSX.Element;
   title: string;
   description: string;
 }
 
-interface BannerProps {
+export interface BannerProps {
   title: string;
   discount: number;
   image: string;
@@ -86,33 +88,33 @@ interface BannerProps {
   onClick?: () => void;
 }
 
-interface PopularProductsProps {
+export interface PopularProductsProps {
   products: UIProduct[];
   onAddToCart?: (productId: number) => void;
 }
 
-interface CategoryForDisplay {
+export interface CategoryForDisplay {
   id: number;
   name: string;
   itemCount: number;
   banners: Banner[];
 }
 
-interface Banner {
+export interface Banner {
   image: string;
   discount: number;
   title: string;
   position?: 'left' | 'right';
 }
 
-interface TimeLeft {
+export interface TimeLeft {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
 }
 
-interface Slide {
+export interface Slide {
   tag: string;
   tagPercentage: string;
   title: string;
@@ -121,23 +123,23 @@ interface Slide {
   backgroundColor: string;
 }
 
-interface CarouselApi {
+export interface CarouselApi {
   on: (event: string, callback: () => void) => void;
   selectedScrollSnap: () => number;
   next: () => void;
   prev: () => void;
 }
 
-interface BreadcrumbItem {
+export interface BreadcrumbItem {
   label: string;
   href: string;
 }
 
-interface BreadcrumbProps {
+export interface BreadcrumbProps {
   items: BreadcrumbItem[];
 }
 
-interface Order {
+export interface Order {
   date: string;
   number: string;
   customer: string;
@@ -147,28 +149,19 @@ interface Order {
   shippingCost: number;
 }
 
-interface ChartData {
+export interface ChartData {
   name: string;
   value: number;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  imageUrl: string;
-  slug: string;
-  description: string;
-  isActive: boolean;
-  updated_at: string;
-  created_at: string;
-}
+export { Category };
 
-interface EditorProps {
+export interface EditorProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-interface OrdersProp {
+export interface OrdersProp {
   id: string | number;
   number: string;
   customer: string;
@@ -179,7 +172,7 @@ interface OrdersProp {
   orderDate: string;
 }
 
-interface ProductDisplay {
+export interface ProductDisplay {
   id: string;
   title: string;
   category: string;
@@ -190,40 +183,40 @@ interface ProductDisplay {
   display: boolean;
 }
 
-interface Option {
+export interface Option {
   value: number;
   label: string;
 }
 
-interface DynamicCategoriesProps {
+export interface DynamicCategoriesProps {
   name: string;
   label: string;
   isRequired?: boolean;
 }
 
-interface CreateCustomerModalProps {
+export interface CreateCustomerModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   isAuthenticated: boolean;
   login: (token: string) => void;
   logout: () => void;
 }
 
-type ForgotPasswordFormValues = {
+export type ForgotPasswordFormValues = {
   email: string;
 };
 
-interface PasswordResetResponse {
+export interface PasswordResetResponse {
   error?: {
     message: string;
   };
 }
 
-interface AxiosResponse<T = unknown, D = unknown> {
+export interface AxiosResponse<T = unknown, D = unknown> {
   data: T;
   status: number;
   statusText: string;
@@ -232,7 +225,7 @@ interface AxiosResponse<T = unknown, D = unknown> {
   request?: unknown;
 }
 
-interface User {
+export interface User {
   id: string | number;
   name: string;
   email: string;
@@ -241,13 +234,13 @@ interface User {
   role?: string;
 }
 
-interface Team {
+export interface Team {
   name: string;
   logo: React.ComponentType;
   plan: string;
 }
 
-interface NavItem {
+export interface NavItem {
   title: string;
   url: string;
   icon?: React.ComponentType;
@@ -258,7 +251,7 @@ interface NavItem {
   }>;
 }
 
-interface ContentItem {
+export interface ContentItem {
   name: string;
   url: string;
   icon: React.ComponentType;

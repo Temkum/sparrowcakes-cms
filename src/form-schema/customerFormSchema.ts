@@ -17,7 +17,7 @@ const customerFormSchema = z
   .object({
     name: z
       .string()
-      .min(2, { message: 'Name must be at least 2 characters.' })
+      .min(2, { message: 'Name is required.' })
       .max(100, { message: 'Name cannot exceed 100 characters.' }),
 
     email: z

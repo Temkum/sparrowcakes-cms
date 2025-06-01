@@ -19,21 +19,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useAuthStore } from '@/store/auth';
 import toast, { Toaster } from 'react-hot-toast';
 import { Loader2, Trash } from 'lucide-react';
-import axiosInstance from '@/services/axiosInstance';
 import Editor from '../Editor';
 import ReactQuill from 'react-quill';
 import { formSchema } from '@/form-schema/categorySchema';
-
-interface CategoryFormModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
-  category?: Category | null; // Add this for edit mode
-  mode?: 'create' | 'edit'; // Add mode prop
-}
+import useCategoryStore from '@/store/categories-store';
+import { CategoryFormModalProps } from '@/types/category';
 
 const QuillEditor = forwardRef<
   ReactQuill,
@@ -45,8 +37,6 @@ const QuillEditor = forwardRef<
   <Editor ref={ref} value={value} onChange={onChange} />
 ));
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
 const CategoryFormModal = ({
   open,
   onOpenChange,
@@ -55,10 +45,10 @@ const CategoryFormModal = ({
   mode,
 }: CategoryFormModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { token } = useAuthStore();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isImageRemoved, setIsImageRemoved] = useState(false);
   const editorRef = useRef<ReactQuill>(null);
+  const { updateCategory, createCategory } = useCategoryStore();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -164,23 +154,15 @@ const CategoryFormModal = ({
         formData.append('image', values.image);
       }
 
-      /* for (const [key, value] of formData.entries()) {
+      for (const [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
-      } */
+      }
 
-      const url =
-        mode === 'edit' && category
-          ? `${API_BASE_URL}/categories/${category.id}`
-          : `${API_BASE_URL}/categories`;
-
-      const method = mode === 'edit' ? 'patch' : 'post';
-
-      await axiosInstance[method](url, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      if (mode === 'edit' && category) {
+        await updateCategory(category.id, formData);
+      } else {
+        await createCategory(formData);
+      }
 
       toast.success(
         `Category ${mode === 'edit' ? 'updated' : 'created'} successfully`
