@@ -140,7 +140,15 @@ const CategoryFormModal = ({
   const handleSubmit = async (keepOpen?: boolean) => {
     try {
       setIsSubmitting(true);
+
+      const isValid = await form.trigger();
+      if (!isValid) {
+        toast.error('Please fix validation errors');
+        return;
+      }
+
       const values = form.getValues();
+      console.log('Form values:', values);
 
       const formData = new FormData();
       formData.append('name', values.name);
@@ -148,15 +156,22 @@ const CategoryFormModal = ({
       formData.append('description', values.description || '');
       formData.append('isActive', String(values.isActive));
 
-      if (isImageRemoved && mode === 'edit') {
-        formData.append('isImageDeleted', 'true');
+      if (mode === 'edit') {
+        if (isImageRemoved) {
+          formData.append('isImageDeleted', 'true');
+          console.log('Image marked for deletion');
+        } else if (values.image instanceof File) {
+          formData.append('image', values.image);
+          console.log('New image attached:', values.image.name);
+        }
       } else if (values.image instanceof File) {
         formData.append('image', values.image);
       }
 
+      /* console.log('Final FormData contents:');
       for (const [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
-      }
+      } */
 
       if (mode === 'edit' && category) {
         await updateCategory(category.id, formData);
@@ -175,10 +190,10 @@ const CategoryFormModal = ({
         onOpenChange(false);
       }
     } catch (error) {
+      console.error('Submit error:', error);
       toast.error(
         `Failed to ${mode === 'edit' ? 'update' : 'create'} category`
       );
-      console.error(error);
     } finally {
       setIsSubmitting(false);
     }

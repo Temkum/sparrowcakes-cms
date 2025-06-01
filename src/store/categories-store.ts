@@ -6,7 +6,7 @@ import { CategoryResponse, CategoryState } from '@/types/category';
 // Helper function to retry failed operations
 const retryOperation = async <T>(
   operation: () => Promise<T>,
-  maxAttempts = 3,
+  maxAttempts = 1,
   delay = 1000
 ): Promise<T> => {
   let lastError: Error = new Error('Operation failed');
@@ -100,7 +100,6 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
       // Invalidate cache
       get().cache.clear();
 
-      toast.success('Category created successfully');
       return category;
     } catch (error) {
       // Revert optimistic update
@@ -118,12 +117,17 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     }
   },
 
-  updateCategory: async (id: number, categoryData: FormData) => {
+  updateCategory: async (
+    id: number,
+    categoryData: FormData
+  ): Promise<CategoryResponse> => {
     set({ loading: true });
 
     // Store previous state for rollback
     const previousCategories = get().categories;
-    const existingCategory = previousCategories.find((c) => c.id === id);
+    const existingCategory = previousCategories.find(
+      (c: CategoryResponse) => c.id === id
+    );
 
     if (!existingCategory) {
       set({ loading: false });
@@ -133,52 +137,44 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     }
 
     // Create updated category for optimistic update
-    const updatedCategory = {
+    const updatedCategory: CategoryResponse = {
       ...existingCategory,
-      name: (categoryData.get('name') as string) || existingCategory.name,
-      slug: (categoryData.get('slug') as string) || existingCategory.slug,
-      description:
-        (categoryData.get('description') as string) ||
-        existingCategory.description,
+      name: categoryData.get('name')?.toString() || '',
+      slug: categoryData.get('slug')?.toString() || '',
+      description: categoryData.get('description')?.toString() || '',
       isActive: categoryData.get('isActive') === 'true',
+      imageUrl: categoryData.get('image')
+        ? undefined
+        : existingCategory.imageUrl,
       updated_at: new Date().toISOString(),
-    };
+    } as CategoryResponse;
 
     // Apply optimistic update
     set({
-      categories: get().categories.map((c) =>
+      categories: previousCategories.map((c) =>
         c.id === id ? updatedCategory : c
       ),
     });
 
     try {
+      // Send request with FormData directly
       const category = await retryOperation(
         () => categoryService.updateCategory(id, categoryData),
         3
       );
 
-      // Update with real data
-      set({
-        categories: get().categories.map((c) => (c.id === id ? category : c)),
-        loading: false,
-      });
-
+      return category;
+    } catch (error: unknown) {
+      // Revert optimistic update
+      set({ categories: previousCategories, loading: false });
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to update category';
+      console.error('Error updating category:', error);
+      toast.error(errorMessage);
+      throw error;
+    } finally {
       // Invalidate cache
       get().cache.clear();
-
-      toast.success('Category updated successfully');
-      return category;
-    } catch (error) {
-      // Rollback to previous state
-      set({
-        categories: previousCategories,
-        loading: false,
-        error:
-          error instanceof Error ? error.message : 'Failed to update category',
-      });
-      console.error(`Error updating category with ID ${id}:`, error);
-      toast.error('Failed to update category');
-      throw error;
     }
   },
 

@@ -67,25 +67,20 @@ const categoryService = {
     categoryData: FormData
   ): Promise<CategoryResponse> {
     try {
-      // Transform FormData to match the expected structure
-      const values = {
-        name: categoryData.get('name') as string,
-        slug: categoryData.get('slug') as string,
-        description: (categoryData.get('description') as string) || '',
-        isActive: categoryData.get('isActive') === 'true',
-        image: categoryData.get('image') as File,
-      };
+      console.log('Updating category with ID:', id);
+      console.log('FormData contents:');
+      for (const [key, value] of categoryData.entries()) {
+        console.log(`${key}:`, value);
+      }
 
-      // Create new FormData with transformed values
+      // Transform FormData to handle image deletion
       const transformedData = new FormData();
-      transformedData.append('name', values.name);
-      transformedData.append('slug', values.slug);
-      transformedData.append('description', values.description);
-      transformedData.append('isActive', values.isActive.toString());
-
-      // Only append image if it exists
-      if (values.image) {
-        transformedData.append('image', values.image);
+      for (const [key, value] of categoryData.entries()) {
+        if (key === 'imageUrl' && value === '') {
+          transformedData.append('imageUrl', '');
+        } else {
+          transformedData.append(key, value);
+        }
       }
 
       const response = await axiosInstance.patch(
@@ -97,8 +92,11 @@ const categoryService = {
           },
         }
       );
+
+      console.log('Update response:', response);
       return response as unknown as CategoryResponse;
     } catch (error) {
+      console.error('Service error:', error);
       throw handleAxiosError(error, 'Error updating category');
     }
   },
