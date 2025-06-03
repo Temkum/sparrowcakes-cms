@@ -49,13 +49,6 @@ const DEFAULT_FILTER = {
 };
 
 const useOrderStore = create<OrderState>((set, get) => {
-  const getAuthToken = (): string => {
-    const persistedState = JSON.parse(
-      localStorage.getItem('auth-storage') || '{}'
-    );
-    return persistedState.state?.token || '';
-  };
-
   return {
     orders: [],
     currentOrder: null,
@@ -81,11 +74,6 @@ const useOrderStore = create<OrderState>((set, get) => {
     loadOrders: async () => {
       set({ loading: true });
       try {
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
         const { filter } = get();
         const cleanFilter = {
           page: filter.page,
@@ -117,7 +105,6 @@ const useOrderStore = create<OrderState>((set, get) => {
       format: 'csv' | 'xlsx' | 'pdf',
       selectedIds: number[] = []
     ) => {
-      console.log('selectedIds store', selectedIds);
       try {
         set({ loading: true });
 
@@ -180,11 +167,6 @@ const useOrderStore = create<OrderState>((set, get) => {
 
     getAllFilteredOrdersIds: async (filter: OrderFilterProps) => {
       try {
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
         const response = await orderService.getAllFilteredOrdersIds(filter);
 
         return response;
@@ -241,12 +223,6 @@ const useOrderStore = create<OrderState>((set, get) => {
     createOrder: async (orderData: Partial<Order>) => {
       try {
         set({ submitting: true });
-        const token = getAuthToken();
-
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
         const response = await orderService.createOrder(orderData);
 
         await get().loadOrders();
@@ -265,12 +241,6 @@ const useOrderStore = create<OrderState>((set, get) => {
     updateOrder: async (id: number, orderData: Partial<Order>) => {
       try {
         set({ submitting: true });
-        const token = getAuthToken();
-
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
         const response = await orderService.updateOrder(id, orderData);
 
         await get().loadOrders();
@@ -288,11 +258,6 @@ const useOrderStore = create<OrderState>((set, get) => {
 
     deleteOrders: async (ids: number[]) => {
       try {
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
         await orderService.deleteOrders(ids);
 
         set((state) => ({
@@ -311,10 +276,6 @@ const useOrderStore = create<OrderState>((set, get) => {
 
     softDeleteOrders: async (ids: number[]) => {
       try {
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
         if (!Array.isArray(ids) || ids.length === 0) {
           throw new Error('No order IDs provided for soft delete');
         }

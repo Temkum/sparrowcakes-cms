@@ -31,6 +31,8 @@ import { LogOut, Search, TrendingDown, TrendingUp } from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { logout } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth';
+import { ChartData } from '@/types';
+import useOrderStore from '@/store/order-store';
 
 const monthlyOrders: ChartData[] = [
   { name: 'Jan', value: 2000 },
@@ -47,34 +49,13 @@ const monthlyOrders: ChartData[] = [
   { name: 'Dec', value: 8000 },
 ];
 
-const orders: Order[] = [
-  {
-    date: 'Feb 11, 2025',
-    number: 'OR407806',
-    customer: 'Hollie White',
-    status: 'Processing',
-    currency: 'USD',
-    totalPrice: 194.59,
-    shippingCost: 325.53,
-  },
-  {
-    date: 'Feb 10, 2025',
-    number: 'OR808086',
-    customer: 'Caitlyn Spencer',
-    status: 'Cancelled',
-    currency: 'USD',
-    totalPrice: 1262.33,
-    shippingCost: 344.09,
-  },
-  // Add more orders as needed
-];
-
 const breadcrumbItems = [
   { label: 'Cakes By Sparrow', href: '/admin' },
   { label: 'Dashboard', href: '/admin/dashboard' },
 ];
 
 const AdminDashboard = () => {
+  const { orders } = useOrderStore();
   const user = useAuthStore().user;
 
   return (
@@ -256,7 +237,7 @@ const AdminDashboard = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Order Date</TableHead>
-                <TableHead>Number</TableHead>
+                <TableHead>Order Number</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Total price</TableHead>
@@ -266,10 +247,10 @@ const AdminDashboard = () => {
             </TableHeader>
             <TableBody>
               {orders.map((order) => (
-                <TableRow key={order.number}>
-                  <TableCell>{order.date}</TableCell>
-                  <TableCell>{order.number}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
+                <TableRow key={order.id}>
+                  <TableCell>{order.created_at}</TableCell>
+                  <TableCell>{order.id}</TableCell>
+                  <TableCell>{order.customer?.name}</TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -286,8 +267,8 @@ const AdminDashboard = () => {
                       {order.status}
                     </span>
                   </TableCell>
-                  <TableCell>${order.totalPrice.toFixed(2)}</TableCell>
-                  <TableCell>${order.shippingCost.toFixed(2)}</TableCell>
+                  {/* <TableCell>${order.toFixed(2)}</TableCell>
+                  <TableCell>${order.shipping_cost.toFixed(2)}</TableCell> */}
                   <TableCell>
                     <Button variant="ghost">Open</Button>
                   </TableCell>

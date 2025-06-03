@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { StarRating } from '@/components/sparrow/StarRating';
 import { Loader2 } from 'lucide-react';
-import { ReviewResponse } from '@/types/review';
+import { ReviewResponseProps } from '@/types/review';
 import { Customer } from '@/types/customer';
 import {
   Select,
@@ -37,17 +37,15 @@ const reviewFormSchema = z.object({
     .number()
     .min(1, { message: 'Rating must be at least 1' })
     .max(5, { message: 'Rating must be at most 5' }),
-  comment: z
-    .string()
-    .min(1, { message: 'Comment must be at least 1 character' }),
+  comment: z.string().min(1, { message: 'Comment is required' }),
   display: z.boolean(),
 });
 
 type ReviewFormData = z.infer<typeof reviewFormSchema>;
 
 interface ReviewFormProps {
-  review?: ReviewResponse;
-  onSubmit: (data: Partial<ReviewResponse>) => void;
+  review?: ReviewResponseProps;
+  onSubmit: (data: Partial<ReviewResponseProps>) => void;
   submitting?: boolean;
   customers: Customer[];
   products: Product[];

@@ -1,3 +1,4 @@
+import { ProductGridProps } from '@/types';
 import ProductCard from './ProductCard';
 
 const ProductGrid = ({

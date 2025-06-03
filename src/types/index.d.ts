@@ -191,6 +191,8 @@ export interface Option {
 export interface DynamicCategoriesProps {
   name: string;
   label: string;
+  value: number[];
+  onChange: (categories: number[]) => void;
   isRequired?: boolean;
 }
 

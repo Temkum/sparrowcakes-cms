@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Search, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ReviewResponse } from '@/types/review';
+import { ReviewResponseProps } from '@/types/review';
 import {
   Select,
   SelectContent,
@@ -32,13 +32,13 @@ import useProductStore from '@/store/product-store';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ReviewsTableProps {
-  reviews: ReviewResponse[];
+  reviews: ReviewResponseProps[];
   totalCount: number;
   currentPage: number;
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
-  onEdit: (review: ReviewResponse) => void;
+  onEdit: (review: ReviewResponseProps) => void;
   onDelete: (reviewId: number) => void;
 }
 
@@ -53,9 +53,8 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
   onDelete,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedReview, setSelectedReview] = useState<ReviewResponse | null>(
-    null
-  );
+  const [selectedReview, setSelectedReview] =
+    useState<ReviewResponseProps | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState<number | null>(null);
@@ -80,7 +79,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
     );
   });
 
-  const handleViewReview = async (review: ReviewResponse) => {
+  const handleViewReview = async (review: ReviewResponseProps) => {
     setSelectedReview(review);
     setIsViewDialogOpen(true);
     if (review.product?.id) {
@@ -106,7 +105,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="relative flex-1">
+        <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by customer, product, or review content..."

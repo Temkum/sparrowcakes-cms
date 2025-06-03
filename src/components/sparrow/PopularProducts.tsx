@@ -8,6 +8,7 @@ import {
   type CarouselApi,
 } from '../ui/carousel';
 import { useEffect, useState } from 'react';
+import { PopularProductsProps, UIProduct } from '@/types';
 
 function ProductCard({
   title,

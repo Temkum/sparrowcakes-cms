@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { categories } from '@/utilities/data';
 import axios from 'axios';
+import { Banner, CategoryForDisplay } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 

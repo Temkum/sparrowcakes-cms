@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useReviewsStore } from '@/store/reviews-store';
 import ReviewsTable from './ReviewsTable';
 import ReviewsForm from './ReviewsForm';
-import { ReviewResponse } from '@/types/review';
+import { ReviewResponseProps } from '@/types/review';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import useProductStore from '@/store/product-store';
@@ -34,9 +34,8 @@ const Reviews: React.FC = () => {
   const { products, loadProducts } = useProductStore();
   const { customers, loadCustomers } = useCustomerStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedReview, setSelectedReview] = useState<ReviewResponse | null>(
-    null
-  );
+  const [selectedReview, setSelectedReview] =
+    useState<ReviewResponseProps | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -45,7 +44,7 @@ const Reviews: React.FC = () => {
     loadCustomers();
   }, [currentPage, pageSize, fetchReviews, loadProducts, loadCustomers]);
 
-  const handleEdit = async (review: ReviewResponse) => {
+  const handleEdit = async (review: ReviewResponseProps) => {
     setSelectedReview(review);
     if (products.length === 0) {
       await loadProducts();
@@ -73,7 +72,7 @@ const Reviews: React.FC = () => {
     fetchReviews({ page: 1, limit: newPageSize });
   };
 
-  const handleSubmit = async (data: Partial<ReviewResponse>) => {
+  const handleSubmit = async (data: Partial<ReviewResponseProps>) => {
     setIsSubmitting(true);
     try {
       if (selectedReview) {

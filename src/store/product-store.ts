@@ -1,7 +1,6 @@
 import { productService } from '../services/products.service';
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
-import { useAuthStore } from './auth';
 import axios from 'axios';
 import {
   Product,
@@ -26,7 +25,7 @@ interface ProductState {
   // Actions
   setFilter: (filter: Partial<ProductFilter>) => void;
   resetFilter: () => void;
-  loadProducts: () => Promise<void>;
+  loadProducts: () => Promise<ProductAPIResponse[] | undefined>;
   loadProduct: (id: number) => Promise<ProductAPIResponse | null>;
   loadStats: () => Promise<void>;
   createProduct: (formData: FormData) => Promise<Product | null>;
@@ -151,6 +150,7 @@ const useProductStore = create<ProductState>((set, get) => ({
         toast.error('Failed to load products');
       }
       console.error('Error loading products:', error);
+      return [];
     }
   },
 
@@ -160,7 +160,6 @@ const useProductStore = create<ProductState>((set, get) => ({
 
     try {
       const response = await productService.getProductById(id);
-      console.log('product response', response);
 
       if (!response) {
         set({ loading: false });
@@ -203,18 +202,10 @@ const useProductStore = create<ProductState>((set, get) => ({
     set({ submitting: true, validationErrors: [] });
 
     try {
-      const { token } = useAuthStore.getState();
-
-      if (!token) {
-        toast.error('Authentication token is missing');
-        set({ submitting: false });
-        return null;
-      }
-
       const response:
         | ProductAPIResponse
         | { success: boolean; errors: { field: string; message: string }[] } =
-        await productService.createProduct(formData, token);
+        await productService.createProduct(formData);
       // Type guard for error response
       function isErrorResponse(resp: unknown): resp is {
         success: boolean;
@@ -301,16 +292,9 @@ const useProductStore = create<ProductState>((set, get) => ({
   ): Promise<Product | null> => {
     set({ submitting: true, validationErrors: [] });
     try {
-      const { token } = useAuthStore.getState();
-      if (!token) {
-        toast.error('Authentication token is missing');
-        set({ submitting: false });
-        return null;
-      }
       const response: ProductAPIResponse = await productService.updateProduct(
         id,
-        formData,
-        token
+        formData
       );
       // Transform API response to Product type
       const updatedProduct: Product = {
@@ -365,14 +349,7 @@ const useProductStore = create<ProductState>((set, get) => ({
   // Delete product
   deleteProduct: async (id: number) => {
     try {
-      const { token } = useAuthStore.getState();
-
-      if (!token) {
-        toast.error('Authentication token is missing');
-        return false;
-      }
-
-      await productService.deleteProduct(id, token);
+      await productService.deleteProduct(id);
 
       // Update local state after successful deletion
       const updatedProducts = get().products.filter(
@@ -400,13 +377,6 @@ const useProductStore = create<ProductState>((set, get) => ({
     try {
       set({ loading: true });
 
-      const { token } = useAuthStore.getState();
-      if (!token) {
-        set({ loading: false });
-        toast.error('Authentication token is missing');
-        return false;
-      }
-
       // Validate ids
       if (!Array.isArray(ids) || ids.length === 0) {
         set({ loading: false });
@@ -417,7 +387,7 @@ const useProductStore = create<ProductState>((set, get) => ({
       // Ensure all IDs are numbers
       const validatedIds = ids.map((id) => Number(id));
 
-      await productService.bulkDeleteProducts(validatedIds, token);
+      await productService.bulkDeleteProducts(validatedIds);
 
       // Update local state after successful deletion
       set((state) => ({
@@ -453,13 +423,6 @@ const useProductStore = create<ProductState>((set, get) => ({
     try {
       set({ loading: true });
 
-      const { token } = useAuthStore.getState();
-      if (!token) {
-        set({ loading: false });
-        toast.error('Authentication token is missing');
-        return false;
-      }
-
       // Validate ids
       if (!Array.isArray(ids) || ids.length === 0) {
         set({ loading: false });
@@ -469,7 +432,7 @@ const useProductStore = create<ProductState>((set, get) => ({
 
       try {
         // First attempt: standard bulk delete
-        await productService.bulkDeleteProducts(ids, token);
+        await productService.bulkDeleteProducts(ids);
 
         // Update UI on success
         toast.success(`Successfully deleted ${ids.length} product(s)`);
@@ -507,7 +470,7 @@ const useProductStore = create<ProductState>((set, get) => ({
 
         for (const id of ids) {
           try {
-            await productService.deleteProduct(id, token);
+            await productService.deleteProduct(id);
             successCount++;
           } catch (singleError) {
             console.error(`Failed to delete product ${id}:`, singleError);
