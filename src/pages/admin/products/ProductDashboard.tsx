@@ -1,36 +1,22 @@
-import { useEffect } from 'react';
-import { Card } from '@/components/ui/card';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { TagIcon, Cake, BadgeDollarSign, Loader2 } from 'lucide-react';
+import { TagIcon, Cake, BadgeDollarSign } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import ProductsTable from './ProductsTable';
 import useProductStore from '@/store/product-store';
 
-const breadcrumbItems = [
-  {
-    label: 'Dashboard',
-    href: '/admin/dashboard',
-  },
-  { label: 'Products', href: '#' },
-];
-
 const ProductDashboard = () => {
-  const { stats, loadStats, loadProducts, loadingProducts } = useProductStore();
+  const { loadingProducts } = useProductStore();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Load both products and stats when component mounts
-    const loadData = async () => {
-      try {
-        // Load products first, then stats - or load them in the order that makes sense for your API
-        await Promise.all([loadProducts(), loadStats()]);
-      } catch (error) {
-        console.error('Error loading product data:', error);
-      }
-    };
-    loadData();
-  }, [loadStats, loadProducts]); // Add loadProducts to dependencies
+  const breadcrumbItems = useMemo(
+    () => [
+      { label: 'Dashboard', href: '/admin/dashboard' },
+      { label: 'Products', href: '#' },
+    ],
+    []
+  );
 
   const handleEdit = (productId: number) => {
     navigate(`/admin/products/edit/${productId}`);
@@ -76,46 +62,6 @@ const ProductDashboard = () => {
                 Orders
               </Button>
             </Link>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="p-4">
-              <h3 className="text-sm text-gray-500">Total Products</h3>
-              {loadingProducts ? (
-                <div className="flex items-center justify-center h-8">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : (
-                <p className="text-2xl font-bold">
-                  {stats?.totalProducts || 0}
-                </p>
-              )}
-            </Card>
-            <Card className="p-4">
-              <h3 className="text-sm text-gray-500">Active Products</h3>
-              {loadingProducts ? (
-                <div className="flex items-center justify-center h-8">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : (
-                <p className="text-2xl font-bold">
-                  {stats?.activeProducts || 0}
-                </p>
-              )}
-            </Card>
-            <Card className="p-4">
-              <h3 className="text-sm text-gray-500">Average price</h3>
-              {loadingProducts ? (
-                <div className="flex items-center justify-center h-8">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : (
-                <p className="text-2xl font-bold">
-                  ${Number(stats?.averagePrice || 0).toFixed(2)}
-                </p>
-              )}
-            </Card>
           </div>
 
           {/* Pass skipInitialLoad prop to prevent ProductsTable from loading data */}

@@ -9,11 +9,6 @@ import { Loader2 } from 'lucide-react';
 import type { OrderStats } from '@/types/order';
 import ErrorBoundary from '@/components/error-boundary/ErrorBoundary';
 
-const breadcrumbItems = [
-  { label: 'Dashboard', href: '/admin/dashboard' },
-  { label: 'Orders', href: '#' },
-];
-
 const EMPTY_STATS: OrderStats = {
   totalOrders: 0,
   activeOrders: 0,
@@ -183,6 +178,14 @@ const OrdersPage: React.FC = () => {
       </div>
     ),
     [stats.topCustomers, formatCurrency]
+  );
+
+  const breadcrumbItems = useMemo(
+    () => [
+      { label: 'Dashboard', href: '/admin/dashboard' },
+      { label: 'Orders', href: '#' },
+    ],
+    []
   );
 
   return (

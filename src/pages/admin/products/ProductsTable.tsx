@@ -48,11 +48,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Toaster } from 'react-hot-toast';
+import { Card } from '@/components/ui/card';
 
 interface ProductTableProps {
   onEdit: (productId: number) => void;
   onView: (productId: number) => void;
-  skipInitialLoad?: boolean; // New prop to skip initial loading
+  skipInitialLoad?: boolean;
 }
 
 const ProductsTable = ({
@@ -73,7 +74,9 @@ const ProductsTable = ({
     deleteProduct,
     bulkDeleteProducts,
     loadProducts,
+    loadStats,
     setError,
+    stats,
   } = useProductStore();
 
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
@@ -86,33 +89,54 @@ const ProductsTable = ({
   const [selectedForDeleteId, setSelectedForDeleteId] = useState<number | null>(
     null
   );
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load products on component mount only if not skipping initial load
+  // Initialize searchInput when filter changes from external source
   useEffect(() => {
-    if (!skipInitialLoad) {
+    setSearchInput(filter.searchTerm || '');
+  }, [filter.searchTerm]);
+
+  // Initial data loading
+  useEffect(() => {
+    if (!skipInitialLoad && !isInitialized) {
+      const initializeData = async () => {
+        try {
+          await Promise.all([loadProducts(), loadStats()]);
+        } catch (err) {
+          console.error('Failed to initialize data:', err);
+        } finally {
+          setIsInitialized(true);
+        }
+      };
+      initializeData();
+    } else if (skipInitialLoad) {
+      setIsInitialized(true);
+    }
+  }, [skipInitialLoad, loadProducts, loadStats, isInitialized]);
+
+  // Reload products when filter changes (except search term which is handled separately)
+  useEffect(() => {
+    if (isInitialized) {
       loadProducts();
     }
-  }, [skipInitialLoad]); // Remove loadProducts from dependencies to prevent infinite loops
+  }, [filter.page, filter.pageSize, loadProducts, isInitialized]);
 
-  // Handle search with debounce
+  // Search debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchInput !== filter.searchTerm) {
-        setFilter({ searchTerm: searchInput, page: 1 });
+        setFilter({
+          ...filter,
+          searchTerm: searchInput,
+          page: 1,
+        });
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchInput, filter.searchTerm, setFilter]);
+  }, [searchInput, filter, setFilter, isInitialized]);
 
-  // Sync search input with filter when filter changes externally
-  useEffect(() => {
-    if (filter.searchTerm !== searchInput) {
-      setSearchInput(filter.searchTerm || '');
-    }
-  }, [filter.searchTerm]);
-
-  // Clear error when component unmounts or when new data loads successfully
+  // Cleanup error on unmount
   useEffect(() => {
     return () => {
       if (error) {
@@ -127,16 +151,31 @@ const ProductsTable = ({
 
   const handlePageSizeChange = useCallback(
     async (size: number) => {
-      await setFilter({ pageSize: size, page: 1 });
+      try {
+        await setFilter({
+          ...filter,
+          pageSize: size,
+          page: 1,
+        });
+      } catch (err) {
+        console.error('Failed to change page size:', err);
+      }
     },
-    [setFilter]
+    [setFilter, filter]
   );
 
   const handlePageChange = useCallback(
     async (page: number) => {
-      await setFilter({ page });
+      try {
+        await setFilter({
+          ...filter,
+          page,
+        });
+      } catch (err) {
+        console.error('Failed to change page:', err);
+      }
     },
-    [setFilter]
+    [setFilter, filter]
   );
 
   const handleDelete = async (productId: number) => {
@@ -146,9 +185,12 @@ const ProductsTable = ({
       const success = await deleteProduct(productId);
 
       if (success) {
-        // Clear selection if deleted product was selected
         setSelectedProducts((prev) => prev.filter((id) => id !== productId));
+        // Reload stats after deletion
+        await loadStats();
       }
+    } catch (err) {
+      console.error('Failed to delete product:', err);
     } finally {
       setDeleteDialogOpen(false);
       setDeletingProductId(null);
@@ -164,7 +206,11 @@ const ProductsTable = ({
 
       if (success) {
         setSelectedProducts([]);
+        // Reload stats after bulk deletion
+        await loadStats();
       }
+    } catch (err) {
+      console.error('Failed to bulk delete products:', err);
     } finally {
       setBulkDeleteDialogOpen(false);
     }
@@ -192,14 +238,58 @@ const ProductsTable = ({
     []
   );
 
+  const handleRetryLoad = useCallback(async () => {
+    setError(null);
+    try {
+      await Promise.all([loadProducts(), loadStats()]);
+    } catch (err) {
+      console.error('Retry failed:', err);
+    }
+  }, [setError, loadProducts, loadStats]);
+
   const isOperationInProgress =
     loadingProducts || deleting || deletingProductId !== null;
-
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const hasProducts = products && products.length > 0;
 
   return (
     <>
       <Toaster />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card className="p-4">
+          <h3 className="text-sm text-gray-500">Total Products</h3>
+          {loadingProducts && !isInitialized ? (
+            <div className="flex items-center justify-center h-8">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <p className="text-2xl font-bold">{stats?.totalProducts || 0}</p>
+          )}
+        </Card>
+        <Card className="p-4">
+          <h3 className="text-sm text-gray-500">Active Products</h3>
+          {loadingProducts && !isInitialized ? (
+            <div className="flex items-center justify-center h-8">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <p className="text-2xl font-bold">{stats?.activeProducts || 0}</p>
+          )}
+        </Card>
+        <Card className="p-4">
+          <h3 className="text-sm text-gray-500">Average Price</h3>
+          {loadingProducts && !isInitialized ? (
+            <div className="flex items-center justify-center h-8">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <p className="text-2xl font-bold">
+              ${stats?.averagePrice?.toFixed(2) || '0.00'}
+            </p>
+          )}
+        </Card>
+      </div>
+
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <Input
@@ -269,23 +359,22 @@ const ProductsTable = ({
                 <TableHead className="w-12">
                   <Checkbox
                     checked={
-                      products.length > 0 &&
-                      selectedProducts.length === products.length
+                      hasProducts && selectedProducts.length === products.length
                     }
                     onCheckedChange={toggleSelectAll}
-                    disabled={isOperationInProgress || products.length === 0}
+                    disabled={isOperationInProgress || !hasProducts}
                   />
                 </TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Active</TableHead>
-                <TableHead>Date added</TableHead>
+                <TableHead>Date Added</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loadingProducts && (
+              {loadingProducts && !isInitialized && (
                 <>
                   {[...Array(5)].map((_, i) => (
                     <TableRow key={i}>
@@ -315,7 +404,7 @@ const ProductsTable = ({
                 </>
               )}
 
-              {!loadingProducts && products.length === 0 && !error && (
+              {!loadingProducts && !hasProducts && !error && isInitialized && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     No products found
@@ -323,7 +412,7 @@ const ProductsTable = ({
                 </TableRow>
               )}
 
-              {!loadingProducts && products.length === 0 && error && (
+              {!loadingProducts && error && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
@@ -333,10 +422,7 @@ const ProductsTable = ({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setError(null);
-                          loadProducts();
-                        }}
+                        onClick={handleRetryLoad}
                       >
                         Try Again
                       </Button>
@@ -345,7 +431,8 @@ const ProductsTable = ({
                 </TableRow>
               )}
 
-              {!loadingProducts &&
+              {isInitialized &&
+                hasProducts &&
                 products.map((product) => {
                   const isDeleting = deletingProductId === product.id;
 

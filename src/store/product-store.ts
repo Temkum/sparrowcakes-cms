@@ -157,6 +157,7 @@ const useProductStore = create<ProductState>((set, get) => ({
 
     try {
       const stats = await productService.getProductStats();
+      console.log('product stats', stats);
       set({ stats });
     } catch (error) {
       console.error('Error loading product stats:', error);
@@ -188,10 +189,10 @@ const useProductStore = create<ProductState>((set, get) => ({
 
       set({
         products: transformedProducts,
-        totalCount: response.meta?.totalItems || 0,
-        currentPage: response.meta?.currentPage || 1,
-        pageSize: response.meta?.itemsPerPage || 10,
-        totalPages: response.meta?.totalPages || 1,
+        totalCount: response.totalCount || 0,
+        currentPage: response.currentPage || 1,
+        pageSize: response.pageSize || 10,
+        totalPages: response.totalPages || 1,
       });
 
       return response.items;
@@ -273,9 +274,6 @@ const useProductStore = create<ProductState>((set, get) => ({
       set((state) => ({
         products: [...state.products, newProduct],
       }));
-
-      toast.success('Product created successfully');
-
       // Refresh stats after creating
       await get().loadStats();
 
@@ -333,8 +331,6 @@ const useProductStore = create<ProductState>((set, get) => ({
           p.id === updatedProduct.id ? updatedProduct : p
         ),
       }));
-
-      toast.success('Product updated successfully');
 
       // Refresh stats after updating
       await get().loadStats();
