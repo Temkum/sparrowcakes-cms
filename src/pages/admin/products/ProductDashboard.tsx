@@ -16,23 +16,21 @@ const breadcrumbItems = [
 ];
 
 const ProductDashboard = () => {
-  const { stats, loadProducts, loadStats, loading } = useProductStore();
+  const { stats, loadStats, loadProducts, loadingProducts } = useProductStore();
   const navigate = useNavigate();
-  // const totalProducts = stats?.totalProducts ?? 0;
-  // const activeProducts = stats?.activeProducts ?? 0;
-  // const averagePrice = Number(stats?.averagePrice || 0).toFixed(2);
 
   useEffect(() => {
     // Load both products and stats when component mounts
     const loadData = async () => {
       try {
+        // Load products first, then stats - or load them in the order that makes sense for your API
         await Promise.all([loadProducts(), loadStats()]);
       } catch (error) {
         console.error('Error loading product data:', error);
       }
     };
     loadData();
-  }, [loadProducts, loadStats]);
+  }, [loadStats, loadProducts]); // Add loadProducts to dependencies
 
   const handleEdit = (productId: number) => {
     navigate(`/admin/products/edit/${productId}`);
@@ -53,7 +51,7 @@ const ProductDashboard = () => {
             <Link to="/admin/products/new">
               <Button
                 className="bg-orange-500 hover:bg-orange-600"
-                disabled={loading}
+                disabled={loadingProducts}
               >
                 New product
               </Button>
@@ -84,7 +82,7 @@ const ProductDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Total Products</h3>
-              {loading ? (
+              {loadingProducts ? (
                 <div className="flex items-center justify-center h-8">
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
@@ -96,7 +94,7 @@ const ProductDashboard = () => {
             </Card>
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Active Products</h3>
-              {loading ? (
+              {loadingProducts ? (
                 <div className="flex items-center justify-center h-8">
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
@@ -105,11 +103,10 @@ const ProductDashboard = () => {
                   {stats?.activeProducts || 0}
                 </p>
               )}
-              {/* <p className="text-2xl font-bold">{activeProducts}</p> */}
             </Card>
             <Card className="p-4">
               <h3 className="text-sm text-gray-500">Average price</h3>
-              {loading ? (
+              {loadingProducts ? (
                 <div className="flex items-center justify-center h-8">
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
@@ -121,7 +118,12 @@ const ProductDashboard = () => {
             </Card>
           </div>
 
-          <ProductsTable onEdit={handleEdit} onView={handleView} />
+          {/* Pass skipInitialLoad prop to prevent ProductsTable from loading data */}
+          <ProductsTable
+            onEdit={handleEdit}
+            onView={handleView}
+            skipInitialLoad={true}
+          />
         </div>
       </div>
     </>

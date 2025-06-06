@@ -9,12 +9,65 @@ import {
   ProductStats,
   ProductFilter,
 } from '@/types/product';
+
+// Type guard for validation error responses
+const isValidationErrorResponse = (
+  resp: unknown
+): resp is {
+  success: boolean;
+  errors: { field: string; message: string }[];
+} => {
+  if (!resp || typeof resp !== 'object') return false;
+  const obj = resp as Record<string, unknown>;
+  return (
+    typeof obj.success === 'boolean' &&
+    Array.isArray(obj.errors) &&
+    obj.errors.every(
+      (err): err is { field: string; message: string } =>
+        typeof err === 'object' &&
+        err !== null &&
+        typeof (err as Record<string, unknown>).field === 'string' &&
+        typeof (err as Record<string, unknown>).message === 'string'
+    )
+  );
+};
+
+// Utility function to transform API response to Product
+const transformApiResponseToProduct = (
+  response: ProductAPIResponse
+): Product => ({
+  id: response.id,
+  name: response.name,
+  slug: response.slug,
+  description: response.description,
+  isActive: response.is_active,
+  availability: response.availability,
+  categories: response.categories?.map((cat) => cat.id) || [],
+  images: response.image_urls || [],
+  imageUrls: response.image_urls || [],
+  price: Number(response.price),
+  discount: Number(response.discount),
+  costPerUnit: Number(response.cost_per_unit),
+  createdAt: response.created_at,
+  updatedAt: response.updated_at,
+  quantity: Number(response.quantity || 0),
+});
+
 interface ProductState {
   products: Product[];
   currentProduct: ProductAPIResponse | null;
   stats: ProductStats;
-  loading: boolean;
+
+  // Separate loading states for different operations
+  loadingProducts: boolean;
+  loadingStats: boolean;
+  loadingProduct: boolean;
   submitting: boolean;
+  deleting: boolean;
+
+  // Error state management
+  error: string | null;
+
   totalCount: number;
   currentPage: number;
   pageSize: number;
@@ -23,8 +76,8 @@ interface ProductState {
   validationErrors: ValidationError[];
 
   // Actions
-  setFilter: (filter: Partial<ProductFilter>) => void;
-  resetFilter: () => void;
+  setFilter: (filter: Partial<ProductFilter>) => Promise<void>;
+  resetFilter: () => Promise<void>;
   loadProducts: () => Promise<ProductAPIResponse[] | undefined>;
   loadProduct: (id: number) => Promise<ProductAPIResponse | null>;
   loadStats: () => Promise<void>;
@@ -34,6 +87,7 @@ interface ProductState {
   bulkDeleteProducts: (ids: number[]) => Promise<boolean>;
   clearCurrentProduct: () => void;
   clearValidationErrors: () => void;
+  setError: (error: string | null) => void;
 }
 
 const useProductStore = create<ProductState>((set, get) => ({
@@ -44,8 +98,17 @@ const useProductStore = create<ProductState>((set, get) => ({
     activeProducts: 0,
     averagePrice: 0,
   },
-  loading: false,
+
+  // Separate loading states
+  loadingProducts: false,
+  loadingStats: false,
+  loadingProduct: false,
   submitting: false,
+  deleting: false,
+
+  // Error state
+  error: null,
+
   totalCount: 0,
   currentPage: 1,
   pageSize: 10,
@@ -59,15 +122,23 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
   validationErrors: [],
 
-  // Set filter and load products
-  setFilter: (filter: Partial<ProductFilter>) => {
+  // Set error state
+  setError: (error: string | null) => {
+    set({ error });
+  },
+
+  // Set filter and auto-reload products
+  setFilter: async (filter: Partial<ProductFilter>) => {
     set((state) => ({
       filter: { ...state.filter, ...filter },
     }));
+
+    // Auto-reload products when filter changes
+    await get().loadProducts();
   },
 
-  // Reset filter to defaults
-  resetFilter: () => {
+  // Reset filter to defaults and reload
+  resetFilter: async () => {
     set({
       filter: {
         page: 1,
@@ -77,30 +148,27 @@ const useProductStore = create<ProductState>((set, get) => ({
         searchTerm: '',
       },
     });
-    get().loadProducts();
+    await get().loadProducts();
   },
 
   // Load product stats
   loadStats: async () => {
+    set({ loadingStats: true, error: null });
+
     try {
-      set({ loading: true });
       const stats = await productService.getProductStats();
-      set({ stats, loading: false });
+      set({ stats });
     } catch (error) {
       console.error('Error loading product stats:', error);
-      set({ loading: false });
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.message || 'Failed to load product stats';
-        toast.error(message);
-      } else {
-        toast.error('Failed to load product stats');
-      }
+      toast.error('Failed to load product stats');
+    } finally {
+      set({ loadingStats: false });
     }
   },
+
   // Load products with pagination and filtering
   loadProducts: async () => {
-    set({ loading: true });
+    set({ loadingProducts: true, error: null });
 
     try {
       const { filter } = get();
@@ -114,23 +182,9 @@ const useProductStore = create<ProductState>((set, get) => ({
       );
 
       // Transform API response to Product type
-      const transformedProducts: Product[] = response.items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        slug: item.slug,
-        description: item.description,
-        isActive: item.is_active,
-        availability: item.availability,
-        categories: item.categories?.map((cat) => cat.id) || [],
-        images: item.image_urls || [],
-        imageUrls: item.image_urls || [],
-        price: Number(item.price),
-        discount: Number(item.discount),
-        costPerUnit: Number(item.cost_per_unit),
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-        quantity: Number(item.quantity || 0),
-      }));
+      const transformedProducts: Product[] = response.items.map(
+        transformApiResponseToProduct
+      );
 
       set({
         products: transformedProducts,
@@ -138,31 +192,27 @@ const useProductStore = create<ProductState>((set, get) => ({
         currentPage: response.meta?.currentPage || 1,
         pageSize: response.meta?.itemsPerPage || 10,
         totalPages: response.meta?.totalPages || 1,
-        loading: false,
       });
+
+      return response.items;
     } catch (error) {
-      set({ loading: false });
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.message || 'Failed to load products';
-        toast.error(message);
-      } else {
-        toast.error('Failed to load products');
-      }
       console.error('Error loading products:', error);
+      toast.error('Failed to load products');
+
       return [];
+    } finally {
+      set({ loadingProducts: false });
     }
   },
 
   // Load single product by ID
   loadProduct: async (id: number): Promise<ProductAPIResponse | null> => {
-    set({ loading: true });
+    set({ loadingProduct: true, error: null });
 
     try {
       const response = await productService.getProductById(id);
 
       if (!response) {
-        set({ loading: false });
         return null;
       }
 
@@ -183,49 +233,29 @@ const useProductStore = create<ProductState>((set, get) => ({
         categories: response.categories || [],
       };
 
-      set({
-        currentProduct: transformedProduct,
-        loading: false,
-      });
-
+      set({ currentProduct: transformedProduct });
       return transformedProduct;
     } catch (error) {
       console.error('Error loading product:', error);
       toast.error('Failed to load product details');
-      set({ loading: false });
+
       return null;
+    } finally {
+      set({ loadingProduct: false });
     }
   },
 
   // Create new product
   createProduct: async (formData: FormData): Promise<Product | null> => {
-    set({ submitting: true, validationErrors: [] });
+    set({ submitting: true, validationErrors: [], error: null });
 
     try {
       const response:
         | ProductAPIResponse
         | { success: boolean; errors: { field: string; message: string }[] } =
         await productService.createProduct(formData);
-      // Type guard for error response
-      function isErrorResponse(resp: unknown): resp is {
-        success: boolean;
-        errors: { field: string; message: string }[];
-      } {
-        if (!resp || typeof resp !== 'object') return false;
-        const obj = resp as Record<string, unknown>;
-        return (
-          typeof obj.success === 'boolean' &&
-          Array.isArray(obj.errors) &&
-          obj.errors.every(
-            (err): err is { field: string; message: string } =>
-              typeof err === 'object' &&
-              err !== null &&
-              typeof (err as Record<string, unknown>).field === 'string' &&
-              typeof (err as Record<string, unknown>).message === 'string'
-          )
-        );
-      }
-      if (isErrorResponse(response)) {
+
+      if (isValidationErrorResponse(response)) {
         set({
           validationErrors: response.errors.map(
             (err: { field: string; message: string }) => ({
@@ -236,33 +266,24 @@ const useProductStore = create<ProductState>((set, get) => ({
         });
         return null;
       }
+
       // Transform API response to Product type
-      const newProduct: Product = {
-        id: response.id,
-        name: response.name,
-        slug: response.slug,
-        description: response.description,
-        isActive: response.is_active,
-        availability: response.availability,
-        categories:
-          response.categories?.map((cat: { id: number }) => cat.id) || [],
-        images: response.image_urls || [],
-        imageUrls: response.image_urls || [],
-        price: Number(response.price),
-        discount: Number(response.discount),
-        costPerUnit: Number(response.cost_per_unit),
-        createdAt: response.created_at,
-        updatedAt: response.updated_at,
-        quantity: Number(response.quantity || 0),
-      };
+      const newProduct: Product = transformApiResponseToProduct(response);
+
       set((state) => ({
         products: [...state.products, newProduct],
-        submitting: false,
       }));
+
       toast.success('Product created successfully');
+
+      // Refresh stats after creating
+      await get().loadStats();
+
       return newProduct;
     } catch (error) {
-      set({ submitting: false });
+      console.error('Error creating product:', error);
+      toast.error('Failed to create product');
+
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data;
         if (errorData?.validation) {
@@ -275,13 +296,19 @@ const useProductStore = create<ProductState>((set, get) => ({
             ),
           });
         } else {
-          toast.error(errorData?.message || 'Failed to create product');
+          const message = errorData?.message || 'Failed to create product';
+          set({ error: message });
+          toast.error(message);
         }
       } else {
-        toast.error('Failed to create product');
+        const message = 'Failed to create product';
+        set({ error: message });
+        toast.error(message);
       }
-      console.error('Error creating product:', error);
+
       return null;
+    } finally {
+      set({ submitting: false });
     }
   },
 
@@ -290,40 +317,33 @@ const useProductStore = create<ProductState>((set, get) => ({
     id: number,
     formData: FormData
   ): Promise<Product | null> => {
-    set({ submitting: true, validationErrors: [] });
+    set({ submitting: true, validationErrors: [], error: null });
+
     try {
       const response: ProductAPIResponse = await productService.updateProduct(
         id,
         formData
       );
+
       // Transform API response to Product type
-      const updatedProduct: Product = {
-        id: response.id,
-        name: response.name,
-        slug: response.slug,
-        description: response.description,
-        isActive: response.is_active,
-        availability: response.availability,
-        categories:
-          response.categories?.map((cat: { id: number }) => cat.id) || [],
-        images: response.image_urls || [],
-        imageUrls: response.image_urls || [],
-        price: Number(response.price),
-        discount: Number(response.discount),
-        costPerUnit: Number(response.cost_per_unit),
-        createdAt: response.created_at,
-        updatedAt: response.updated_at,
-        quantity: Number(response.quantity || 0),
-      };
+      const updatedProduct: Product = transformApiResponseToProduct(response);
+
       set((state) => ({
         products: state.products.map((p) =>
           p.id === updatedProduct.id ? updatedProduct : p
         ),
-        submitting: false,
       }));
+
+      toast.success('Product updated successfully');
+
+      // Refresh stats after updating
+      await get().loadStats();
+
       return updatedProduct;
     } catch (error) {
-      set({ submitting: false });
+      console.error('Error updating product:', error);
+      toast.error('Failed to update product');
+
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data;
         if (errorData?.validation) {
@@ -336,186 +356,88 @@ const useProductStore = create<ProductState>((set, get) => ({
             ),
           });
         } else {
-          toast.error(errorData?.message || 'Failed to update product');
+          const message = errorData?.message || 'Failed to update product';
+          set({ error: message });
+          toast.error(message);
         }
       } else {
-        toast.error('Failed to update product');
+        const message = 'Failed to update product';
+        set({ error: message });
+        toast.error(message);
       }
-      console.error('Error updating product:', error);
+
       return null;
+    } finally {
+      set({ submitting: false });
     }
   },
 
-  // Delete product
-  deleteProduct: async (id: number) => {
+  // Delete single product - simplified approach
+  deleteProduct: async (id: number): Promise<boolean> => {
+    set({ deleting: true, error: null });
+
     try {
       await productService.deleteProduct(id);
-
-      // Update local state after successful deletion
-      const updatedProducts = get().products.filter(
-        (product) => product.id !== id
-      );
-      set((state) => ({
-        products: updatedProducts,
-        totalCount: state.totalCount - 1,
-      }));
-
-      // Refresh the products list and stats
-      await get().loadProducts();
-      await get().loadStats();
-
       toast.success('Product deleted successfully');
+
+      // Refresh data after deletion
+      await Promise.all([get().loadProducts(), get().loadStats()]);
+
       return true;
     } catch (error) {
-      toast.error('Failed to delete product');
       console.error('Error deleting product:', error);
+      toast.error('Failed to delete product');
+
       return false;
+    } finally {
+      set({ deleting: false });
     }
   },
 
-  bulkDeleteProducts1: async (ids: number[]) => {
+  // Simplified bulk delete
+  bulkDeleteProducts: async (ids: number[]): Promise<boolean> => {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      toast.error('No products selected for deletion');
+      return false;
+    }
+
+    set({ deleting: true, error: null });
+
     try {
-      set({ loading: true });
+      await productService.bulkDeleteProducts(ids);
+      toast.success(`Successfully deleted ${ids.length} product(s)`);
 
-      // Validate ids
-      if (!Array.isArray(ids) || ids.length === 0) {
-        set({ loading: false });
-        toast.error('No products selected for deletion');
-        return false;
-      }
+      // Refresh data after bulk deletion
+      await Promise.all([get().loadProducts(), get().loadStats()]);
 
-      // Ensure all IDs are numbers
-      const validatedIds = ids.map((id) => Number(id));
-
-      await productService.bulkDeleteProducts(validatedIds);
-
-      // Update local state after successful deletion
-      set((state) => ({
-        products: state.products.filter(
-          (product) => !validatedIds.includes(product.id!)
-        ),
-        totalCount: state.totalCount - validatedIds.length,
-      }));
-
-      // Refresh data
-      await get().loadProducts();
-      await get().loadStats();
-
-      set({ loading: false });
       return true;
     } catch (error) {
-      set({ loading: false });
-      console.error('Error bulk deleting products:', error);
+      console.error('Bulk delete failed:', error);
+      toast.error('Failed to delete products');
+
+      let message = 'Failed to delete products';
 
       if (axios.isAxiosError(error)) {
-        const errorMessage =
-          error.response?.data?.message || 'Failed to delete selected products';
-        toast.error(errorMessage);
-      } else {
-        toast.error('Failed to delete selected products');
+        message = error.response?.data?.message || message;
+
+        // Handle specific constraint errors
+        if (message.includes('constraint') || message.includes('reference')) {
+          message =
+            'Some products cannot be deleted because they are referenced by other items';
+        }
       }
 
+      toast.error(message);
+
       return false;
+    } finally {
+      set({ deleting: false });
     }
   },
 
-  bulkDeleteProducts: async (ids: number[]) => {
-    try {
-      set({ loading: true });
-
-      // Validate ids
-      if (!Array.isArray(ids) || ids.length === 0) {
-        set({ loading: false });
-        toast.error('No products selected for deletion');
-        return false;
-      }
-
-      try {
-        // First attempt: standard bulk delete
-        await productService.bulkDeleteProducts(ids);
-
-        // Update UI on success
-        toast.success(`Successfully deleted ${ids.length} product(s)`);
-
-        // Refresh product list
-        await get().loadStats();
-        await get().loadProducts();
-
-        set({ loading: false });
-        return true;
-      } catch (bulkError) {
-        console.error('Bulk delete failed:', bulkError);
-
-        // Extract any useful error information
-        let errorMessage = 'Database error occurred during bulk deletion';
-        if (bulkError instanceof Error) {
-          errorMessage = bulkError.message;
-        }
-
-        // If there's a specific database constraint error, show it
-        if (
-          errorMessage.includes('constraint') ||
-          errorMessage.includes('reference')
-        ) {
-          toast.error(
-            'Some products cannot be deleted because they are referenced by other items'
-          );
-          set({ loading: false });
-          return false;
-        }
-
-        // Plan B: Try fallback to individual deletes if bulk fails
-        let successCount = 0;
-        let failureCount = 0;
-
-        for (const id of ids) {
-          try {
-            await productService.deleteProduct(id);
-            successCount++;
-          } catch (singleError) {
-            console.error(`Failed to delete product ${id}:`, singleError);
-            failureCount++;
-          }
-        }
-
-        // Report results of individual deletes
-        if (successCount > 0 && failureCount > 0) {
-          toast.error(
-            `Partially succeeded: Deleted ${successCount} out of ${ids.length} products`
-          );
-        } else if (successCount > 0) {
-          toast.success(`Successfully deleted ${successCount} product(s)`);
-        } else {
-          toast.error('Failed to delete any products');
-          set({ loading: false });
-          return false;
-        }
-
-        // Refresh data
-        await get().loadProducts();
-
-        set({ loading: false });
-        return successCount > 0;
-      }
-    } catch (error) {
-      set({ loading: false });
-      console.error('Error in bulkDeleteProducts store method:', error);
-
-      let errorMessage = 'Failed to delete selected products';
-
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (axios.isAxiosError(error) && error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-
-      toast.error(errorMessage);
-      return false;
-    }
-  },
   // Clear current product from state
   clearCurrentProduct: () => {
-    set({ currentProduct: null });
+    set({ currentProduct: null, error: null });
   },
 
   // Clear validation errors
