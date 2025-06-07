@@ -40,12 +40,12 @@ export const login = async (data: {
   password: string;
 }): Promise<LoginResponse> => {
   try {
-    const response = await axiosInstance.post<object, LoginResponse>(
+    const response = await axiosInstance.post<LoginResponse>(
       '/auth/login',
       data
     );
     console.log(response);
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Login error:', error);
     throw error;
@@ -58,7 +58,7 @@ export const register = async (
   password: string
 ): Promise<RegisterResponse> => {
   try {
-    const response = await axiosInstance.post<object, RegisterResponse>(
+    const response = await axiosInstance.post<RegisterResponse>(
       '/auth/register',
       {
         name,
@@ -71,7 +71,7 @@ export const register = async (
       throw new Error('No response from server');
     }
 
-    return response;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       // Get the specific error message from the backend
@@ -87,12 +87,12 @@ export const firebaseLogin = async (
   idToken: string
 ): Promise<FirebaseLoginResponse> => {
   try {
-    const response = await axiosInstance.post<object, FirebaseLoginResponse>(
+    const response = await axiosInstance.post<FirebaseLoginResponse>(
       '/firebase',
       { idToken }
     );
-    localStorage.setItem('token', response.token);
-    return response;
+    localStorage.setItem('token', response.data.token);
+    return response.data;
   } catch (error) {
     console.error('Firebase login error:', error);
     throw error;

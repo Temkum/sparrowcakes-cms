@@ -71,16 +71,8 @@ export function OrderForm({
 }: OrderFormProps) {
   const navigate = useNavigate();
   const { createOrder, submitting: createSubmitting } = useOrderStore();
-  const {
-    products,
-    loading: productsLoading,
-    loadProducts,
-  } = useProductStore();
-  const {
-    customers,
-    loading: customersLoading,
-    fetchCustomers,
-  } = useCustomerStore();
+  const { products, loadingProducts, loadProducts } = useProductStore();
+  const { customers, loading: loadingCustomers, fetchCustomers } = useCustomerStore();
 
   const isSubmitting = propSubmitting || createSubmitting;
 
@@ -185,7 +177,7 @@ export function OrderForm({
     }
   };
 
-  if (productsLoading || customersLoading || isSubmitting) {
+  if (loadingProducts || loadingCustomers || isSubmitting) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -288,7 +280,7 @@ export function OrderForm({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {customers.map((customer) => (
+                            {customers?.map((customer) => (
                               <SelectItem
                                 key={customer.id}
                                 value={customer.id.toString()}

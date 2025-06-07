@@ -39,26 +39,44 @@ class OrderService {
   // Get all orders with pagination and filtering
   async getOrders(filter: OrderFilter): Promise<OrderResponse> {
     try {
-      const queryParams = Object.entries(filter)
-        .filter(([, value]) => value !== undefined && value !== '')
-        .reduce((params, [key, value]) => {
-          params[key] = String(value);
-          return params;
-        }, {} as Record<string, string>);
-
-      const response = await axiosInstance.get<object, OrderResponse>(
-        '/orders',
-        {
-          params: queryParams,
+      const queryParams = new URLSearchParams();
+      Object.entries(filter).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
         }
-      );
-      console.log('Fetched orders:', response);
+      });
 
-      if (!response || !Array.isArray(response)) {
-        throw new Error('Invalid order data format');
+      type ApiResponse = OrderResponse | Order[] | { data: Order[] };
+      const response = await axiosInstance.get<ApiResponse>('/orders', {
+        params: queryParams,
+      });
+      console.log('Fetched orders service:', response);
+
+      // Handle case where response.data is already the array of orders
+      if (Array.isArray(response.data)) {
+        return {
+          data: response.data,
+          meta: {
+            total: response.data.length,
+            page: 1,
+            limit: response.data.length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        } as OrderResponse;
       }
 
-      return response;
+      // Handle case where response has data property with array of orders
+      if (
+        response.data &&
+        'data' in response.data &&
+        Array.isArray(response.data.data)
+      ) {
+        return response.data as OrderResponse;
+      }
+
+      throw new Error('Invalid order data format');
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;
@@ -197,7 +215,8 @@ class OrderService {
   // Get order statistics
   async getOrderStats(): Promise<OrderStats> {
     try {
-      return await axiosInstance.get<object, OrderStats>('/orders/stats');
+      const response = await axiosInstance.get<OrderStats>('/orders/stats');
+      return response.data;
     } catch (error) {
       console.error('Error fetching order stats:', error);
       throw error;

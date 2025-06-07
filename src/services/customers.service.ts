@@ -27,29 +27,30 @@ export const customerService = {
       };
 
       // Fetch customers with pagination
-      const response = await axiosInstance.get<
-        object,
-        PaginatedCustomersResponse
-      >('/customers', {
-        params: cleanParams,
-        paramsSerializer: (params) => {
-          return Object.entries(params)
-            .filter(
-              ([, value]) =>
-                value !== undefined && value !== null && value !== ''
-            )
-            .map(
-              ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
-            )
-            .join('&');
-        },
-      });
+      const response = await axiosInstance.get<PaginatedCustomersResponse>(
+        '/customers',
+        {
+          params: cleanParams,
+          paramsSerializer: (params) => {
+            return Object.entries(params)
+              .filter(
+                ([, value]) =>
+                  value !== undefined && value !== null && value !== ''
+              )
+              .map(
+                ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
+              )
+              .join('&');
+          },
+        }
+      );
+      console.log('response service', response);
 
       if (!response) {
         throw new Error('No data received from server');
       }
 
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error fetching customers:', error);
       // Add more specific error handling
@@ -64,7 +65,8 @@ export const customerService = {
   // Get a single customer by ID
   async getCustomerById(id: number): Promise<Customer> {
     try {
-      return await axiosInstance.get<object, Customer>(`/customers/${id}`);
+      const response = await axiosInstance.get<Customer>(`/customers/${id}`);
+      return response.data;
     } catch (error) {
       console.error(`Error fetching customer with ID ${id}:`, error);
       throw error;
@@ -77,10 +79,11 @@ export const customerService = {
       throw new Error('Invalid customer data');
     }
     try {
-      return await axiosInstance.post<object, Customer>(
+      const response = await axiosInstance.post<Customer>(
         '/customers',
         customerData
       );
+      return response.data;
     } catch (error) {
       console.error('Error creating customer:', error);
       throw error;
@@ -93,10 +96,11 @@ export const customerService = {
     customerData: Partial<Customer>
   ): Promise<Customer> {
     try {
-      return await axiosInstance.put<object, Customer>(
+      const response = await axiosInstance.put<Customer>(
         `/customers/${id}`,
         customerData
       );
+      return response.data;
     } catch (error) {
       console.error(`Error updating customer with ID ${id}:`, error);
       throw error;
@@ -109,12 +113,13 @@ export const customerService = {
       throw new Error('Invalid customer IDs');
     }
     try {
-      return await axiosInstance.delete<object, { success: boolean }>(
+      const response = await axiosInstance.delete<{ success: boolean }>(
         '/customers',
         {
           data: { ids },
         }
       );
+      return response.data;
     } catch (error) {
       console.error('Error deleting customers:', error);
       throw error;
@@ -124,7 +129,10 @@ export const customerService = {
   // Get customer statistics
   async getCustomerStats(): Promise<CustomerStats> {
     try {
-      return await axiosInstance.get<object, CustomerStats>('/customers/stats');
+      const response = await axiosInstance.get<CustomerStats>(
+        '/customers/stats'
+      );
+      return response.data;
     } catch (error) {
       console.error('Error fetching customer stats:', error);
       throw error;

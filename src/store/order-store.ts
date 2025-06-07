@@ -3,10 +3,12 @@ import { orderService } from '@/services/orders.service';
 import {
   Order,
   OrderFilterProps,
+  OrderResponse,
   OrderStats,
   OrderStatus,
 } from '@/types/order';
 import { toast } from 'react-hot-toast';
+
 
 interface OrderState {
   orders: Order[];
@@ -26,7 +28,7 @@ interface OrderState {
   selectedOrders: number[];
 
   // Actions
-  loadOrders: () => Promise<Order[]>;
+  loadOrders: () => Promise<OrderResponse>;
   selectAllFiltered: () => Promise<number[]>;
   getAllFilteredOrdersIds: (filter: OrderFilterProps) => Promise<number[]>;
   // CRUD operations
@@ -51,70 +53,81 @@ const DEFAULT_FILTER = {
   searchTerm: '',
 };
 
-const useOrderStore = create<OrderState>((set, get) => {
-  return {
-    orders: [],
-    currentOrder: null,
-    loading: false,
-    submitting: false,
-    totalCount: 0,
-    selectedOrders: [],
-    filter: { ...DEFAULT_FILTER },
-    stats: {
-      totalOrders: 0,
-      activeOrders: 0,
-      newOrders: 0,
-      completedOrders: 0,
-      totalRevenue: 0,
-      averageOrderValue: 0,
-      weeklyOrders: [],
-      monthlyOrders: [],
-      yearlyOrders: [],
-      topProducts: [],
-      topCustomers: [],
-    },
+// Create the store with proper typing
+const createOrderStore = (set: (state: Partial<OrderState> | ((state: OrderState) => Partial<OrderState>)) => void, 
+                         get: () => OrderState): OrderState => ({
+  // State
+  orders: [],
+  currentOrder: null,
+  loading: false,
+  submitting: false,
+  totalCount: 0,
+  selectedOrders: [],
+  filter: { ...DEFAULT_FILTER },
+  stats: {
+    totalOrders: 0,
+    activeOrders: 0,
+    newOrders: 0,
+    completedOrders: 0,
+    totalRevenue: 0,
+    averageOrderValue: 0,
+    weeklyOrders: [],
+    monthlyOrders: [],
+    yearlyOrders: [],
+    topProducts: [],
+    topCustomers: [],
+  },
 
-    loadOrders: async () => {
-      set({ loading: true });
-      try {
-        const { filter } = get();
-        const cleanFilter = {
-          page: filter.page,
-          limit: filter.pageSize,
-          search: filter.searchTerm?.trim() || undefined,
-          sortBy: filter.sortBy,
-          sortOrder: filter.sortDirection,
-          status: filter.status,
-        };
+  // Actions
+  loadOrders: async (): Promise<OrderResponse> => {
+    set({ loading: true });
+    try {
+      const { filter } = get();
+      const cleanFilter = {
+        page: filter.page,
+        limit: filter.pageSize,
+        search: filter.searchTerm?.trim() || undefined,
+        sortBy: filter.sortBy,
+        sortOrder: filter.sortDirection,
+        status: filter.status,
+      };
 
-        const response = await orderService.getOrders(cleanFilter);
-        console.log('loadOrders response', typeof response);
+      const response = await orderService.getOrders(cleanFilter);
 
-        if (!Array.isArray(response)) {
-          throw new Error('Invalid response format from server');
-        }
+      // Transform the response to match the OrderResponse type
+      const orderResponse: OrderResponse = {
+        items: response.data,
+        total: response.meta.total,
+        page: response.meta.page,
+        limit: response.meta.limit,
+        totalPages: response.meta.totalPages,
+      };
 
-        set({
-          orders: response,
-          totalCount: response.length,
-          loading: false,
-        });
-        return response;
-      } catch (error) {
-        console.error('Error loading orders:', error);
-        toast.error(
-          error instanceof Error ? error.message : 'Failed to load orders'
-        );
-        set({
-          loading: false,
-          orders: [],
-          totalCount: 0,
-        });
-        return [];
-      }
-    },
+      set({
+        orders: response.data,
+        totalCount: response.meta.total,
+        loading: false,
+      });
 
-    exportOrders: async (
+      return orderResponse;
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to load orders'
+      );
+      set({ loading: false });
+      // Return an empty OrderResponse on error
+      return {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      };
+    }
+  },
+
+  exportOrders: async (
       format: 'csv' | 'xlsx' | 'pdf',
       selectedIds: number[] = []
     ) => {
@@ -320,7 +333,11 @@ const useOrderStore = create<OrderState>((set, get) => {
         set({ loading: false });
       }
     },
-  };
 });
+
+// Create the store with proper typing
+const useOrderStore = create<OrderState>((set, get) => ({
+  ...createOrderStore(set, get),
+}));
 
 export default useOrderStore;
