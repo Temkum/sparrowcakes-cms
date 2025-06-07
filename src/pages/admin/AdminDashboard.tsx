@@ -7,6 +7,7 @@ import {
   LineChart,
   Line,
   ResponsiveContainer,
+  Tooltip,
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 import {
@@ -31,41 +32,74 @@ import { LogOut, Search, TrendingDown, TrendingUp } from 'lucide-react';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { logout } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth';
-import { ChartData } from '@/types';
 import useOrderStore from '@/store/order-store';
+import { useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
-const monthlyOrders: ChartData[] = [
-  { name: 'Jan', value: 2000 },
-  { name: 'Feb', value: 4000 },
-  { name: 'Mar', value: 3000 },
-  { name: 'Apr', value: 5000 },
-  { name: 'May', value: 4500 },
-  { name: 'Jun', value: 6000 },
-  { name: 'Jul', value: 7000 },
-  { name: 'Aug', value: 8500 },
-  { name: 'Sep', value: 7500 },
-  { name: 'Oct', value: 9000 },
-  { name: 'Nov', value: 8500 },
-  { name: 'Dec', value: 8000 },
-];
+interface ChartDataPoint {
+  name: string | number;
+  value: number;
+}
 
-const breadcrumbItems = [
-  { label: 'Cakes By Sparrow', href: '/admin' },
-  { label: 'Dashboard', href: '/admin/dashboard' },
-];
+const formatMonthlyData = (data: number[]): ChartDataPoint[] => {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return data.map((value, index) => ({
+    name: months[index],
+    value,
+  }));
+};
+
+const formatWeeklyData = (data: number[]): ChartDataPoint[] => {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  return data.map((value, index) => ({
+    name: days[index],
+    value,
+  }));
+};
+
+const formatYearlyData = (data: number[]): ChartDataPoint[] => {
+  const currentYear = new Date().getFullYear();
+  return data.map((value, index) => ({
+    name: currentYear - 4 + index,
+    value,
+  }));
+};
 
 const AdminDashboard = () => {
-  const { orders } = useOrderStore();
+  const { orders, stats, loadStats } = useOrderStore();
   const user = useAuthStore().user;
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  const breadcrumbItems = useMemo(
+    () => [
+      { label: 'Cakes By Sparrow', href: '/admin' },
+      { label: 'Dashboard', href: '/admin/dashboard' },
+    ],
+    []
+  );
 
   return (
     <div className="min-h-screen">
-      {/* Breadcrumb */}
       <div>
         <BreadcrumbComponent items={breadcrumbItems} />
       </div>
 
-      {/* Main Content */}
       <div className="max-w-[1280px] mx-auto p-4">
         <div className="flex justify-between items-center my-7">
           <div className="space-y-4">
@@ -117,15 +151,17 @@ const AdminDashboard = () => {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <p className="text-sm text-gray-500">Revenue</p>
-                <h3 className="text-2xl font-bold">$192.10k</h3>
+                <h3 className="text-2xl font-bold">
+                  ${(stats.totalRevenue / 1000).toFixed(2)}k
+                </h3>
               </div>
               <span className="text-green-500 flex items-center">
                 <TrendingUp className="h-4 w-4 mr-1" />
-                32%
+                {((stats.totalRevenue / stats.totalOrders) * 100).toFixed(0)}%
               </span>
             </div>
             <ResponsiveContainer width="100%" height={60}>
-              <LineChart data={monthlyOrders}>
+              <LineChart data={formatMonthlyData(stats.monthlyOrders)}>
                 <Line
                   type="monotone"
                   dataKey="value"
@@ -133,6 +169,7 @@ const AdminDashboard = () => {
                   strokeWidth={2}
                   dot={false}
                 />
+                <Tooltip />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -140,16 +177,26 @@ const AdminDashboard = () => {
           <Card className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-sm text-gray-500">New customers</p>
-                <h3 className="text-2xl font-bold">1.34k</h3>
+                <p className="text-sm text-gray-500">Active Orders</p>
+                <h3 className="text-2xl font-bold">{stats.activeOrders}</h3>
               </div>
-              <span className="text-red-500 flex items-center">
-                <TrendingDown className="h-4 w-4 mr-1" />
-                3%
+              <span
+                className={`${
+                  stats.newOrders > stats.completedOrders
+                    ? 'text-green-500'
+                    : 'text-red-500'
+                } flex items-center`}
+              >
+                {stats.newOrders > stats.completedOrders ? (
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 mr-1" />
+                )}
+                {Math.abs(stats.newOrders - stats.completedOrders)}
               </span>
             </div>
             <ResponsiveContainer width="100%" height={60}>
-              <LineChart data={monthlyOrders}>
+              <LineChart data={formatWeeklyData(stats.weeklyOrders)}>
                 <Line
                   type="monotone"
                   dataKey="value"
@@ -157,6 +204,7 @@ const AdminDashboard = () => {
                   strokeWidth={2}
                   dot={false}
                 />
+                <Tooltip />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -164,16 +212,16 @@ const AdminDashboard = () => {
           <Card className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-sm text-gray-500">New orders</p>
-                <h3 className="text-2xl font-bold">3.54k</h3>
+                <p className="text-sm text-gray-500">New Orders</p>
+                <h3 className="text-2xl font-bold">{stats.newOrders}</h3>
               </div>
               <span className="text-green-500 flex items-center">
                 <TrendingUp className="h-4 w-4 mr-1" />
-                7%
+                {((stats.newOrders / stats.totalOrders) * 100).toFixed(0)}%
               </span>
             </div>
             <ResponsiveContainer width="100%" height={60}>
-              <LineChart data={monthlyOrders}>
+              <LineChart data={formatMonthlyData(stats.monthlyOrders)}>
                 <Line
                   type="monotone"
                   dataKey="value"
@@ -181,6 +229,7 @@ const AdminDashboard = () => {
                   strokeWidth={2}
                   dot={false}
                 />
+                <Tooltip />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -191,22 +240,24 @@ const AdminDashboard = () => {
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">Orders per month</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyOrders}>
+              <BarChart data={formatMonthlyData(stats.monthlyOrders)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
+                <Tooltip />
                 <Bar dataKey="value" fill="#f59e0b" />
               </BarChart>
             </ResponsiveContainer>
           </Card>
 
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Total customers</h3>
+            <h3 className="text-lg font-semibold mb-4">Orders by Year</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyOrders}>
+              <LineChart data={formatYearlyData(stats.yearlyOrders)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
+                <Tooltip />
                 <Line
                   type="monotone"
                   dataKey="value"
@@ -246,34 +297,50 @@ const AdminDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>{order.created_at}</TableCell>
-                  <TableCell>{order.id}</TableCell>
-                  <TableCell>{order.customer?.name}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${
-                          order.status === 'Processing'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : order.status === 'Cancelled'
-                            ? 'bg-red-100 text-red-800'
-                            : order.status === 'Shipped'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}
-                    >
-                      {order.status}
-                    </span>
-                  </TableCell>
-                  {/* <TableCell>${order.toFixed(2)}</TableCell>
-                  <TableCell>${order.shipping_cost.toFixed(2)}</TableCell> */}
-                  <TableCell>
-                    <Button variant="ghost">Open</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {orders.slice(0, 5).map((order) => {
+                const total =
+                  order.items?.reduce(
+                    (sum, item) => sum + (item.total || 0),
+                    0
+                  ) || 0;
+                const shippingCost =
+                  typeof order.shipping_cost === 'string'
+                    ? parseFloat(order.shipping_cost)
+                    : order.shipping_cost || 0;
+
+                return (
+                  <TableRow key={order.id}>
+                    <TableCell>
+                      {new Date(order.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{order.order_number}</TableCell>
+                    <TableCell>{order.customer?.name || 'N/A'}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          ${
+                            order.status === 'Processing'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : order.status === 'Cancelled'
+                              ? 'bg-red-100 text-red-800'
+                              : order.status === 'Shipped'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
+                      >
+                        {order.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>${total.toFixed(2)}</TableCell>
+                    <TableCell>${shippingCost.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" asChild>
+                        <Link to={`/admin/orders/${order.id}`}>Open</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
 

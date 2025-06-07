@@ -18,7 +18,7 @@ export interface Category {
   updated_at: string;
 }
 
-interface CacheEntry {
+export interface CacheEntry {
   data: CategoryResponse[];
   timestamp: number;
 }
@@ -47,7 +47,7 @@ export interface CategoryState {
     sortBy?: string;
     sortOrder?: 'ASC' | 'DESC';
     isActive?: boolean;
-  }) => Promise<CategoryResponse[]>;
+  }) => Promise<CategoryListResponse>;
 }
 
 export interface CategoryRequest {
@@ -63,6 +63,16 @@ export interface CategoryRequest {
 export interface CategoryResponse extends Required<Omit<Category, 'image'>> {
   created_at: string;
   updated_at: string;
+}
+
+export interface CategoryListParams {
+  categories: CategoryResponse[];
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  isActive?: boolean;
 }
 
 export interface CategoryListResponse {

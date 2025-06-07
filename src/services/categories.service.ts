@@ -1,15 +1,7 @@
 import axiosInstance from '@/services/axiosInstance';
 import { CategoryResponse, CategoryListResponse } from '@/types/category';
-import { AxiosError } from 'axios';
 
 const CATEGORIES_ENDPOINT = '/categories';
-
-const handleAxiosError = (error: unknown, defaultMessage: string): never => {
-  if (error instanceof AxiosError) {
-    throw new Error(error.response?.data?.message || defaultMessage);
-  }
-  throw error;
-};
 
 const categoryService = {
   async getCategories(): Promise<CategoryResponse[]> {
@@ -17,10 +9,12 @@ const categoryService = {
       const response = await axiosInstance.get<CategoryResponse[]>(
         `${CATEGORIES_ENDPOINT}/all`
       );
+      console.log('Fetched categories:', response.data);
 
-      return response as unknown as CategoryResponse[];
+      return response.data;
     } catch (error) {
-      throw handleAxiosError(error, 'Error fetching categories');
+      console.error('Service error:', error);
+      throw new Error('Error fetching categories');
     }
   },
 
@@ -57,7 +51,8 @@ const categoryService = {
       );
       return response as unknown as CategoryResponse;
     } catch (error) {
-      throw handleAxiosError(error, 'Error creating category');
+      console.error('Service error:', error);
+      throw new Error('Error creating category');
     }
   },
 
@@ -84,7 +79,7 @@ const categoryService = {
       return response as unknown as CategoryResponse;
     } catch (error) {
       console.error('Service error:', error);
-      throw handleAxiosError(error, 'Error updating category');
+      throw new Error('Error updating category');
     }
   },
 
@@ -92,7 +87,8 @@ const categoryService = {
     try {
       await axiosInstance.delete(`${CATEGORIES_ENDPOINT}/${id}`);
     } catch (error) {
-      throw handleAxiosError(error, 'Error deleting category');
+      console.error('Service error:', error);
+      throw new Error('Error deleting category');
     }
   },
 
@@ -102,7 +98,8 @@ const categoryService = {
         data: { ids },
       });
     } catch (error) {
-      throw handleAxiosError(error, 'Error deleting categories');
+      console.error('Service error:', error);
+      throw new Error('Error deleting categories');
     }
   },
 
@@ -125,9 +122,10 @@ const categoryService = {
           isActive: params.isActive,
         },
       });
-      return response as unknown as CategoryListResponse;
+      return response.data;
     } catch (error) {
-      throw handleAxiosError(error, 'Error fetching categories');
+      console.error('Service error:', error);
+      throw new Error('Error fetching categories');
     }
   },
 };

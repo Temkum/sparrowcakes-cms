@@ -90,21 +90,29 @@ const CategoriesTable = () => {
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
-      const categories = await useCategoriesStore
+      const response = await useCategoriesStore
         .getState()
         .getCategoriesPaginated({
-          categories: [],
+          categories: [], // Initialize with empty array as required by the type
           page,
           limit,
           search: debouncedSearchTerm,
           sortBy: sortConfig.field,
           sortOrder: sortConfig.direction,
         });
-      setTotal(categories.length);
+
+      // Ensure we always have an array, even if the response is undefined or null
+      const categories = Array.isArray(response?.data) ? response.data : [];
+      const total = typeof response?.total === 'number' ? response.total : 0;
+      
       setCategories(categories);
+      setTotal(total);
+      return { data: categories, total };
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to fetch categories. Please try again later!');
+      setCategories([]);
+      setTotal(0);
     } finally {
       setIsLoading(false);
     }

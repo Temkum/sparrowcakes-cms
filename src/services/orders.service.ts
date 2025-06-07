@@ -46,9 +46,19 @@ class OrderService {
           return params;
         }, {} as Record<string, string>);
 
-      return await axiosInstance.get<object, OrderResponse>('/orders', {
-        params: queryParams,
-      });
+      const response = await axiosInstance.get<object, OrderResponse>(
+        '/orders',
+        {
+          params: queryParams,
+        }
+      );
+      console.log('Fetched orders:', response);
+
+      if (!response || !Array.isArray(response)) {
+        throw new Error('Invalid order data format');
+      }
+
+      return response;
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;

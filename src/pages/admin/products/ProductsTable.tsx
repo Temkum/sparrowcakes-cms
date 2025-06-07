@@ -417,7 +417,7 @@ const ProductsTable = ({
                   <TableCell colSpan={7} className="text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-red-600">
-                        Failed to load products
+                        Failed to load products!
                       </span>
                       <Button
                         variant="outline"

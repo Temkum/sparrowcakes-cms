@@ -272,7 +272,7 @@ axiosInstance.interceptors.response.use(
       console.groupEnd();
     }
 
-    return response.data;
+    return response;
   },
   async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig;

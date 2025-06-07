@@ -26,7 +26,10 @@ interface OrderState {
   selectedOrders: number[];
 
   // Actions
-  loadOrders: () => Promise<void>;
+  loadOrders: () => Promise<Order[]>;
+  selectAllFiltered: () => Promise<number[]>;
+  getAllFilteredOrdersIds: (filter: OrderFilterProps) => Promise<number[]>;
+  // CRUD operations
   createOrder: (orderData: Partial<Order>) => Promise<Order>;
   updateOrder: (id: number, orderData: Partial<Order>) => Promise<Order>;
   deleteOrders: (ids: number[]) => Promise<void>;
@@ -85,19 +88,29 @@ const useOrderStore = create<OrderState>((set, get) => {
         };
 
         const response = await orderService.getOrders(cleanFilter);
-        const { data: ordersArray, meta } = response;
+        console.log('loadOrders response', typeof response);
+
+        if (!Array.isArray(response)) {
+          throw new Error('Invalid response format from server');
+        }
 
         set({
-          orders: ordersArray,
-          totalCount: meta.total,
+          orders: response,
+          totalCount: response.length,
           loading: false,
         });
+        return response;
       } catch (error) {
         console.error('Error loading orders:', error);
         toast.error(
           error instanceof Error ? error.message : 'Failed to load orders'
         );
-        set({ loading: false });
+        set({
+          loading: false,
+          orders: [],
+          totalCount: 0,
+        });
+        return [];
       }
     },
 

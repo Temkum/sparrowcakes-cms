@@ -1,10 +1,10 @@
 import axios from 'axios';
 import axiosInstance from './axiosInstance';
-import {
+import type {
   BulkDeletionError,
-  PaginatedProductsResponse,
   ProductStats,
   ProductAPIResponse,
+  PaginatedProductsResponse,
 } from '@/types/product';
 
 export const productService = {
@@ -15,70 +15,85 @@ export const productService = {
     searchTerm: string = '',
     sortBy: string = 'updatedAt',
     sortDirection: 'asc' | 'desc' = 'desc'
-  ) {
+  ): Promise<PaginatedProductsResponse> {
     try {
       // Convert frontend's lowercase sort direction to uppercase for backend
       const backendSortDirection = sortDirection.toUpperCase() as
         | 'ASC'
         | 'DESC';
 
-      const response = await axiosInstance.get<
-        object,
-        PaginatedProductsResponse
-      >('/products', {
-        params: {
-          page: Number(page),
-          limit: Number(limit),
-          searchTerm,
-          sortBy,
-          sortDirection: backendSortDirection,
-        },
-        paramsSerializer: (params) => {
-          return Object.entries(params)
-            .filter(
-              ([, value]) =>
-                value !== undefined && value !== null && value !== ''
-            )
-            .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-            .join('&');
-        },
-      });
+      const response = await axiosInstance.get<PaginatedProductsResponse>(
+        '/products',
+        {
+          params: {
+            page: Number(page),
+            limit: Number(limit),
+            searchTerm,
+            sortBy,
+            sortDirection: backendSortDirection,
+          },
+          paramsSerializer: (params) => {
+            return Object.entries(params)
+              .filter(
+                ([, value]) =>
+                  value !== undefined && value !== null && value !== ''
+              )
+              .map(
+                ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
+              )
+              .join('&');
+          },
+        }
+      );
 
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
-      throw error;
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as { message?: string };
+        throw new Error(errorData?.message || 'Failed to fetch products');
+      }
+      throw new Error('Failed to fetch products. Please try again.');
     }
   },
 
   async getProductStats(): Promise<ProductStats> {
     try {
-      return await axiosInstance.get<object, ProductStats>('/products/stats');
+      const response = await axiosInstance.get<ProductStats>('/products/stats');
+      return response.data;
     } catch (error) {
       console.error('Error fetching product stats:', error);
-      throw error;
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as { message?: string };
+        throw new Error(errorData?.message || 'Failed to fetch product stats');
+      }
+      throw new Error('Failed to fetch product stats. Please try again.');
     }
   },
 
   // Get a single product by ID
   async getProductById(id: number): Promise<ProductAPIResponse> {
     try {
-      return await axiosInstance.get<object, ProductAPIResponse>(`/products/${id}`);
+      const response = await axiosInstance.get<ProductAPIResponse>(
+        `/products/${id}`
+      );
+      return response.data;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
-      throw error;
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as { message?: string };
+        throw new Error(
+          errorData?.message || `Failed to fetch product with ID ${id}`
+        );
+      }
+      throw new Error('Failed to fetch product. Please try again.');
     }
   },
 
   // Create a new product
-  async createProduct(
-    productData: FormData
-  ): Promise<
-    | ProductAPIResponse
-    | { success: boolean; errors: { field: string; message: string }[] }
-  > {
+  async createProduct(productData: FormData): Promise<ProductAPIResponse> {
     try {
-      return await axiosInstance.post<object, ProductAPIResponse>(
+      const response = await axiosInstance.post<ProductAPIResponse>(
         '/products',
         productData,
         {
@@ -87,6 +102,7 @@ export const productService = {
           },
         }
       );
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {
@@ -105,10 +121,9 @@ export const productService = {
         }
 
         if (validationErrors.length > 0) {
-          return {
-            success: false,
-            errors: validationErrors,
-          };
+          throw new Error(
+            validationErrors.map((e) => `${e.field}: ${e.message}`).join('\n')
+          );
         }
 
         if (errorData?.message) {
@@ -124,7 +139,7 @@ export const productService = {
     productData: FormData
   ): Promise<ProductAPIResponse> {
     try {
-      return await axiosInstance.put<object, ProductAPIResponse>(
+      const response = await axiosInstance.put<ProductAPIResponse>(
         `/products/${id}`,
         productData,
         {
@@ -133,6 +148,7 @@ export const productService = {
           },
         }
       );
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errorData = error.response?.data as {
@@ -165,64 +181,83 @@ export const productService = {
 
   async deleteProduct(id: number): Promise<{ success: boolean }> {
     try {
-      return await axiosInstance.delete<object, { success: boolean }>(`/products/${id}`);
+      const response = await axiosInstance.delete<{ success: boolean }>(
+        `/products/${id}`
+      );
+      return response.data;
     } catch (error) {
       console.error(`Error deleting product with ID ${id}:`, error);
-      throw error;
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as { message?: string };
+        throw new Error(
+          errorData?.message || `Failed to delete product with ID ${id}`
+        );
+      }
+      throw new Error('Failed to delete product. Please try again.');
     }
   },
 
   // Bulk delete products
-  async bulkDeleteProducts(ids: number[]): Promise<{ success: boolean; deleted: number; errors?: BulkDeletionError[] }> {
+  async bulkDeleteProducts(ids: number[]): Promise<{
+    success: boolean;
+    deleted: number;
+    errors?: BulkDeletionError[];
+  }> {
     if (!Array.isArray(ids) || ids.length === 0) {
       throw new Error('Invalid input: ids should be a non-empty array.');
     }
 
+    // Make sure all IDs are valid numbers
+    const validatedIds = ids.map((id) => parseInt(String(id), 10));
+
+    // Check for invalid IDs after conversion
+    if (validatedIds.some((id) => isNaN(id) || id <= 0)) {
+      throw new Error('Invalid product IDs detected');
+    }
+
     try {
-      // Make sure all IDs are valid numbers
-      const validatedIds = ids.map((id) => parseInt(String(id), 10));
-
-      // Check for invalid IDs after conversion
-      if (validatedIds.some((id) => isNaN(id) || id <= 0)) {
-        throw new Error('Invalid product IDs detected');
-      }
-
-      // Try the most common API format first
-      return await axiosInstance.delete<
-        object, 
-        { success: boolean; deleted: number; errors?: BulkDeletionError[] }
-      >('/products', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await axiosInstance.delete<{
+        success: boolean;
+        deleted: number;
+        errors?: BulkDeletionError[];
+      }>('/products/bulk', {
         data: { ids: validatedIds },
       });
+
+      return response.data;
     } catch (error) {
       console.error('Error in bulkDeleteProducts service:', error);
 
+      // Handle different error formats
       if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const responseData = error.response?.data as {
+        const errorData = error.response?.data as {
           message?: string;
           error?: string;
+          errors?: Array<{ id: number; message: string }>;
         };
 
-        console.error('API Response:', status, responseData);
+        const errorMessage =
+          errorData?.message ||
+          errorData?.error ||
+          'Failed to delete products. Please try again.';
 
-        // Enrich error with more context
-        const enhancedError = new Error(
-          responseData?.message ||
-            responseData?.error ||
-            'A database error occurred during bulk deletion'
-        ) as BulkDeletionError;
+        // If we have detailed errors, include them
+        if (errorData?.errors && errorData.errors.length > 0) {
+          return {
+            success: false,
+            deleted: 0,
+            errors: errorData.errors.map((e) => ({
+              id: e.id,
+              message: e.message,
+              name: 'BulkDeletionError',
+            })),
+          };
+        }
 
-        // Add original response data to the error
-        enhancedError.responseData = responseData;
-        enhancedError.status = status;
-
-        throw enhancedError;
+        throw new Error(errorMessage);
       }
 
+      // For non-Axios errors, rethrow as is
       throw error;
     }
   },
