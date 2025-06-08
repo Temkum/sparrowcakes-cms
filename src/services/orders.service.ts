@@ -2,42 +2,16 @@ import axiosInstance from './axiosInstance';
 import {
   Order,
   OrderFilterProps,
+  OrderHistoryItem,
+  OrderResponse,
   OrderStats,
   OrderStatus,
 } from '@/types/order';
 import { AxiosResponse } from 'axios';
 
-interface OrderHistoryItem {
-  timestamp: string;
-  status: OrderStatus;
-  user: string;
-  notes?: string;
-}
-
-export interface OrderFilter {
-  page?: number;
-  limit?: number;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
-  status?: string;
-}
-
-export interface OrderResponse {
-  data: Order[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
-}
-
 class OrderService {
   // Get all orders with pagination and filtering
-  async getOrders(filter: OrderFilter): Promise<OrderResponse> {
+  async getOrders(filter: OrderFilterProps): Promise<OrderResponse> {
     try {
       const queryParams = new URLSearchParams();
       Object.entries(filter).forEach(([key, value]) => {
@@ -90,7 +64,8 @@ class OrderService {
         throw new Error('Order ID is required');
       }
 
-      return await axiosInstance.get<object, Order>(`/orders/${id}`);
+      const response = await axiosInstance.get<Order>(`/orders/${id}`);
+      return response.data;
     } catch (error) {
       console.error(`Error fetching order with ID ${id}:`, error);
       throw error;
@@ -127,9 +102,10 @@ class OrderService {
         Object.entries(params).filter((entry) => entry[1] !== undefined)
       ) as Record<string, string | number>;
 
-      return await axiosInstance.get<object, number[]>('/orders/ids', {
+      const response = await axiosInstance.get<number[]>('/orders/ids', {
         params: cleanParams,
       });
+      return response.data;
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;
@@ -148,7 +124,8 @@ class OrderService {
         throw new Error('Order must contain at least one item');
       }
 
-      return await axiosInstance.post<object, Order>('/orders', orderData);
+      const response = await axiosInstance.post<Order>('/orders', orderData);
+      return response.data;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -162,10 +139,11 @@ class OrderService {
         throw new Error('Order ID is required for update');
       }
 
-      return await axiosInstance.patch<object, Order>(
+      const response = await axiosInstance.patch<Order>(
         `/orders/${id}`,
         orderData
       );
+      return response.data;
     } catch (error) {
       console.error(`Error updating order with ID ${id}:`, error);
       throw error;
@@ -179,12 +157,13 @@ class OrderService {
         throw new Error('No order IDs provided for deletion');
       }
 
-      return await axiosInstance.delete<object, { success: boolean }>(
+      const response = await axiosInstance.delete<{ success: boolean }>(
         '/orders',
         {
           data: { ids },
         }
       );
+      return response.data;
     } catch (error) {
       console.error('Error deleting orders:', error);
       throw error;
@@ -203,9 +182,10 @@ class OrderService {
         throw new Error('No valid order IDs provided for soft delete');
       }
 
-      await axiosInstance.delete('/orders', {
+      const response = await axiosInstance.delete('/orders', {
         data: { ids: validIds },
       });
+      return response.data;
     } catch (error) {
       console.error('Error soft deleting orders:', error);
       throw error;
@@ -242,9 +222,13 @@ class OrderService {
         throw new Error('Invalid order status');
       }
 
-      return await axiosInstance.patch<object, Order>(`/orders/${id}/status`, {
-        status,
-      });
+      const response = await axiosInstance.patch<Order>(
+        `/orders/${id}/status`,
+        {
+          status,
+        }
+      );
+      return response.data;
     } catch (error) {
       console.error(`Error updating status for order with ID ${id}:`, error);
       throw error;
@@ -258,9 +242,10 @@ class OrderService {
         throw new Error('Order ID is required');
       }
 
-      return await axiosInstance.get<object, OrderHistoryItem[]>(
+      const response = await axiosInstance.get<OrderHistoryItem[]>(
         `/orders/${id}/history`
       );
+      return response.data;
     } catch (error) {
       console.error(`Error fetching history for order with ID ${id}:`, error);
       throw error;
@@ -278,10 +263,11 @@ class OrderService {
         throw new Error('Note content is required');
       }
 
-      return await axiosInstance.post<object, { success: boolean }>(
+      const response = await axiosInstance.post<{ success: boolean }>(
         `/orders/${id}/notes`,
         { content: note }
       );
+      return response.data;
     } catch (error) {
       console.error(`Error adding note to order with ID ${id}:`, error);
       throw error;
@@ -295,9 +281,10 @@ class OrderService {
         throw new Error('Order ID is required');
       }
 
-      return await axiosInstance.get<Blob>(`/orders/${id}/invoice`, {
+      const response = await axiosInstance.get<Blob>(`/orders/${id}/invoice`, {
         responseType: 'blob',
       });
+      return response;
     } catch (error) {
       console.error(`Error generating invoice for order with ID ${id}:`, error);
       throw error;
@@ -309,53 +296,14 @@ class OrderService {
     format: 'csv' | 'xlsx' | 'pdf',
     selectedIds?: number[]
   ): Promise<Blob> {
-    console.log('Exporting orders with format:', format);
-    console.log('Selected IDs:', selectedIds);
     try {
-      // Create a filter object with selectedIds if provided
-      const filter: Record<string, number[] | string | undefined> = {};
-
-      // Add selected IDs if provided
-      if (selectedIds && selectedIds.length > 0) {
-        filter.selectedIds = selectedIds;
-      }
-
-      // Create the export DTO that matches the server's expected format
-      const exportDto = {
-        format, // Include format in the body as well
-        filter,
-      };
-
-      // Log the export request for debugging
-      console.log(
-        'Export request (frontend):',
-        JSON.stringify(exportDto, null, 2)
-      );
-
-      // First, request the export to be generated
-      const exportResponse = await axiosInstance.post<
-        object,
-        {
-          success: boolean;
-          fileName: string;
-          downloadUrl: string;
-        }
-      >(`/orders/export/${format}`, exportDto);
-
-      console.log('Export response:', exportResponse);
-
-      // Then download the file using the provided URL
-      const downloadResponse = await axiosInstance.get<Blob>(
-        exportResponse.downloadUrl,
-        {
-          responseType: 'blob',
-        }
-      );
-      console.log('Download response:', downloadResponse);
-
-      return downloadResponse.data;
+      const response = await axiosInstance.get(`/orders/export/${format}`, {
+        params: { ids: selectedIds },
+        responseType: 'blob',
+      });
+      return response.data;
     } catch (error) {
-      console.error('Error exporting orders:', error);
+      console.error('Export failed:', error);
       throw error;
     }
   }
@@ -377,10 +325,12 @@ class OrderService {
         throw new Error('Recipient email is required');
       }
 
-      return await axiosInstance.post<{
+      const response = await axiosInstance.post<{
         success: boolean;
         messageId?: string;
       }>(`/orders/${id}/send-confirmation`, emailData);
+
+      return response;
     } catch (error) {
       console.error(
         `Error sending confirmation for order with ID ${id}:`,

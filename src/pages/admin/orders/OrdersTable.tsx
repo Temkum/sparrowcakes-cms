@@ -5,7 +5,6 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { OrderStatus, Order } from '@/types/order';
 import { toast } from 'react-hot-toast';
 import useOrderStore from '@/store/order-store';
-import { orderService } from '@/services/orders.service';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -73,6 +72,7 @@ const OrdersTable: React.FC = () => {
   const [currentStatus, setCurrentStatus] = useState<StatusFilter>('all');
   const [searchValue, setSearchValue] = useState(filter.searchTerm || '');
   const debouncedSearch = useDebounce(searchValue, 600);
+  const totalPages = Math.ceil(totalCount / filter.pageSize);
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -83,16 +83,32 @@ const OrdersTable: React.FC = () => {
 
   // Effect for debounced search
   useEffect(() => {
-    if (debouncedSearch !== filter.searchTerm) {
-      setFilter({
-        searchTerm: debouncedSearch,
-        page: 1,
-      });
-    }
-  }, [debouncedSearch, filter.searchTerm, setFilter]);
+    setFilter({
+      searchTerm: debouncedSearch || undefined,
+      page: 1, // Reset to first page on search
+    });
+  }, [debouncedSearch, setFilter]);
 
+  // Load orders when filter changes
   useEffect(() => {
-    loadOrders();
+    let isMounted = true;
+
+    const fetchOrders = async () => {
+      try {
+        await loadOrders();
+      } catch (error) {
+        if (isMounted) {
+          console.error('Error loading orders:', error);
+          toast.error('Failed to load orders');
+        }
+      }
+    };
+
+    fetchOrders();
+
+    return () => {
+      isMounted = false;
+    };
   }, [filter, loadOrders]);
 
   // Update status filter state when filter changes from outside this component
@@ -105,7 +121,7 @@ const OrdersTable: React.FC = () => {
     setCurrentStatus(status);
     setFilter({
       status: status === 'all' ? undefined : status,
-      page: 1,
+      page: 1, // Reset to first page
     });
   };
 
@@ -184,120 +200,28 @@ const OrdersTable: React.FC = () => {
 
   // Client-side export handler similar to customers export
   const handleExport = async (format: 'csv' | 'xlsx' | 'pdf') => {
-    setExporting(true);
-    setExportFormat(format);
-
     try {
-      // Get orders to export (either selected or all filtered)
-      let ordersToExport: Order[] = [];
+      setExporting(true);
+      setExportFormat(format);
 
-      if (selectedOrders.length > 0) {
-        // Export only selected orders
-        ordersToExport = orders.filter((order) =>
-          selectedOrders.includes(order.id)
-        );
-      } else {
-        // Export all orders from database regardless of pagination
-        try {
-          // Create a filter without pagination limits to get all orders
-          const exportFilter = {
-            // Keep current filters but remove pagination
-            search: filter.searchTerm?.trim() || undefined,
-            sortBy: filter.sortBy,
-            sortOrder: filter.sortDirection,
-            status: filter.status,
-            // Set a very large limit to get all records
-            limit: 10000,
-          };
+      const success = await exportOrders(
+        format,
+        selectedOrders.length > 0 ? selectedOrders : undefined
+      );
 
-          // Show loading toast
-          const loadingToast = toast.loading(
-            'Loading all orders for export...'
-          );
-
-          // Fetch all orders directly from the service
-          const response = await orderService.getOrders(exportFilter);
-          ordersToExport = response.data;
-
-          toast.dismiss(loadingToast);
-          toast.success(`Loaded ${ordersToExport.length} orders for export`);
-        } catch (error) {
-          console.error('Error loading all orders for export:', error);
-          toast.error('Failed to load all orders for export');
-          // Fallback to current page orders if loading all fails
-          ordersToExport = orders;
-        }
-      }
-
-      if (ordersToExport.length === 0) {
-        toast.error('No orders to export');
-        return;
-      }
-
-      if (format === 'csv') {
-        // Prepare data for CSV export
-        const csvData = ordersToExport.map((order) => ({
-          order_number: order.order_number,
-          customer_info: order.customer
-            ? `${order.customer.name} (${order.customer.email})`
-            : 'N/A',
-          status: order.status,
-          total: calculateOrderTotal(order).toFixed(2),
-          items_count: order.items?.length || 0,
-          shipping_cost:
-            typeof order.shipping_cost === 'string'
-              ? order.shipping_cost
-              : order.shipping_cost.toFixed(2),
-          address: order.address,
-          city: order.city,
-          state: order.state,
-          country: order.country,
-          notes: order.notes || 'N/A',
-          created_at: new Date(order.created_at).toLocaleDateString(),
-        }));
-
-        // Create CSV string
-        const csvString = [
-          Object.keys(csvData[0]).join(','),
-          ...csvData.map((row) => Object.values(row).join(',')),
-        ].join('\n');
-
-        // Create and download blob
-        const blob = new Blob([csvString], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `orders-export-${
-          new Date().toISOString().split('T')[0]
-        }.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
+      if (success) {
         toast.success(
-          `Successfully exported ${ordersToExport.length} orders as CSV`
+          selectedOrders.length > 0
+            ? `Exported ${
+                selectedOrders.length
+              } selected orders as ${format.toUpperCase()}`
+            : `Exported all filtered orders as ${format.toUpperCase()}`
         );
-      } else {
-        // For XLSX and PDF, we still need to use the server-side export
-        // as these formats are more complex to generate client-side
-        const success = await exportOrders(format, selectedOrders);
-
-        if (success) {
-          toast.success(
-            `Successfully exported ${
-              selectedOrders.length > 0
-                ? `${selectedOrders.length} selected orders`
-                : 'all filtered orders'
-            } as ${format.toUpperCase()}`
-          );
-        }
       }
     } catch (error) {
       console.error('Export failed:', error);
       toast.error(`Failed to export orders as ${format.toUpperCase()}`);
     } finally {
-      // Reset export state
       setExporting(false);
       setExportFormat(null);
     }
@@ -315,30 +239,6 @@ const OrdersTable: React.FC = () => {
     filter.sortBy !== 'created_at' ||
     filter.sortDirection === 'ASC';
 
-  /*   const getExportButtonText = (format: 'csv' | 'xlsx' | 'pdf') => {
-    if (exporting && exportFormat === format) {
-      return `Exporting... ${exportProgress}%`;
-    }
-    return format.toUpperCase();
-  };
-
-  const getExportIcon = (format: 'csv' | 'xlsx' | 'pdf') => {
-    if (exporting && exportFormat === format) {
-      return <Loader2 className="mr-2 h-4 w-4 animate-spin" />;
-    }
-
-    switch (format) {
-      case 'csv':
-        return <FileText className="mr-2 h-4 w-4" />;
-      case 'xlsx':
-        return <FileSpreadsheetIcon className="mr-2 h-4 w-4" />;
-      case 'pdf':
-        return <FileText className="mr-2 h-4 w-4" />;
-      default:
-        return <Download className="mr-2 h-4 w-4" />;
-    }
-  };
- */
   return (
     <>
       {/* Status Filters */}
@@ -664,24 +564,26 @@ const OrdersTable: React.FC = () => {
         </Table>
 
         {/* Pagination Controls */}
-        <div className="flex justify-between items-center p-4 border-t">
+        <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t gap-4">
           <div className="text-sm text-gray-500">
-            Showing {orders.length} of {totalCount} orders
+            Showing <span className="font-medium">{orders.length}</span> of{' '}
+            <span className="font-medium">{totalCount}</span> orders
             {selectedOrders.length > 0 && (
               <span className="ml-2 text-orange-600 font-medium">
                 ({selectedOrders.length} selected)
               </span>
             )}
-            {filter.pageSize < totalCount && (
-              <>
-                {' '}
-                (Page {filter.page} of {Math.ceil(totalCount / filter.pageSize)}
-                )
-              </>
-            )}
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilter({ page: 1 })}
+              disabled={filter.page === 1}
+            >
+              First
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -691,17 +593,28 @@ const OrdersTable: React.FC = () => {
               Previous
             </Button>
 
-            <div className="text-sm">
-              Page {filter.page} of {Math.ceil(totalCount / filter.pageSize)}
+            <div className="flex items-center gap-1 text-sm">
+              <span>Page</span>
+              <span className="font-medium">{filter.page}</span>
+              <span>of</span>
+              <span className="font-medium">{totalPages}</span>
             </div>
 
             <Button
               variant="outline"
               size="sm"
               onClick={() => setFilter({ page: filter.page + 1 })}
-              disabled={filter.page >= Math.ceil(totalCount / filter.pageSize)}
+              disabled={filter.page >= totalPages}
             >
               Next
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilter({ page: totalPages })}
+              disabled={filter.page >= totalPages}
+            >
+              Last
             </Button>
           </div>
         </div>

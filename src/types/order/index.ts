@@ -105,3 +105,31 @@ export interface OrderStats {
     totalOrders: number;
   }[];
 }
+
+export interface OrderHistoryItem {
+  timestamp: string;
+  status: OrderStatus;
+  user: string;
+  notes?: string;
+}
+
+export interface OrderFilter {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  status?: string;
+}
+
+export interface OrderResponse {
+  data: Order[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
