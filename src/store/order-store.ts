@@ -117,9 +117,11 @@ const createOrderStore = (
     try {
       set({ loading: true });
 
+      const { filter } = get();
       const blob = await orderService.exportOrders(
         format,
-        selectedIds.length > 0 ? selectedIds : undefined
+        selectedIds.length > 0 ? selectedIds : undefined,
+        filter
       );
 
       // Create download link

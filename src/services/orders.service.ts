@@ -294,11 +294,22 @@ class OrderService {
   // Export orders in different formats
   async exportOrders(
     format: 'csv' | 'xlsx' | 'pdf',
-    selectedIds?: number[]
+    selectedIds?: number[],
+    currentFilter?: OrderFilterProps
   ): Promise<Blob> {
     try {
-      const response = await axiosInstance.get(`/orders/export/${format}`, {
-        params: { ids: selectedIds },
+      const exportPayload = {
+        format,
+        filter: {
+          selectedIds,
+          searchTerm: currentFilter?.searchTerm || currentFilter?.search,
+          status: currentFilter?.status,
+          sortBy: currentFilter?.sortBy,
+          sortDirection: currentFilter?.sortDirection || currentFilter?.sortOrder,
+        },
+      };
+
+      const response = await axiosInstance.post(`/orders/export/${format}`, exportPayload, {
         responseType: 'blob',
       });
       return response.data;
