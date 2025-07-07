@@ -5,10 +5,11 @@ export const createReview = async (
   review: Partial<ReviewResponseProps>
 ): Promise<ReviewResponseProps> => {
   try {
-    return await axiosInstance.post<object, ReviewResponseProps>(
+    const response = await axiosInstance.post<ReviewResponseProps>(
       '/reviews',
       review
     );
+    return response.data;
   } catch (error) {
     console.error('Error creating review:', error);
     throw error;
@@ -48,18 +49,12 @@ export const getReviews = async ({
       Object.entries(params).filter(([, value]) => value !== undefined)
     );
 
-    console.log('Reviews service - Request params:', cleanParams);
-
     // Make the API request
-    const response = await axiosInstance.get<object, ReviewsResponse>(
-      '/reviews',
-      {
-        params: cleanParams,
-      }
-    );
+    const response = await axiosInstance.get<ReviewsResponse>('/reviews', {
+      params: cleanParams,
+    });
 
-    console.log('Reviews service - Raw response:', response);
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Error fetching reviews:', error);
     throw error;
@@ -71,10 +66,11 @@ export const updateReview = async (
   review: Partial<ReviewResponseProps>
 ): Promise<ReviewResponseProps> => {
   try {
-    return await axiosInstance.put<object, ReviewResponseProps>(
+    const response = await axiosInstance.put<ReviewResponseProps>(
       `/reviews/${id}`,
       review
     );
+    return response.data;
   } catch (error) {
     console.error('Error updating review:', error);
     throw error;
@@ -95,9 +91,10 @@ export const getReviewById = async (
   id: number
 ): Promise<ReviewResponseProps> => {
   try {
-    return await axiosInstance.get<object, ReviewResponseProps>(
+    const response = await axiosInstance.get<ReviewResponseProps>(
       `/reviews/${id}`
     );
+    return response.data;
   } catch (error) {
     console.error(`Error fetching review with ID ${id}:`, error);
     throw error;
@@ -110,10 +107,11 @@ export const toggleReviewDisplay = async (
   display: boolean
 ): Promise<ReviewResponseProps> => {
   try {
-    return await axiosInstance.patch<object, ReviewResponseProps>(
+    const response = await axiosInstance.patch<ReviewResponseProps>(
       `/reviews/${id}/display`,
       { display }
     );
+    return response.data;
   } catch (error) {
     console.error(`Error toggling display for review with ID ${id}:`, error);
     throw error;

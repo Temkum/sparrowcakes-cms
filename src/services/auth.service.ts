@@ -112,6 +112,21 @@ export const logout = () => {
 };
 
 export const getToken = () => {
-  const token = localStorage.getItem('auth-storage');
-  return token;
+  // First try to get from localStorage directly
+  const token = localStorage.getItem('token');
+  if (token) return token;
+
+  // If not found, try to get from auth-storage (Zustand persisted state)
+  const authStorage = localStorage.getItem('auth-storage');
+  if (authStorage) {
+    try {
+      const parsed = JSON.parse(authStorage);
+      return parsed.state?.token || null;
+    } catch (error) {
+      console.error('Error parsing auth storage:', error);
+      return null;
+    }
+  }
+
+  return null;
 };

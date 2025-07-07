@@ -24,7 +24,6 @@ class OrderService {
       const response = await axiosInstance.get<ApiResponse>('/orders', {
         params: queryParams,
       });
-      console.log('Fetched orders service:', response);
 
       // Handle case where response.data is already the array of orders
       if (Array.isArray(response.data)) {
@@ -305,13 +304,18 @@ class OrderService {
           searchTerm: currentFilter?.searchTerm || currentFilter?.search,
           status: currentFilter?.status,
           sortBy: currentFilter?.sortBy,
-          sortDirection: currentFilter?.sortDirection || currentFilter?.sortOrder,
+          sortDirection:
+            currentFilter?.sortDirection || currentFilter?.sortOrder,
         },
       };
 
-      const response = await axiosInstance.post(`/orders/export/${format}`, exportPayload, {
-        responseType: 'blob',
-      });
+      const response = await axiosInstance.post(
+        `/orders/export/${format}`,
+        exportPayload,
+        {
+          responseType: 'blob',
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('Export failed:', error);

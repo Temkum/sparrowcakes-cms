@@ -38,7 +38,7 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
     set({ loading: true });
     try {
       const response = await reviewService.getReviews(params);
-      console.log('response reviews store', response);
+
       set({
         reviews: response.items,
         totalCount: response.meta.total,
@@ -60,7 +60,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
       toast.success('Review created successfully');
       // Refresh the reviews list
       const response = await reviewService.getReviews();
-      console.log('response reviews store', response);
       set({
         reviews: response.items,
         totalCount: response.meta.total,
@@ -82,7 +81,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
       toast.success('Review updated successfully');
       // Refresh the reviews list
       const response = await reviewService.getReviews();
-      console.log('response reviews store', response);
       set({
         reviews: response.items,
         totalCount: response.meta.total,
@@ -104,7 +102,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
       toast.success('Review deleted successfully');
       // Refresh the reviews list
       const response = await reviewService.getReviews();
-      console.log('response reviews store', response);
       set({
         reviews: response.items,
         totalCount: response.meta.total,

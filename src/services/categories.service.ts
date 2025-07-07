@@ -9,7 +9,6 @@ const categoryService = {
       const response = await axiosInstance.get<CategoryResponse[]>(
         `${CATEGORIES_ENDPOINT}/all`
       );
-      console.log('Fetched categories:', response.data);
 
       return response.data;
     } catch (error) {

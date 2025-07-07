@@ -87,6 +87,10 @@ const authStore = create<AuthStore>()(
             isAuthenticated: true,
             user: response.user,
           });
+
+          // Also store token in localStorage for compatibility
+          localStorage.setItem('token', response.token);
+
           return true;
         } catch (error) {
           set({ loading: false });
