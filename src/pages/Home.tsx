@@ -1,3 +1,4 @@
+import AnimatedReviews from '@/components/reviews/AnimatedReviews';
 import BannerDeal from '@/components/sparrow/BannerDeal';
 import LatestGist from '@/components/sparrow/BlogSection';
 import CategoriesSection from '@/components/sparrow/CategoriesSection';
@@ -42,7 +43,7 @@ const Home = () => {
       <ProductBanners />
       <Services />
       <BannerDeal />
-      <Testimonials />
+      <AnimatedReviews />
       <LatestGist />
     </>
   );
