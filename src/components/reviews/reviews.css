@@ -1,0 +1,31 @@
+@keyframes slide-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
+@keyframes slide-right {
+  from {
+    transform: translateX(-33.333%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-left {
+  animation: slide-left linear infinite;
+}
+
+.animate-slide-right {
+  animation: slide-right linear infinite;
+}
+
+/* Pause animation on hover */
+.animate-slide-left:hover,
+.animate-slide-right:hover {
+  animation-play-state: paused;
+}

@@ -1,6 +1,7 @@
 import { Heart, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star } from 'lucide-react';
+import { ProductCardProps } from '@/types';
 
 export default function ProductCard({
   title = 'Best snakes with hazel nut mix pack 200gm',

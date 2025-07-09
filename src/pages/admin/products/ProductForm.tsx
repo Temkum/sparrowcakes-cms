@@ -556,7 +556,9 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                     name="categories"
                     label="Category"
                     value={form.watch('categories')}
-                    onChange={(categories) => form.setValue('categories', categories)}
+                    onChange={(categories) =>
+                      form.setValue('categories', categories)
+                    }
                     isRequired
                   />
                 </CardContent>

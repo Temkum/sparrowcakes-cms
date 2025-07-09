@@ -48,16 +48,33 @@ export interface Order {
 }
 
 export interface OrderFilterProps {
-  page?: number;
-  limit?: number;
-  searchTerm?: string;
+  page: number;
+  pageSize?: number;
+  limit?: number; // Alias for pageSize
+  searchTerm?: string; // For client-side filtering
+  search?: string; // For API requests
   sortBy?: string;
-  sortDirection?: 'ASC' | 'DESC';
+  sortDirection?: 'ASC' | 'DESC'; // Client-side
+  sortOrder?: 'ASC' | 'DESC'; // API parameter
   status?: OrderStatus;
   ids?: number[];
+  startDate?: string | Date;
+  endDate?: string | Date;
 }
 
-export interface PaginatedOrdersResponse {
+export interface ApiOrderResponse {
+  data: Order[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+export interface OrderResponse {
   items: Order[];
   total: number;
   page: number;
@@ -87,4 +104,32 @@ export interface OrderStats {
     totalSpent: number;
     totalOrders: number;
   }[];
+}
+
+export interface OrderHistoryItem {
+  timestamp: string;
+  status: OrderStatus;
+  user: string;
+  notes?: string;
+}
+
+export interface OrderFilter {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  status?: string;
+}
+
+export interface OrderResponse {
+  data: Order[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 }

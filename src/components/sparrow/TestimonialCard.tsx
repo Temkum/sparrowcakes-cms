@@ -1,3 +1,4 @@
+import { TestimonialCardProps } from '@/types';
 import { StarRating } from './StarRating';
 
 export function TestimonialCard({

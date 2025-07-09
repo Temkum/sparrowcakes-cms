@@ -70,16 +70,15 @@ const ViewOrder: React.FC = () => {
         <h1 className="text-2xl font-bold mb-6">Order Details</h1>
         <div className="space-y-6">
           {/* Order Information Card */}
-          <Card className="p-6 space-y-4" aria-label="Order details">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span className="font-semibold">Order Number:</span>{' '}
-                {order.order_number}
-              </div>
-              <div>
-                <span className="font-semibold">Status:</span>{' '}
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <span className="font-semibold">Order Number:</span>{' '}
+              {order.order_number}
+            </div>
+            <div>
+              <span className="font-semibold">Status:</span>{' '}
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium
                   ${
                     order.status === 'Delivered'
                       ? 'bg-green-100 text-green-800'
@@ -91,39 +90,36 @@ const ViewOrder: React.FC = () => {
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}
-                >
-                  {order.status}
-                </span>
-              </div>
-              <div>
-                <span className="font-semibold">Customer:</span>{' '}
-                {order.customer?.name || order.customer_id}
-              </div>
-              <div>
-                <span className="font-semibold">Currency:</span>{' '}
-                {order.currency}
-              </div>
-              <div>
-                <span className="font-semibold">Address:</span> {order.address},{' '}
-                {order.city}, {order.state}, {order.country}
-              </div>
-              <div>
-                <span className="font-semibold">Notes:</span>{' '}
-                {order.notes || '-'}
-              </div>
-              <div>
-                <span className="font-semibold">Created At:</span>{' '}
-                {new Date(order.created_at).toLocaleDateString()}
-              </div>
-              <div>
-                <span className="font-semibold">Shipping Cost:</span>{' '}
-                {typeof order.shipping_cost === 'string'
-                  ? parseFloat(order.shipping_cost).toFixed(2)
-                  : order.shipping_cost.toFixed(2)}{' '}
-                {order.currency}
-              </div>
+              >
+                {order.status}
+              </span>
             </div>
-          </Card>
+            <div>
+              <span className="font-semibold">Customer:</span>{' '}
+              {order.customer?.name || order.customer_id}
+            </div>
+            <div>
+              <span className="font-semibold">Currency:</span> {order.currency}
+            </div>
+            <div>
+              <span className="font-semibold">Address:</span> {order.address},{' '}
+              {order.city}, {order.state}, {order.country}
+            </div>
+            <div>
+              <span className="font-semibold">Notes:</span> {order.notes || '-'}
+            </div>
+            <div>
+              <span className="font-semibold">Created At:</span>{' '}
+              {new Date(order.created_at).toLocaleDateString()}
+            </div>
+            <div>
+              <span className="font-semibold">Shipping Cost:</span>{' '}
+              {typeof order.shipping_cost === 'string'
+                ? parseFloat(order.shipping_cost).toFixed(2)
+                : order.shipping_cost.toFixed(2)}{' '}
+              {order.currency}
+            </div>
+          </div>
 
           {/* Products Card */}
           <Card className="p-6" aria-label="Order items">

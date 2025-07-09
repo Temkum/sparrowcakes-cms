@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
 
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
 function calculateTimeLeft(): TimeLeft {
   const difference = +new Date('2025-03-25') - +new Date();
   let timeLeft: TimeLeft = {

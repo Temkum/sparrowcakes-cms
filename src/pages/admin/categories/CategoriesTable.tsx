@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { useAuthStore } from '@/store/auth';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,14 +49,13 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Link } from 'react-router-dom';
-import axiosInstance from '@/services/axiosInstance';
 import DOMPurify from 'dompurify';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import { Category } from '@/types/category';
+import useCategoriesStore from '@/store/categories-store';
 
 const CategoriesTable = () => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
@@ -79,13 +77,11 @@ const CategoriesTable = () => {
   const [selectedCategoryDetails, setSelectedCategoryDetails] =
     useState<Category | null>(null);
 
-  const { token } = useAuthStore();
-
   // Debounce search term to avoid excessive API calls
   useEffect(() => {
     const timerId = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm.trim()); // Trim whitespace
-    }, 500); // Increased to 500ms for better debouncing
+      setDebouncedSearchTerm(searchTerm.trim());
+    }, 500);
 
     return () => clearTimeout(timerId);
   }, [searchTerm]);
@@ -94,29 +90,33 @@ const CategoriesTable = () => {
   const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.get(`${API_BASE_URL}/categories`, {
-        params: {
+      const response = await useCategoriesStore
+        .getState()
+        .getCategoriesPaginated({
+          categories: [], // Initialize with empty array as required by the type
           page,
           limit,
+          search: debouncedSearchTerm,
           sortBy: sortConfig.field,
           sortOrder: sortConfig.direction,
-          search: debouncedSearchTerm || undefined,
-        },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setCategories(response.data);
-      setTotal(Number(response.data.total));
+        });
+
+      // Ensure we always have an array, even if the response is undefined or null
+      const categories = Array.isArray(response?.data) ? response.data : [];
+      const total = typeof response?.total === 'number' ? response.total : 0;
+      
+      setCategories(categories);
+      setTotal(total);
+      return { data: categories, total };
     } catch (error) {
       console.error('Error fetching categories:', error);
-      toast.error('Failed to load categories');
+      toast.error('Failed to fetch categories. Please try again later!');
       setCategories([]);
       setTotal(0);
     } finally {
       setIsLoading(false);
     }
-  }, [page, limit, sortConfig, debouncedSearchTerm, token]);
+  }, [debouncedSearchTerm, limit, page, sortConfig]);
 
   useEffect(() => {
     fetchCategories();
@@ -144,24 +144,9 @@ const CategoriesTable = () => {
     setPage(1);
   }, [debouncedSearchTerm, sortConfig]);
 
-  const handleDelete = async (categoryId: string) => {
-    setIsDeleting(true);
-    try {
-      await axiosInstance.delete(`${API_BASE_URL}/categories/${categoryId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      toast.success('Category deleted successfully');
-      await fetchCategories(); // Refresh the list after deletion
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to delete category. Please try again later!', {
-        duration: 5000,
-      });
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleDelete = async (categoryId: number) => {
+    await useCategoriesStore.getState().deleteCategory(categoryId);
+    await fetchCategories();
   };
 
   const handleBulkDelete = async () => {
@@ -169,20 +154,12 @@ const CategoriesTable = () => {
     setIsDeleting(true);
 
     try {
-      await Promise.all(
-        selectedCategories.map((id) =>
-          axiosInstance.delete(`${API_BASE_URL}/categories/${id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-        )
-      );
+      await useCategoriesStore.getState().deleteCategories(selectedCategories);
       toast.success(
         `${selectedCategories.length} categories deleted successfully`
       );
       setSelectedCategories([]);
-      await fetchCategories(); // Refresh the list after deletion
+      await fetchCategories();
     } catch (error) {
       console.error(error);
       toast.error('Failed to delete some categories. Please try again later!', {

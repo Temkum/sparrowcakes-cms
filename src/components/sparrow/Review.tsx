@@ -1,6 +1,7 @@
 import { Card, CardContent } from '../ui/card';
 import { Star } from 'lucide-react';
-import { ReviewResponse, Customer } from '@/types/review';
+import { ReviewResponseProps } from '@/types/review';
+import { Customer } from '@/types/customer';
 
 // Extended customer type that includes the new fields we've added
 interface ExtendedCustomer extends Customer {
@@ -9,12 +10,12 @@ interface ExtendedCustomer extends Customer {
 }
 
 // Extended review response that uses our extended customer type
-interface ExtendedReviewResponse extends Omit<ReviewResponse, 'customer'> {
+interface ExtendedReviewResponse extends Omit<ReviewResponseProps, 'customer'> {
   customer: ExtendedCustomer;
 }
 
 interface ReviewComponentProps {
-  review?: ReviewResponse | ExtendedReviewResponse;
+  review?: ReviewResponseProps | ExtendedReviewResponse;
   name?: string;
   occupation?: string;
   comment?: string;
@@ -33,12 +34,16 @@ const Review = ({
   // Use review data if provided, otherwise use props
   const displayName = review?.customer?.name || name;
   // Use the customer's occupation if available
-  const displayOccupation = (review?.customer as ExtendedCustomer)?.occupation || occupation;
+  const displayOccupation =
+    (review?.customer as ExtendedCustomer)?.occupation || occupation;
   const displayComment = review?.comment || comment;
   const displayRating = review?.rating || rating;
-  
+
   // Use customer image from review if available, otherwise use provided image or default
-  const displayImage = (review?.customer as ExtendedCustomer)?.image_url || customerImage || '/placeholder-avatar.png';
+  const displayImage =
+    (review?.customer as ExtendedCustomer)?.image_url ||
+    customerImage ||
+    '/placeholder-avatar.png';
 
   return (
     <div className="w-full max-w-md mx-auto p-4">
@@ -73,16 +78,18 @@ const Review = ({
           <h3 className="text-xl font-bold text-gray-900">{displayName}</h3>
 
           {/* Quote/Comment */}
-          <p className="text-gray-500 max-w-sm">
-            "{displayComment}"
-          </p>
+          <p className="text-gray-500 max-w-sm">"{displayComment}"</p>
 
           {/* Star Rating */}
           <div className="flex gap-1">
             {[...Array(5)].map((_, i) => (
-              <Star 
-                key={i} 
-                className={`w-5 h-5 ${i < displayRating ? 'fill-[#ff7b5c] text-[#ff7b5c]' : 'fill-gray-200 text-gray-200'}`} 
+              <Star
+                key={i}
+                className={`w-5 h-5 ${
+                  i < displayRating
+                    ? 'fill-[#ff7b5c] text-[#ff7b5c]'
+                    : 'fill-gray-200 text-gray-200'
+                }`}
               />
             ))}
           </div>

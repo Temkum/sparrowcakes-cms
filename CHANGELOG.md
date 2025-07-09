@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github-personal/Temkum/sparrowcakes-cms/compare/v1.3.0...v1.8.0) (2025-05-29)
+
+
+### Features
+
+* update export feature ([4a8c771](https://github-personal/Temkum/sparrowcakes-cms/commit/4a8c77108621a73fb2eb38524f170905d301d3ce))
+
+
+### Bug Fixes
+
+* fix orders filtering and search ([6d2c0ae](https://github-personal/Temkum/sparrowcakes-cms/commit/6d2c0ae20391726816b8d39cad98c429a6bbe61e))
+* made fixes to order service and store ([1c5844d](https://github-personal/Temkum/sparrowcakes-cms/commit/1c5844d1f16d117c9a59af4fa969646b16561322))
+* standardize order sorting and export format handling ([db55401](https://github-personal/Temkum/sparrowcakes-cms/commit/db55401a05fcbd43d870d9d7892d2145b498ab45))
+* update order number generation and improve customer address autofill logic ([db4a347](https://github-personal/Temkum/sparrowcakes-cms/commit/db4a3477eb5af6751eaadcf2457b19d282eca182))
+
 ### [1.7.1](https://github-personal/Temkum/sparrowcakes-cms/compare/v1.7.0...v1.7.1) (2025-05-17)
 
 

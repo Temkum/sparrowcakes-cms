@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { BannerProps } from '@/types';
 import { banners } from '@/utilities/data';
 
 function ProductBanner({

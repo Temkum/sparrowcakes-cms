@@ -51,6 +51,7 @@ export function ProductSelector({
     const selectedProduct = products.find((p) => p.id === Number(productId));
     if (selectedProduct) {
       setValue(`${name}.${index}.productId`, Number(productId));
+      // Set initial unit price but allow editing
       setValue(`${name}.${index}.unitPrice`, selectedProduct.price);
     }
   };
@@ -119,16 +120,15 @@ export function ProductSelector({
               name={`${name}.${index}.unitPrice`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Unit Price</FormLabel>
+                  <FormLabel>Unit Price*</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="number"
-                      min={0}
+                      min={''}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                       value={field.value}
-                      readOnly
-                      className="bg-gray-100"
+                      disabled={readOnly}
                     />
                   </FormControl>
                   <FormMessage />

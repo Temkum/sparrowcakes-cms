@@ -120,12 +120,10 @@ export interface Category {
 // For pagination
 export interface PaginatedProductsResponse {
   items: ProductAPIResponse[];
-  meta: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface BulkDeletionError extends Error {

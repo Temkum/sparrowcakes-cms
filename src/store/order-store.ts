@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { orderService } from '@/services/orders.service';
-import { Order, OrderStats, OrderStatus } from '@/types/order';
+import {
+  Order,
+  OrderFilterProps,
+  OrderStats,
+  OrderStatus,
+} from '@/types/order';
 import { toast } from 'react-hot-toast';
 
 interface OrderState {
@@ -13,291 +18,289 @@ interface OrderState {
     page: number;
     pageSize: number;
     sortBy: string;
-    sortDirection: 'asc' | 'desc';
+    sortDirection: 'ASC' | 'DESC';
     searchTerm: string;
     status?: OrderStatus;
   };
   stats: OrderStats;
+  selectedOrders: number[];
 
   // Actions
   loadOrders: () => Promise<void>;
+  selectAllFiltered: () => Promise<number[]>;
+  getAllFilteredOrdersIds: (filter: OrderFilterProps) => Promise<number[]>;
+  // CRUD operations
   createOrder: (orderData: Partial<Order>) => Promise<Order>;
   updateOrder: (id: number, orderData: Partial<Order>) => Promise<Order>;
   deleteOrders: (ids: number[]) => Promise<void>;
   softDeleteOrders: (ids: number[]) => Promise<void>;
   setFilter: (filter: Partial<OrderState['filter']>) => void;
   loadStats: () => Promise<void>;
+  resetFilter: () => void;
+  exportOrders: (
+    format: 'csv' | 'xlsx' | 'pdf',
+    selectedIds?: number[]
+  ) => Promise<boolean>;
 }
 
-const useOrderStore = create<OrderState>((set, get) => {
-  const getAuthToken = (): string => {
-    const persistedState = JSON.parse(
-      localStorage.getItem('auth-storage') || '{}'
-    );
-    return persistedState.state?.token || '';
-  };
+const DEFAULT_FILTER = {
+  page: 1,
+  pageSize: 10,
+  sortBy: 'created_at',
+  sortDirection: 'DESC' as const,
+  searchTerm: '',
+};
 
-  return {
-    orders: [],
-    currentOrder: null,
-    loading: false,
-    submitting: false,
-    totalCount: 0,
-    filter: {
-      page: 1,
-      pageSize: 10,
-      sortBy: 'created_at',
-      sortDirection: 'desc',
-      searchTerm: '',
-    },
-    stats: {
-      totalOrders: 0,
-      activeOrders: 0,
-      newOrders: 0,
-      completedOrders: 0,
-      totalRevenue: 0,
-      averageOrderValue: 0,
-      weeklyOrders: [],
-      monthlyOrders: [],
-      yearlyOrders: [],
-      topProducts: [],
-      topCustomers: [],
-    },
+// Create the store with proper typing
+const createOrderStore = (
+  set: (
+    state: Partial<OrderState> | ((state: OrderState) => Partial<OrderState>)
+  ) => void,
+  get: () => OrderState
+): OrderState => ({
+  // State
+  orders: [],
+  currentOrder: null,
+  loading: false,
+  submitting: false,
+  totalCount: 0,
+  selectedOrders: [],
+  filter: { ...DEFAULT_FILTER },
+  stats: {
+    totalOrders: 0,
+    activeOrders: 0,
+    newOrders: 0,
+    completedOrders: 0,
+    totalRevenue: 0,
+    averageOrderValue: 0,
+    weeklyOrders: [],
+    monthlyOrders: [],
+    yearlyOrders: [],
+    topProducts: [],
+    topCustomers: [],
+  },
 
-    loadOrders: async () => {
-      set({ loading: true });
-      try {
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
+  // Actions
+  loadOrders: async () => {
+    set({ loading: true });
+    try {
+      const { filter } = get();
 
-        const { filter } = get();
-        const cleanFilter = {
-          page: filter.page,
-          limit: filter.pageSize,
-          searchTerm: filter.searchTerm?.trim() || undefined,
-          sortBy: filter.sortBy,
-          sortDirection: filter.sortDirection.toUpperCase() as 'ASC' | 'DESC',
-          status: filter.status,
-        };
+      const apiFilter = {
+        page: filter.page,
+        limit: filter.pageSize,
+        search: filter.searchTerm,
+        sortBy: filter.sortBy,
+        sortOrder: filter.sortDirection,
+        status: filter.status,
+      };
 
-        const response = await orderService.getOrders(cleanFilter, token);
+      const response = await orderService.getOrders(apiFilter);
 
-        // Apply client-side filtering if API doesn't support it fully
-        // This is a fallback if the API doesn't handle filtering properly
-        let filteredOrders = response?.items ?? [];
-
-        // Apply status filter if set
-        if (filter.status) {
-          filteredOrders = filteredOrders.filter(
-            (order) => order.status === filter.status
-          );
-        }
-
-        // Apply search filter if set
-        if (filter.searchTerm) {
-          const searchLower = filter.searchTerm.toLowerCase();
-          filteredOrders = filteredOrders.filter(
-            (order) =>
-              order.order_number.toLowerCase().includes(searchLower) ||
-              (order.customer?.name &&
-                order.customer.name.toLowerCase().includes(searchLower)) ||
-              String(order.id).includes(searchLower) ||
-              (order.notes && order.notes.toLowerCase().includes(searchLower))
-          );
-        }
-
-        // Apply sorting
-        filteredOrders.sort((a, b) => {
-          const sortField = filter.sortBy as keyof Order;
-          let aValue = a[sortField];
-          let bValue = b[sortField];
-
-          // Handle special cases for complex fields
-          if (sortField === 'customer' && a.customer && b.customer) {
-            aValue = a.customer.name;
-            bValue = b.customer.name;
-          }
-
-          // Compare values based on their types
-          if (typeof aValue === 'string' && typeof bValue === 'string') {
-            return filter.sortDirection === 'asc'
-              ? aValue.localeCompare(bValue)
-              : bValue.localeCompare(aValue);
-          }
-
-          // Handle dates
-          if (aValue instanceof Date && bValue instanceof Date) {
-            return filter.sortDirection === 'asc'
-              ? aValue.getTime() - bValue.getTime()
-              : bValue.getTime() - aValue.getTime();
-          }
-
-          // Default numeric comparison
-          if (aValue !== undefined && bValue !== undefined) {
-            return filter.sortDirection === 'asc'
-              ? Number(aValue) - Number(bValue)
-              : Number(bValue) - Number(aValue);
-          }
-
-          return 0;
-        });
-
-        set({
-          orders: filteredOrders,
-          totalCount: filteredOrders.length,
-          loading: false,
-        });
-      } catch (error) {
-        console.error('Error loading orders:', error);
-        set({ loading: false });
-      }
-    },
-
-    createOrder: async (orderData: Partial<Order>) => {
-      try {
-        set({ submitting: true });
-        const token = getAuthToken();
-
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        const response = await orderService.createOrder(orderData, token);
-
-        await get().loadOrders();
-        await get().loadStats();
-        toast.success('Order created successfully');
-
-        return response;
-      } catch (error) {
-        console.error('Failed to create order:', error);
-        throw error;
-      } finally {
-        set({ submitting: false });
-      }
-    },
-
-    updateOrder: async (id: number, orderData: Partial<Order>) => {
-      try {
-        set({ submitting: true });
-        const token = getAuthToken();
-
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        const response = await orderService.updateOrder(id, orderData, token);
-
-        await get().loadOrders();
-        await get().loadStats();
-        toast.success('Order updated successfully');
-
-        return response;
-      } catch (error) {
-        console.error('Failed to update order:', error);
-        throw error;
-      } finally {
-        set({ submitting: false });
-      }
-    },
-
-    deleteOrders: async (ids: number[]) => {
-      try {
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        await orderService.deleteOrders(ids, token);
-
-        set((state) => ({
-          orders: state.orders.filter((order) => !ids.includes(order.id)),
-          totalCount: state.totalCount - ids.length,
-        }));
-
-        toast.success(
-          `Successfully deleted ${ids.length} order${ids.length > 1 ? 's' : ''}`
-        );
-      } catch (error) {
-        console.error('Failed to delete orders:', error);
-        toast.error('Failed to delete orders');
-      }
-    },
-
-    softDeleteOrders: async (ids: number[]) => {
-      try {
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-        if (!Array.isArray(ids) || ids.length === 0) {
-          throw new Error('No order IDs provided for soft delete');
-        }
-
-        await orderService.softDeleteOrders(ids, token);
-
-        // Refresh orders and stats to get latest data
-        await get().loadOrders();
-        await get().loadStats();
-
-        toast.success(
-          `Successfully soft deleted ${ids.length} order${
-            ids.length > 1 ? 's' : ''
-          }`
-        );
-      } catch (error) {
-        console.error('Failed to soft delete orders:', error);
-        toast.error('Failed to soft delete orders');
-      }
-    },
-
-    setFilter: (newFilter) => {
-      set((state) => {
-        // Create a new filter object
-        const updatedFilter = {
-          ...state.filter,
-          ...newFilter,
-        };
-
-        // Handle special case for 'all' status
-        if (newFilter.status === 'all') {
-          updatedFilter.status = undefined;
-        }
-
-        // Ensure search term is always a string
-        updatedFilter.searchTerm =
-          newFilter.searchTerm ?? state.filter.searchTerm;
-
-        // Reset to page 1 if filter criteria change (except page itself)
-        if (
-          newFilter.page === undefined &&
-          (newFilter.status !== undefined ||
-            newFilter.searchTerm !== undefined ||
-            newFilter.sortBy !== undefined ||
-            newFilter.sortDirection !== undefined ||
-            newFilter.pageSize !== undefined)
-        ) {
-          updatedFilter.page = 1;
-        }
-
-        return { filter: updatedFilter };
+      set({
+        orders: Array.isArray(response.data) ? response.data : response.data,
+        totalCount: response.meta.total,
+        loading: false,
       });
-    },
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error('Failed to load orders');
+      set({ loading: false });
+    }
+  },
 
-    loadStats: async () => {
+  // In order-store.ts
+  exportOrders: async (
+    format: 'csv' | 'xlsx' | 'pdf',
+    selectedIds: number[] = []
+  ) => {
+    try {
       set({ loading: true });
-      try {
-        const token = getAuthToken();
-        const stats = await orderService.getOrderStats(token);
-        set({ stats, loading: false });
-      } catch (error) {
-        console.error('Error loading order stats:', error);
-        set({ loading: false });
+
+      const { filter } = get();
+      const blob = await orderService.exportOrders(
+        format,
+        selectedIds.length > 0 ? selectedIds : undefined,
+        filter
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute(
+        'download',
+        `orders_${new Date().toISOString().split('T')[0]}.${format}`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      return true;
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export orders');
+      return false;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // Add this if you want a "select all" feature
+  selectAllFiltered: async () => {
+    try {
+      const ids = await orderService.getAllFilteredOrdersIds(get().filter);
+      set({ selectedOrders: ids });
+      return ids;
+    } catch (error) {
+      console.error('Failed to select all:', error);
+      return [];
+    }
+  },
+
+  getAllFilteredOrdersIds: async (filter: OrderFilterProps) => {
+    try {
+      const response = await orderService.getAllFilteredOrdersIds(filter);
+      return response;
+    } catch (error) {
+      console.error('Error fetching order IDs:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to fetch order IDs'
+      );
+      return [];
+    }
+  },
+
+  // In order-store.ts
+  setFilter: (newFilter) => {
+    set((state) => {
+      const updatedFilter = {
+        ...state.filter,
+        ...newFilter,
+      };
+
+      // Handle status filter
+      if ('status' in newFilter && newFilter.status === 'all') {
+        updatedFilter.status = undefined;
       }
-    },
-  };
+
+      // Reset to page 1 if any filter changes (except page itself)
+      const isFilterChanging = Object.keys(newFilter).some(
+        (key) => key !== 'page' && key !== 'pageSize'
+      );
+
+      if (isFilterChanging) {
+        updatedFilter.page = 1;
+      }
+
+      return { filter: updatedFilter };
+    });
+
+    // Load orders with new filter
+    get().loadOrders();
+  },
+
+  resetFilter: () => {
+    set({
+      filter: { ...DEFAULT_FILTER },
+      selectedOrders: [],
+    });
+    get().loadOrders();
+  },
+
+  createOrder: async (orderData: Partial<Order>) => {
+    try {
+      set({ submitting: true });
+      const response = await orderService.createOrder(orderData);
+
+      await get().loadOrders();
+      await get().loadStats();
+      toast.success('Order created successfully');
+
+      return response;
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      throw error;
+    } finally {
+      set({ submitting: false });
+    }
+  },
+
+  updateOrder: async (id: number, orderData: Partial<Order>) => {
+    try {
+      set({ submitting: true });
+      const response = await orderService.updateOrder(id, orderData);
+
+      await get().loadOrders();
+      await get().loadStats();
+      toast.success('Order updated successfully');
+
+      return response;
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      throw error;
+    } finally {
+      set({ submitting: false });
+    }
+  },
+
+  deleteOrders: async (ids: number[]) => {
+    try {
+      await orderService.deleteOrders(ids);
+
+      set((state) => ({
+        orders: state.orders.filter((order) => !ids.includes(order.id)),
+        totalCount: state.totalCount - ids.length,
+      }));
+
+      toast.success(
+        `Successfully deleted ${ids.length} order${ids.length > 1 ? 's' : ''}`
+      );
+    } catch (error) {
+      console.error('Failed to delete orders:', error);
+      toast.error('Failed to delete orders');
+    }
+  },
+
+  softDeleteOrders: async (ids: number[]) => {
+    try {
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw new Error('No order IDs provided for soft delete');
+      }
+
+      await orderService.softDeleteOrders(ids);
+
+      // Refresh orders and stats to get latest data
+      await get().loadOrders();
+      await get().loadStats();
+
+      toast.success(
+        `Successfully soft deleted ${ids.length} order${
+          ids.length > 1 ? 's' : ''
+        }`
+      );
+    } catch (error) {
+      console.error('Failed to soft delete orders:', error);
+      toast.error('Failed to soft delete orders');
+    }
+  },
+
+  loadStats: async () => {
+    set({ loading: true });
+    try {
+      const stats = await orderService.getOrderStats();
+      set({ stats, loading: false });
+    } catch (error) {
+      console.error('Error loading order stats:', error);
+      set({ loading: false });
+    }
+  },
 });
+
+// Create the store with proper typing
+const useOrderStore = create<OrderState>((set, get) => ({
+  ...createOrderStore(set, get),
+}));
 
 export default useOrderStore;

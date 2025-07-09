@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import './dynamic-categories.css';
 import { categoryOptionSchema } from '@/form-schema/categoryOptionSchema';
 import axios from 'axios';
+import { DynamicCategoriesProps } from '@/types';
 
 type Category = z.infer<typeof categoryOptionSchema>;
 type Option = { value: number; label: string };
@@ -16,7 +17,7 @@ export function DynamicCategories({
   name,
   label,
   isRequired,
-}: DynamicCategories) {
+}: DynamicCategoriesProps) {
   const { control } = useFormContext();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);

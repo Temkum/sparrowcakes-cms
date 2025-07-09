@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
@@ -14,7 +14,7 @@ import DOMPurify from 'dompurify';
 
 export const ProductDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const { currentProduct, loading, loadProduct } = useProductStore();
+  const { currentProduct, loadingProduct, loadProduct } = useProductStore();
   const [activeImage, setActiveImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,7 +37,15 @@ export const ProductDetails = () => {
     { label: currentProduct?.name || 'Product Details', href: '#' },
   ];
 
-  if (loading || !currentProduct) {
+  if (loadingProduct) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!currentProduct) {
     return (
       <div className="p-6">
         <BreadcrumbComponent items={breadcrumbItems} />

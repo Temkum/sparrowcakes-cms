@@ -1,16 +1,17 @@
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import CategoriesTable from '@/pages/admin/categories/CategoriesTable';
 import { Toaster } from '@/components/ui/toaster';
-
-const breadcrumbItems = [
-  {
-    label: 'Cakes By Sparrow',
-    href: '/admin/dashboard',
-  },
-  { label: 'Categories', href: '/admin/categories' },
-];
+import { useMemo } from 'react';
 
 export default function CategoriesPage() {
+  const breadcrumbItems = useMemo(
+    () => [
+      { label: 'Dashboard', href: '/admin/dashboard' },
+      { label: 'Categories', href: '#' },
+    ],
+    []
+  );
+
   return (
     <>
       <BreadcrumbComponent items={breadcrumbItems} />

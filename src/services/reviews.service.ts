@@ -1,18 +1,14 @@
 import axiosInstance from '@/services/axiosInstance';
-import { Review } from '@/types/review';
-
-const getAuthHeader = () => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import { ReviewResponseProps, ReviewsResponse } from '@/types/review';
 
 export const createReview = async (
-  review: Partial<Review>
-): Promise<Review> => {
+  review: Partial<ReviewResponseProps>
+): Promise<ReviewResponseProps> => {
   try {
-    const response = await axiosInstance.post('/reviews', review, {
-      headers: getAuthHeader(),
-    });
+    const response = await axiosInstance.post<ReviewResponseProps>(
+      '/reviews',
+      review
+    );
     return response.data;
   } catch (error) {
     console.error('Error creating review:', error);
@@ -20,11 +16,44 @@ export const createReview = async (
   }
 };
 
-export const getReviews = async (): Promise<Review[]> => {
+export const getReviews = async ({
+  page = 1,
+  limit = 10,
+  searchTerm = '',
+  productId,
+  customerId,
+  display,
+}: {
+  page?: number;
+  limit?: number;
+  searchTerm?: string;
+  productId?: number;
+  customerId?: number;
+  display?: boolean;
+} = {}): Promise<ReviewsResponse> => {
   try {
-    const response = await axiosInstance.get('/reviews', {
-      headers: getAuthHeader(),
+    // Build query parameters
+    const params: Record<string, string | number | boolean | undefined> = {
+      page,
+      limit,
+    };
+
+    // Add optional filters only if they're defined
+    if (searchTerm?.trim()) params.searchTerm = searchTerm.trim();
+    if (productId !== undefined) params.productId = productId;
+    if (customerId !== undefined) params.customerId = customerId;
+    if (display !== undefined) params.display = display;
+
+    // Remove undefined values
+    const cleanParams = Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined)
+    );
+
+    // Make the API request
+    const response = await axiosInstance.get<ReviewsResponse>('/reviews', {
+      params: cleanParams,
     });
+
     return response.data;
   } catch (error) {
     console.error('Error fetching reviews:', error);
@@ -34,15 +63,13 @@ export const getReviews = async (): Promise<Review[]> => {
 
 export const updateReview = async (
   id: number,
-  review: Partial<Review>
-): Promise<Review> => {
+  review: Partial<ReviewResponseProps>
+): Promise<ReviewResponseProps> => {
   try {
-    if (!id) {
-      throw new Error('Review ID is required for update');
-    }
-    const response = await axiosInstance.put(`/reviews/${id}`, review, {
-      headers: getAuthHeader(),
-    });
+    const response = await axiosInstance.put<ReviewResponseProps>(
+      `/reviews/${id}`,
+      review
+    );
     return response.data;
   } catch (error) {
     console.error('Error updating review:', error);
@@ -52,14 +79,41 @@ export const updateReview = async (
 
 export const deleteReview = async (id: number): Promise<void> => {
   try {
-    if (!id) {
-      throw new Error('Review ID is required for deletion');
-    }
-    await axiosInstance.delete(`/reviews/${id}`, {
-      headers: getAuthHeader(),
-    });
+    await axiosInstance.delete(`/reviews/${id}`);
   } catch (error) {
     console.error('Error deleting review:', error);
+    throw error;
+  }
+};
+
+// Get review by ID
+export const getReviewById = async (
+  id: number
+): Promise<ReviewResponseProps> => {
+  try {
+    const response = await axiosInstance.get<ReviewResponseProps>(
+      `/reviews/${id}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching review with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Toggle review display status
+export const toggleReviewDisplay = async (
+  id: number,
+  display: boolean
+): Promise<ReviewResponseProps> => {
+  try {
+    const response = await axiosInstance.patch<ReviewResponseProps>(
+      `/reviews/${id}/display`,
+      { display }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error toggling display for review with ID ${id}:`, error);
     throw error;
   }
 };

@@ -1,120 +1,139 @@
 import { create } from 'zustand';
-import axiosInstance from '@/services/axiosInstance';
-import { Review, ReviewResponse } from '@/types/review';
-import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
-
-// Note: Our axios instance has a response interceptor that automatically extracts response.data
-// This means we need to handle the typing differently than standard axios
+import { ReviewResponseProps } from '@/types/review';
+import * as reviewService from '@/services/reviews.service';
 
 interface ReviewsState {
   loading: boolean;
-  reviews: ReviewResponse[];
-  fetchReviews: () => Promise<void>;
-  createReview: (review: Partial<Review>) => Promise<ReviewResponse>;
+  reviews: ReviewResponseProps[];
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
+
+  fetchReviews: (params?: {
+    page?: number;
+    limit?: number;
+    searchTerm?: string;
+    productId?: number;
+    customerId?: number;
+    display?: boolean;
+  }) => Promise<void>;
+  createReview: (review: Partial<ReviewResponseProps>) => Promise<void>;
   updateReview: (
-    reviewId: number,
-    review: Partial<Review>
-  ) => Promise<ReviewResponse>;
-  deleteReview: (reviewId: number) => Promise<void>;
+    id: number,
+    review: Partial<ReviewResponseProps>
+  ) => Promise<void>;
+  deleteReview: (id: number) => Promise<void>;
+  toggleReviewDisplay: (id: number, display: boolean) => Promise<void>;
 }
 
-// Helper function to get auth token
-const getAuthHeader = () => {
-  const { token } = useAuthStore.getState();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
-const useReviewsStore = create<ReviewsState>((set) => ({
+export const useReviewsStore = create<ReviewsState>((set) => ({
   loading: false,
   reviews: [],
+  totalCount: 0,
+  currentPage: 1,
+  pageSize: 10,
 
-  fetchReviews: async () => {
+  fetchReviews: async (params = {}) => {
     set({ loading: true });
-
     try {
-      // The axios interceptor already extracts the data
-      const reviews = await axiosInstance.get('/reviews') as unknown as ReviewResponse[];
-      set({ reviews, loading: false });
+      const response = await reviewService.getReviews(params);
+
+      set({
+        reviews: response.items,
+        totalCount: response.meta.total,
+        currentPage: response.meta.page,
+        pageSize: response.meta.limit,
+        loading: false,
+      });
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      toast.error('Failed to load reviews');
+      toast.error('Failed to fetch reviews');
       set({ loading: false });
-      throw error;
     }
   },
 
   createReview: async (review) => {
+    set({ loading: true });
     try {
-      const reviewData = {
-        comment: review.comment,
-        customer_id: review.customerId,
-        display: review.isActive,
-        product_id: review.productId,
-        rating: review.rating,
-      };
-
-      const response = await axiosInstance.post('/reviews', reviewData, {
-        headers: getAuthHeader(),
-      }) as unknown as ReviewResponse;
-
-      console.log(response);
-
-      // The axios interceptor already extracts the data, so this is already a ReviewResponse
-      set((state) => ({ reviews: [...state.reviews, response] }));
-      return response;
+      await reviewService.createReview(review);
+      toast.success('Review created successfully');
+      // Refresh the reviews list
+      const response = await reviewService.getReviews();
+      set({
+        reviews: response.items,
+        totalCount: response.meta.total,
+        currentPage: response.meta.page,
+        pageSize: response.meta.limit,
+        loading: false,
+      });
     } catch (error) {
       console.error('Error creating review:', error);
-      throw error;
+      toast.error('Failed to create review');
+      set({ loading: false });
     }
   },
 
-  updateReview: async (reviewId, review) => {
+  updateReview: async (id, review) => {
+    set({ loading: true });
     try {
-      const reviewData = {
-        comment: review.comment,
-        customer_id: review.customerId,
-        display: review.isActive,
-        product_id: review.productId,
-        rating: review.rating,
-      };
-
-      const response = await axiosInstance.put(
-        `/reviews/${reviewId}`,
-        reviewData,
-        {
-          headers: getAuthHeader(),
-        }
-      ) as unknown as ReviewResponse;
-
-      // The axios interceptor already extracts the data, so this is already a ReviewResponse
-      set((state) => ({
-        reviews: state.reviews.map((r) =>
-          r.id === reviewId ? response : r
-        ),
-      }));
-
-      return response;
+      await reviewService.updateReview(id, review);
+      // Refresh the reviews list
+      const response = await reviewService.getReviews();
+      set({
+        reviews: response.items,
+        totalCount: response.meta.total,
+        currentPage: response.meta.page,
+        pageSize: response.meta.limit,
+        loading: false,
+      });
+      toast.success('Review updated successfully');
     } catch (error) {
       console.error('Error updating review:', error);
-      throw error;
+      toast.error('Failed to update review');
+      set({ loading: false });
     }
   },
 
-  deleteReview: async (reviewId) => {
+  deleteReview: async (id) => {
+    set({ loading: true });
     try {
-      await axiosInstance.delete(`/reviews/${reviewId}`, {
-        headers: getAuthHeader(),
+      await reviewService.deleteReview(id);
+      toast.success('Review deleted successfully');
+      // Refresh the reviews list
+      const response = await reviewService.getReviews();
+      set({
+        reviews: response.items,
+        totalCount: response.meta.total,
+        currentPage: response.meta.page,
+        pageSize: response.meta.limit,
+        loading: false,
       });
-
-      set((state) => ({
-        reviews: state.reviews.filter((review) => review.id !== reviewId),
-      }));
     } catch (error) {
       console.error('Error deleting review:', error);
-      throw error;
+      toast.error('Failed to delete review');
+      set({ loading: false });
+    }
+  },
+
+  toggleReviewDisplay: async (id, display) => {
+    set({ loading: true });
+    try {
+      await reviewService.toggleReviewDisplay(id, display);
+      toast.success(`Review ${display ? 'shown' : 'hidden'} successfully`);
+      // Refresh the reviews list
+      const response = await reviewService.getReviews();
+      set({
+        reviews: response.items,
+        totalCount: response.meta.total,
+        currentPage: response.meta.page,
+        pageSize: response.meta.limit,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Error toggling review display:', error);
+      toast.error('Failed to update review visibility');
+      set({ loading: false });
     }
   },
 }));
-
-export default useReviewsStore;

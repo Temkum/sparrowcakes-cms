@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -29,7 +29,6 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import useProductStore from '@/store/product-store';
-import toast from 'react-hot-toast';
 import {
   Select,
   SelectContent,
@@ -48,16 +47,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Toaster } from 'react-hot-toast';
+import { Card } from '@/components/ui/card';
 
 interface ProductTableProps {
   onEdit: (productId: number) => void;
   onView: (productId: number) => void;
+  skipInitialLoad?: boolean;
 }
 
-const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
+const ProductsTable = ({
+  onEdit,
+  onView,
+  skipInitialLoad = false,
+}: ProductTableProps) => {
   const {
     products,
-    loading,
+    loadingProducts,
+    deleting,
+    error,
     totalCount,
     currentPage,
     pageSize,
@@ -66,52 +74,123 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
     deleteProduct,
     bulkDeleteProducts,
     loadProducts,
+    loadStats,
+    setError,
+    stats,
   } = useProductStore();
+
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
-  const [limit, setLimit] = useState<number>(pageSize);
+  const [searchInput, setSearchInput] = useState(filter.searchTerm || '');
   const [deletingProductId, setDeletingProductId] = useState<number | null>(
     null
   );
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [selectedForDeleteId, setSelectedForDeleteId] = useState<number | null>(
     null
   );
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Handle filter changes with debounce
+  // Initialize searchInput when filter changes from external source
+  useEffect(() => {
+    setSearchInput(filter.searchTerm || '');
+  }, [filter.searchTerm]);
+
+  // Initial data loading
+  useEffect(() => {
+    if (!skipInitialLoad && !isInitialized) {
+      const initializeData = async () => {
+        try {
+          await Promise.all([loadProducts(), loadStats()]);
+        } catch (err) {
+          console.error('Failed to initialize data:', err);
+        } finally {
+          setIsInitialized(true);
+        }
+      };
+      initializeData();
+    } else if (skipInitialLoad) {
+      setIsInitialized(true);
+    }
+  }, [skipInitialLoad, loadProducts, loadStats, isInitialized]);
+
+  // Reload products when filter changes (except search term which is handled separately)
+  useEffect(() => {
+    if (isInitialized) {
+      loadProducts();
+    }
+  }, [filter.page, filter.pageSize, loadProducts, isInitialized]);
+
+  // Search debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
-      loadProducts();
+      if (searchInput !== filter.searchTerm) {
+        setFilter({
+          ...filter,
+          searchTerm: searchInput,
+          page: 1,
+        });
+      }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [filter, loadProducts]);
+  }, [searchInput, filter, setFilter, isInitialized]);
 
-  const handleSearch = (searchTerm: string) => {
-    setFilter({ searchTerm, page: 1 });
-  };
+  // Cleanup error on unmount
+  useEffect(() => {
+    return () => {
+      if (error) {
+        setError(null);
+      }
+    };
+  }, [error, setError]);
 
-  const handlePageSizeChange = (size: number) => {
-    setFilter({ pageSize: size, page: 1 });
-  };
+  const handleSearch = useCallback((searchTerm: string) => {
+    setSearchInput(searchTerm);
+  }, []);
 
-  const handlePageChange = (page: number) => {
-    setFilter({ page });
-  };
+  const handlePageSizeChange = useCallback(
+    async (size: number) => {
+      try {
+        await setFilter({
+          ...filter,
+          pageSize: size,
+          page: 1,
+        });
+      } catch (err) {
+        console.error('Failed to change page size:', err);
+      }
+    },
+    [setFilter, filter]
+  );
+
+  const handlePageChange = useCallback(
+    async (page: number) => {
+      try {
+        await setFilter({
+          ...filter,
+          page,
+        });
+      } catch (err) {
+        console.error('Failed to change page:', err);
+      }
+    },
+    [setFilter, filter]
+  );
 
   const handleDelete = async (productId: number) => {
+    setDeletingProductId(productId);
+
     try {
-      setDeletingProductId(productId);
       const success = await deleteProduct(productId);
+
       if (success) {
-        toast.success('Product deleted successfully');
-      } else {
-        toast.error('Failed to delete product');
+        setSelectedProducts((prev) => prev.filter((id) => id !== productId));
+        // Reload stats after deletion
+        await loadStats();
       }
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      toast.error('Failed to delete product');
+    } catch (err) {
+      console.error('Failed to delete product:', err);
     } finally {
       setDeleteDialogOpen(false);
       setDeletingProductId(null);
@@ -122,68 +201,101 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
   const handleBulkDelete = async () => {
     if (selectedProducts.length === 0) return;
 
-    setIsBulkDeleting(true);
     try {
       const success = await bulkDeleteProducts(selectedProducts);
+
       if (success) {
-        toast.success(
-          `${selectedProducts.length} product(s) deleted successfully`
-        );
         setSelectedProducts([]);
-      } else {
-        toast.error('Failed to delete selected products');
+        // Reload stats after bulk deletion
+        await loadStats();
       }
-    } catch (error: unknown) {
-      console.error('Error bulk deleting products:', error);
-
-      let errorMessage = 'Failed to delete selected products';
-
-      if (error instanceof Error) {
-        errorMessage = error.message || errorMessage;
-      } else if (typeof error === 'object' && error !== null) {
-        // Handle API error response structure
-        const apiError = error as {
-          response?: { data?: { message?: string } };
-        };
-        if (apiError.response?.data?.message) {
-          errorMessage = apiError.response.data.message;
-        }
-      }
-
-      toast.error(errorMessage);
+    } catch (err) {
+      console.error('Failed to bulk delete products:', err);
     } finally {
-      setIsBulkDeleting(false);
       setBulkDeleteDialogOpen(false);
     }
   };
 
-  const toggleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedProducts(products?.map((product) => product.id!) || []);
-    } else {
-      setSelectedProducts([]);
-    }
-  };
+  const toggleSelectAll = useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        setSelectedProducts(products?.map((product) => product.id!) || []);
+      } else {
+        setSelectedProducts([]);
+      }
+    },
+    [products]
+  );
 
-  const toggleSelectProduct = (productId: number, checked: boolean) => {
-    if (checked) {
-      setSelectedProducts([...selectedProducts, productId]);
-    } else {
-      setSelectedProducts(selectedProducts.filter((id) => id !== productId));
+  const toggleSelectProduct = useCallback(
+    (productId: number, checked: boolean) => {
+      if (checked) {
+        setSelectedProducts((prev) => [...prev, productId]);
+      } else {
+        setSelectedProducts((prev) => prev.filter((id) => id !== productId));
+      }
+    },
+    []
+  );
+
+  const handleRetryLoad = useCallback(async () => {
+    setError(null);
+    try {
+      await Promise.all([loadProducts(), loadStats()]);
+    } catch (err) {
+      console.error('Retry failed:', err);
     }
-  };
+  }, [setError, loadProducts, loadStats]);
 
   const isOperationInProgress =
-    loading || isBulkDeleting || deletingProductId !== null;
+    loadingProducts || deleting || deletingProductId !== null;
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const hasProducts = products && products.length > 0;
 
   return (
     <>
+      <Toaster />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card className="p-4">
+          <h3 className="text-sm text-gray-500">Total Products</h3>
+          {loadingProducts && !isInitialized ? (
+            <div className="flex items-center justify-center h-8">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <p className="text-2xl font-bold">{stats?.totalProducts || 0}</p>
+          )}
+        </Card>
+        <Card className="p-4">
+          <h3 className="text-sm text-gray-500">Active Products</h3>
+          {loadingProducts && !isInitialized ? (
+            <div className="flex items-center justify-center h-8">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <p className="text-2xl font-bold">{stats?.activeProducts || 0}</p>
+          )}
+        </Card>
+        <Card className="p-4">
+          <h3 className="text-sm text-gray-500">Average Price</h3>
+          {loadingProducts && !isInitialized ? (
+            <div className="flex items-center justify-center h-8">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <p className="text-2xl font-bold">
+              ${stats?.averagePrice?.toFixed(2) || '0.00'}
+            </p>
+          )}
+        </Card>
+      </div>
+
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <Input
             placeholder="Search products..."
             className="max-w-sm"
-            value={filter.searchTerm || ''}
+            value={searchInput}
             onChange={(e) => handleSearch(e.target.value)}
             disabled={isOperationInProgress}
           />
@@ -194,12 +306,8 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
               onOpenChange={setBulkDeleteDialogOpen}
             >
               <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  disabled={isOperationInProgress}
-                  onClick={() => setBulkDeleteDialogOpen(true)}
-                >
-                  {isBulkDeleting ? (
+                <Button variant="destructive" disabled={isOperationInProgress}>
+                  {deleting ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="animate-spin w-4 h-4" />
                       Processing...
@@ -214,12 +322,11 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
                     This will permanently delete {selectedProducts.length}{' '}
-                    selected product
-                    {selectedProducts.length > 1 ? 's' : ''}.
+                    selected product{selectedProducts.length > 1 ? 's' : ''}.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isBulkDeleting}>
+                  <AlertDialogCancel disabled={deleting}>
                     Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction
@@ -228,9 +335,9 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                       e.preventDefault();
                       handleBulkDelete();
                     }}
-                    disabled={isBulkDeleting}
+                    disabled={deleting}
                   >
-                    {isBulkDeleting ? (
+                    {deleting ? (
                       <span className="flex items-center gap-2">
                         <Loader2 className="animate-spin w-4 h-4" />
                         Deleting...
@@ -252,35 +359,52 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                 <TableHead className="w-12">
                   <Checkbox
                     checked={
-                      selectedProducts.length > 0 &&
-                      selectedProducts.length === products.length
+                      hasProducts && selectedProducts.length === products.length
                     }
                     onCheckedChange={toggleSelectAll}
-                    disabled={isOperationInProgress || products.length === 0}
+                    disabled={isOperationInProgress || !hasProducts}
                   />
                 </TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Active</TableHead>
-                <TableHead>Date added</TableHead>
+                <TableHead>Date Added</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead></TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={7}>
-                    <div className="space-y-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Skeleton key={i} className="h-12 w-full" />
-                      ))}
-                    </div>
-                  </TableCell>
-                </TableRow>
+              {loadingProducts && !isInitialized && (
+                <>
+                  {[...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-10 w-10 rounded" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-4" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-16" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-4" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </>
               )}
 
-              {!loading && products.length === 0 && (
+              {!loadingProducts && !hasProducts && !error && isInitialized && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     No products found
@@ -288,7 +412,27 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                 </TableRow>
               )}
 
-              {!loading &&
+              {!loadingProducts && error && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-red-600">
+                        Failed to load products!
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRetryLoad}
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {isInitialized &&
+                hasProducts &&
                 products.map((product) => {
                   const isDeleting = deletingProductId === product.id;
 
@@ -338,24 +482,19 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                         </Link>
                       </TableCell>
                       <TableCell>
-                        {product.isActive || product.isActive ? (
+                        {product.isActive ? (
                           <CheckCircle className="h-5 w-5 text-green-500" />
                         ) : (
                           <XCircle className="h-5 w-5 text-red-500" />
                         )}
                       </TableCell>
                       <TableCell>
-                        {product.createdAt || product.createdAt
-                          ? format(
-                              new Date(
-                                product.createdAt || product.createdAt || ''
-                              ),
-                              'MMM dd, yyyy'
-                            )
+                        {product.createdAt
+                          ? format(new Date(product.createdAt), 'MMM dd, yyyy')
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {product.price ? `$${product.price}` : '-'}
+                        {product.price ? `$${product.price.toFixed(2)}` : '-'}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -368,25 +507,16 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            onClick={(e) => e.stopPropagation()}
-                          >
+                          <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onView(product.id!);
-                              }}
+                              onClick={() => onView(product.id!)}
                               disabled={isDeleting}
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEdit(product.id!);
-                              }}
+                              onClick={() => onEdit(product.id!)}
                               disabled={isDeleting}
                             >
                               <Edit className="mr-2 h-4 w-4" />
@@ -409,8 +539,7 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                                   type="button"
                                   className="text-red-600 cursor-pointer flex items-center bg-transparent border-none p-2 w-full text-left hover:bg-gray-100 rounded-sm text-sm"
                                   disabled={isDeleting}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                  onClick={() => {
                                     setSelectedForDeleteId(product.id!);
                                     setDeleteDialogOpen(true);
                                   }}
@@ -419,24 +548,18 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
                                   Delete
                                 </button>
                               </AlertDialogTrigger>
-                              <AlertDialogContent
-                                onClick={(e) => e.stopPropagation()}
-                              >
+                              <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>
                                     Are you absolutely sure?
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     This action cannot be undone. This will
-                                    permanently delete this product.
+                                    permanently delete "{product.name}".
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel
-                                    onClick={() => {
-                                      setDeleteDialogOpen(false);
-                                      setSelectedForDeleteId(null);
-                                    }}
                                     disabled={deletingProductId === product.id}
                                   >
                                     Cancel
@@ -471,20 +594,17 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
           </Table>
         </div>
 
+        {/* Pagination */}
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center space-x-2">
             <p className="text-sm font-medium">Rows per page</p>
             <Select
-              value={limit.toString()}
-              onValueChange={(value) => {
-                const newLimit = Number(value);
-                setLimit(newLimit);
-                handlePageSizeChange(newLimit);
-              }}
+              value={pageSize.toString()}
+              onValueChange={(value) => handlePageSizeChange(Number(value))}
               disabled={isOperationInProgress}
             >
               <SelectTrigger className="w-20">
-                <SelectValue placeholder={limit.toString()} />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="10">10</SelectItem>
@@ -505,14 +625,14 @@ const ProductsTable = ({ onEdit, onView }: ProductTableProps) => {
               Previous
             </Button>
             <span className="text-sm">
-              Page {currentPage} of {Math.ceil(totalCount / pageSize) || 1}
+              Page {currentPage} of {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={
-                currentPage === Math.ceil(totalCount / pageSize) ||
+                currentPage === totalPages ||
                 isOperationInProgress ||
                 totalCount === 0
               }

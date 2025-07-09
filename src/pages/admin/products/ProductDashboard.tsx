@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Card } from '@/components/ui/card';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { TagIcon, Cake, BadgeDollarSign } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,29 +6,17 @@ import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import ProductsTable from './ProductsTable';
 import useProductStore from '@/store/product-store';
 
-const breadcrumbItems = [
-  {
-    label: 'Dashboard',
-    href: '/admin/dashboard',
-  },
-  { label: 'Products', href: '#' },
-];
-
 const ProductDashboard = () => {
-  const { stats, loadProducts, loadStats, loading } = useProductStore();
+  const { loadingProducts } = useProductStore();
   const navigate = useNavigate();
-  // const totalProducts = stats?.totalProducts ?? 0;
-  // const activeProducts = stats?.activeProducts ?? 0;
-  // const averatePrice = Number(stats?.averagePrice || 0).toFixed(2);
 
-  useEffect(() => {
-    // Load both products and stats when component mounts
-    const loadData = async () => {
-      await loadProducts();
-      await loadStats();
-    };
-    loadData();
-  }, [loadProducts, loadStats]);
+  const breadcrumbItems = useMemo(
+    () => [
+      { label: 'Dashboard', href: '/admin/dashboard' },
+      { label: 'Products', href: '#' },
+    ],
+    []
+  );
 
   const handleEdit = (productId: number) => {
     navigate(`/admin/products/edit/${productId}`);
@@ -50,7 +37,7 @@ const ProductDashboard = () => {
             <Link to="/admin/products/new">
               <Button
                 className="bg-orange-500 hover:bg-orange-600"
-                disabled={loading}
+                disabled={loadingProducts}
               >
                 New product
               </Button>
@@ -77,27 +64,12 @@ const ProductDashboard = () => {
             </Link>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="p-4">
-              <h3 className="text-sm text-gray-500">Total Products</h3>
-              <p className="text-2xl font-bold">{stats?.totalProducts}</p>
-            </Card>
-            <Card className="p-4">
-              <h3 className="text-sm text-gray-500">Active Products</h3>
-              <p className="text-2xl font-bold">{stats?.activeProducts}</p>
-              {/* <p className="text-2xl font-bold">{activeProducts}</p> */}
-            </Card>
-            <Card className="p-4">
-              <h3 className="text-sm text-gray-500">Average price</h3>
-              <p className="text-2xl font-bold">
-                ${Number(stats?.averagePrice || 0).toFixed(2)}$
-                {/* {averatePrice} */}
-              </p>
-            </Card>
-          </div>
-
-          <ProductsTable onEdit={handleEdit} onView={handleView} />
+          {/* Pass skipInitialLoad prop to prevent ProductsTable from loading data */}
+          <ProductsTable
+            onEdit={handleEdit}
+            onView={handleView}
+            skipInitialLoad={true}
+          />
         </div>
       </div>
     </>

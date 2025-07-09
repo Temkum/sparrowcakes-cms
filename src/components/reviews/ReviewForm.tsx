@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { StarRating } from '@/components/sparrow/StarRating';
 import { Loader2 } from 'lucide-react';
-import { Review, ReviewResponse } from '@/types/review';
+import { Review, ReviewResponseProps } from '@/types/review';
 import { Customer } from '@/types/customer';
 import {
   Select,
@@ -45,7 +45,7 @@ const reviewFormSchema = z.object({
 type ReviewFormData = z.infer<typeof reviewFormSchema>;
 
 interface ReviewFormProps {
-  review?: Review | ReviewResponse;
+  review?: Review | ReviewResponseProps;
   onSubmit: (data: Partial<Review>) => void;
   onDelete?: () => void;
   submitting?: boolean;

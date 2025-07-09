@@ -1,13 +1,15 @@
+import AnimatedReviews from '@/components/reviews/AnimatedReviews';
 import BannerDeal from '@/components/sparrow/BannerDeal';
 import LatestGist from '@/components/sparrow/BlogSection';
-import CategoriesSection from '@/components/sparrow/CategoriesSection';
+// import CategoriesSection from '@/components/sparrow/CategoriesSection';
+import DynamicCategoriesSection from '@/components/sparrow/DynamicCategoriesSection';
 import HeroBanner from '@/components/sparrow/HeroBanner';
 // import HeroSlider from '@/components/sparrow/HeroSlider';
+// import HeroCarousel from '@/components/sparrow/HeroCarousel';
 import PopularProducts from '@/components/sparrow/PopularProducts';
 import ProductBanners from '@/components/sparrow/ProductBanners';
 import ProductGrid from '@/components/sparrow/ProductGrid';
 import Services from '@/components/sparrow/Services';
-import Testimonials from '@/components/sparrow/Testimonials';
 import { products } from '@/utilities/data';
 
 const Home = () => {
@@ -27,7 +29,9 @@ const Home = () => {
     <>
       {/* <HeroSlider /> */}
       <HeroBanner />
-      <CategoriesSection />
+      {/* <HeroCarousel /> */}
+      {/* <CategoriesSection /> */}
+      <DynamicCategoriesSection />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-8 text-center">Our Products</h1>
         <ProductGrid
@@ -42,7 +46,7 @@ const Home = () => {
       <ProductBanners />
       <Services />
       <BannerDeal />
-      <Testimonials />
+      <AnimatedReviews />
       <LatestGist />
     </>
   );
