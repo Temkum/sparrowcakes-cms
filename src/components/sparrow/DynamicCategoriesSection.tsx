@@ -186,7 +186,7 @@ const BannerCard: React.FC<{ category: Category; onNavigate: () => void }> = ({
         <div className="flex items-center space-x-4">
           <button
             onClick={onNavigate}
-            className="group bg-white text-black px-8 py-3 rounded-md font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center space-x-2"
+            className="group bg-emerald-500 text-white px-8 py-3 rounded-md font-semibold hover:bg-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center space-x-2"
           >
             <ShoppingBag className="w-5 h-5" />
             <span>Order Now</span>
@@ -206,34 +206,34 @@ const CategoryItem: React.FC<{
   return (
     <div
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
+      className={`group relative overflow-hidden rounded-md cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-lg h-16 ${
         isActive ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'
       }`}
     >
       {/* Background Image */}
-      <div className="aspect-[4/3] relative">
+      <div className="relative h-full w-full">
         <img
           src={category.image}
           alt={category.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div
           className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-60`}
         />
 
         {/* Content Overlay */}
-        <div className="absolute inset-0 p-4 flex flex-col justify-end">
-          <h3 className="text-white font-semibold text-lg mb-1 group-hover:text-white transition-colors">
+        <div className="absolute inset-0 p-2 flex flex-col justify-end">
+          <h3 className="text-white font-semibold text-base mb-0 group-hover:text-white transition-colors truncate">
             {category.name}
           </h3>
-          <p className="text-white/80 text-sm">
+          <p className="text-white/80 text-xs truncate">
             {category.productCount.toLocaleString()} items
           </p>
         </div>
 
         {/* Active Indicator */}
         {isActive && (
-          <div className="absolute top-3 right-3 w-3 h-3 bg-blue-500 rounded-full shadow-lg animate-pulse" />
+          <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full shadow-lg animate-pulse" />
         )}
       </div>
     </div>
@@ -304,7 +304,7 @@ const DynamicCategoriesSection: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-md h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading categories...</p>
         </div>
       </div>
@@ -353,16 +353,16 @@ const DynamicCategoriesSection: React.FC = () => {
                   <button
                     onClick={loadMoreCategories}
                     disabled={loadingMore}
-                    className="group bg-blue-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-600 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group bg-emerald-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-md flex items-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingMore ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-md h-5 w-5 border-b-2 border-white"></div>
                         <span>Loading...</span>
                       </>
                     ) : (
                       <>
-                        <Plus className="w-5 h-5" />
+                        <Plus className="w-5 h-5" width={2} />
                         <span>View More Categories</span>
                         <ArrowUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
                       </>

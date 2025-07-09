@@ -268,16 +268,17 @@ const HeroCarousel = () => {
                 </div>
 
                 {/* Right Column - Image */}
-                <div className="order-1 lg:order-2 relative">
-                  <div className="aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
-                    <img
-                      src={slide.image}
-                      alt={slide.headline}
-                      className="w-full h-full object-cover"
-                      loading={index === 0 ? 'eager' : 'lazy'}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                  </div>
+                <div className="order-1 lg:order-2 h-full flex items-center justify-center relative">
+                  {/* Background circle */}
+                  <div className="absolute w-[400px] h-[400px] lg:w-[500px] lg:h-[500px] bg-white/30 rounded-full z-0" />
+
+                  {/* Product image */}
+                  <img
+                    src={slide.image}
+                    alt={slide.headline}
+                    className="relative z-10 w-[280px] lg:w-[380px] object-contain"
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                  />
                 </div>
               </div>
             </div>

@@ -3,9 +3,9 @@ import BannerDeal from '@/components/sparrow/BannerDeal';
 import LatestGist from '@/components/sparrow/BlogSection';
 // import CategoriesSection from '@/components/sparrow/CategoriesSection';
 import DynamicCategoriesSection from '@/components/sparrow/DynamicCategoriesSection';
-// import HeroBanner from '@/components/sparrow/HeroBanner';
+import HeroBanner from '@/components/sparrow/HeroBanner';
 // import HeroSlider from '@/components/sparrow/HeroSlider';
-import HeroCarousel from '@/components/sparrow/HeroCarousel';
+// import HeroCarousel from '@/components/sparrow/HeroCarousel';
 import PopularProducts from '@/components/sparrow/PopularProducts';
 import ProductBanners from '@/components/sparrow/ProductBanners';
 import ProductGrid from '@/components/sparrow/ProductGrid';
@@ -28,8 +28,8 @@ const Home = () => {
   return (
     <>
       {/* <HeroSlider /> */}
-      {/* <HeroBanner /> */}
-      <HeroCarousel />
+      <HeroBanner />
+      {/* <HeroCarousel /> */}
       {/* <CategoriesSection /> */}
       <DynamicCategoriesSection />
       <div className="container mx-auto px-4 py-8">
