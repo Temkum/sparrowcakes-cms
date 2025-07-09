@@ -78,7 +78,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
     set({ loading: true });
     try {
       await reviewService.updateReview(id, review);
-      toast.success('Review updated successfully');
       // Refresh the reviews list
       const response = await reviewService.getReviews();
       set({
@@ -88,6 +87,7 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
         pageSize: response.meta.limit,
         loading: false,
       });
+      toast.success('Review updated successfully');
     } catch (error) {
       console.error('Error updating review:', error);
       toast.error('Failed to update review');
