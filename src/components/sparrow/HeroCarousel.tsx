@@ -4,7 +4,6 @@ import {
   ChevronRight,
   Star,
   Zap,
-  Shield,
   Crown,
   Sparkles,
   Heart,
@@ -15,75 +14,6 @@ const HeroCarousel = () => {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
-
-  const slides1 = [
-    {
-      id: 1,
-      discount: '25% Off Today',
-      headline: 'Premium Wireless Headphones',
-      description:
-        'Experience crystal-clear audio with our flagship noise-canceling headphones. Perfect for music lovers and professionals.',
-      image:
-        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=600&fit=crop&crop=center',
-      dominantColor: 'bg-gradient-to-r from-purple-600 to-blue-600',
-      icon: <Star className="w-4 h-4" />,
-    },
-    {
-      id: 2,
-      discount: '30% Off Limited',
-      headline: 'Smart Fitness Tracker',
-      description:
-        'Track your health, monitor your progress, and achieve your fitness goals with advanced biometric sensors.',
-      image:
-        'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=800&h=600&fit=crop&crop=center',
-      dominantColor: 'bg-gradient-to-r from-green-600 to-teal-600',
-      icon: <Zap className="w-4 h-4" />,
-    },
-    {
-      id: 3,
-      discount: '20% Off Flash Sale',
-      headline: 'Ultra-Secure Laptop',
-      description:
-        'Professional-grade security meets cutting-edge performance. Built for creators and business professionals.',
-      image:
-        'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&h=600&fit=crop&crop=center',
-      dominantColor: 'bg-gradient-to-r from-slate-700 to-slate-900',
-      icon: <Shield className="w-4 h-4" />,
-    },
-    {
-      id: 4,
-      discount: '35% Off Exclusive',
-      headline: 'Luxury Smartwatch',
-      description:
-        'Elegance meets innovation. Premium materials and advanced features for the discerning individual.',
-      image:
-        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=600&fit=crop&crop=center',
-      dominantColor: 'bg-gradient-to-r from-amber-600 to-orange-600',
-      icon: <Crown className="w-4 h-4" />,
-    },
-    {
-      id: 5,
-      discount: '40% Off Today Only',
-      headline: 'Gaming Mechanical Keyboard',
-      description:
-        'Professional gaming performance with RGB lighting and tactile switches. Dominate every game.',
-      image:
-        'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&h=600&fit=crop&crop=center',
-      dominantColor: 'bg-gradient-to-r from-red-600 to-pink-600',
-      icon: <Sparkles className="w-4 h-4" />,
-    },
-    {
-      id: 6,
-      discount: '50% Off Special',
-      headline: 'Wellness Essential Kit',
-      description:
-        'Complete wellness solution with aromatherapy, meditation tools, and premium self-care products.',
-      image:
-        'https://images.unsplash.com/photo-1540553016722-983e48a2cd10?w=800&h=600&fit=crop&crop=center',
-      dominantColor: 'bg-gradient-to-r from-rose-500 to-pink-500',
-      icon: <Heart className="w-4 h-4" />,
-    },
-  ];
 
   const slides = [
     {

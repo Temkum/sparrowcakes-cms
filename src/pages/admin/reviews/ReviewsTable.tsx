@@ -62,7 +62,7 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
   const {
     loadProduct,
     currentProduct,
-    loading: productLoading,
+    loadingProduct: productLoading,
   } = useProductStore();
 
   const filteredReviews = reviews?.filter((review) => {

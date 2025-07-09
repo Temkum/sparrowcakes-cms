@@ -18,7 +18,7 @@ const breadcrumbItems = [
 const ProductEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { loadProduct, currentProduct, loading } = useProductStore();
+  const { loadProduct, currentProduct, loadingProduct } = useProductStore();
 
   if (!id) {
     toast.error('Product ID not found');
@@ -36,7 +36,7 @@ const ProductEdit = () => {
     navigate('/admin/products');
   };
 
-  if (loading) {
+  if (loadingProduct) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin" />
