@@ -44,7 +44,6 @@ export const customerService = {
           },
         }
       );
-      console.log('response service', response);
 
       if (!response) {
         throw new Error('No data received from server');

@@ -60,14 +60,22 @@ function toUIProduct(product: Product): UIProduct {
       availability = product.availability;
     }
   }
-  return {
+  const reviews = Array.isArray(product.reviews) ? product.reviews : [];
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+      : 0;
+  const totalReviews = reviews.length;
+
+  const uiProduct: UIProduct = {
     id: product.id,
     title: product.name || '',
     category,
     price: product.price,
     originalPrice: product.price + (product.discount || 0),
-    rating: product.rating ?? 0,
-    numReviews: product.numReviews ?? 0,
+    reviews,
+    rating: averageRating,
+    totalReviews,
     image: imageUrl || '/placeholder.svg',
     display: true,
     quantity: product.quantity,
@@ -82,6 +90,8 @@ function toUIProduct(product: Product): UIProduct {
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };
+
+  return uiProduct;
 }
 
 const Home = () => {

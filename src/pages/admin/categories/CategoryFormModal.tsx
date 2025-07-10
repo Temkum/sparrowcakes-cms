@@ -167,7 +167,7 @@ const CategoryFormModal = ({
         formData.append('image', values.image);
       }
 
-      /* console.log('Final FormData contents:');
+      /*
       for (const [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
       } */

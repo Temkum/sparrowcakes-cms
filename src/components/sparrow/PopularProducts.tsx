@@ -19,6 +19,7 @@ function ProductCard({
   price,
   originalPrice,
   rating,
+  totalReviews,
   image,
   onAddToCart,
 }: UIProduct & { onAddToCart?: () => void }) {
@@ -55,14 +56,16 @@ function ProductCard({
               key={i}
               className={`w-4 h-4 ${
                 i < Math.floor(rating)
-                  ? 'fill-yellow-400 text-yellow-400'
+                  ? 'fill-yellow-300 text-yellow-300'
                   : i < rating
-                  ? 'fill-yellow-400 text-yellow-400 opacity-50'
+                  ? 'fill-rose-200 text-rose-200 opacity-50'
                   : 'fill-gray-200 text-gray-200'
               }`}
             />
           ))}
-          <span className="text-sm text-muted-foreground ml-1">({rating})</span>
+          <span className="text-sm text-muted-foreground ml-1">
+            ({totalReviews})
+          </span>
         </div>
 
         {/* Title */}
@@ -127,6 +130,17 @@ function toUIProduct(product: Product): UIProduct {
       categories = catArr;
     }
   }
+
+  // get the average rating of the product
+  const averageRating =
+    product.reviews.length > 0
+      ? product.reviews.reduce((acc, review) => acc + review.rating, 0) /
+        product.reviews.length
+      : 0;
+
+  // get total number of reviews of the product
+  const totalReviews = product.reviews.length;
+
   // Handle image extraction (only string URLs)
   const imageUrl =
     Array.isArray(product.imageUrls) && product.imageUrls.length > 0
@@ -164,6 +178,8 @@ function toUIProduct(product: Product): UIProduct {
     availability,
     categories,
     images,
+    rating: averageRating,
+    totalReviews,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };

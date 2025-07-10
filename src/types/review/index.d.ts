@@ -67,4 +67,5 @@ export interface Product {
   availability?: string;
   deleted_at?: string | null;
   categories?: number[];
+  reviews: Review[];
 }

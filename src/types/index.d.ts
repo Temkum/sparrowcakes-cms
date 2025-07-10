@@ -1,4 +1,5 @@
 import { Category } from './category/index';
+import { Review } from './review';
 
 export interface InputProps {
   type: string;
@@ -39,6 +40,8 @@ export interface ProductCardProps {
   originalPrice: number;
   rating: number;
   image: string;
+  reviews?: Review[];
+  totalReviews?: number;
   onAddToCart?: () => void;
   onAddToWishlist?: () => void;
   onQuickView?: () => void;
@@ -61,6 +64,8 @@ export interface UIProduct {
   isActive?: boolean;
   availability?: Date;
   categories?: { id: number; name: string }[];
+  reviews?: Review[];
+  totalReviews?: number;
   images?: string[];
   createdAt?: string;
   updatedAt?: string;

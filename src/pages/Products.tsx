@@ -44,16 +44,26 @@ function toUIProduct(product: Product): UIProduct {
       availability = product.availability;
     }
   }
+
+  // get the average rating of the product
+  const averageRating =
+    product.reviews.length > 0
+      ? product.reviews.reduce((acc, review) => acc + review.rating, 0) /
+        product.reviews.length
+      : 0;
+
+  // get total number of reviews of the product
+  const totalReviews = product.reviews.length;
+
   return {
     id: product.id,
     title: product.name || '',
     category,
     price: product.price,
     originalPrice: product.price + (product.discount || 0),
-    rating: product.rating ?? 0,
-    numReviews: product.numReviews ?? 0,
-    averageRating: product.averageRating ?? product.rating ?? 0, // NEW: average rating from reviews
-    reviewCount: product.reviewCount ?? product.numReviews ?? 0, // NEW: total number of reviews
+    rating: averageRating,
+    totalReviews: totalReviews ?? 0,
+    reviews: product.reviews ?? [],
     image: imageUrl || '/placeholder.svg',
     display: true,
     quantity: product.quantity,
@@ -124,7 +134,7 @@ const Products: React.FC = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search products..."
-          className="w-full max-w-md px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full max-w-md px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-400 bg-inherit"
         />
       </div>
       {loadingProducts ? (

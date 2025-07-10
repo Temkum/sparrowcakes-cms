@@ -9,6 +9,7 @@ export default function ProductCard({
   price = 120.25,
   originalPrice = 123.25,
   rating = 0,
+  totalReviews = 0,
   image = '/placeholder.svg',
   onAddToWishlist,
   onQuickView,
@@ -59,7 +60,9 @@ export default function ProductCard({
               }`}
             />
           ))}
-          <span className="text-sm text-muted-foreground ml-1">({rating})</span>
+          <span className="text-sm text-muted-foreground ml-1">
+            ({totalReviews})
+          </span>
         </div>
 
         {/* Title */}

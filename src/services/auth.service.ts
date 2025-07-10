@@ -44,7 +44,6 @@ export const login = async (data: {
       '/auth/login',
       data
     );
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error('Login error:', error);

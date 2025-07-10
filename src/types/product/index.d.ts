@@ -1,3 +1,5 @@
+import { Review } from '../review';
+
 // Product interface for frontend use (camelCase)
 export interface Product {
   id: number;
@@ -15,6 +17,8 @@ export interface Product {
   createdAt?: string;
   updatedAt?: string;
   quantity?: number;
+  reviews: Review[];
+  totalReviews: number;
 }
 
 // API response interface (snake_case)
@@ -29,10 +33,12 @@ export interface ProductAPIResponse {
   quantity: number;
   image_urls: string[];
   is_active: boolean;
+  reviews: Review[];
   created_at: string;
   updated_at: string;
   availability: string;
   categories: Category[];
+  totalReviews: number;
 }
 
 export interface ProductStatsUI {

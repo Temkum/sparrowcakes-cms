@@ -51,6 +51,8 @@ const transformApiResponseToProduct = (
   createdAt: response.created_at,
   updatedAt: response.updated_at,
   quantity: Number(response.quantity || 0),
+  reviews: response.reviews || [],
+  totalReviews: response.reviews?.length || 0,
 });
 
 interface ProductState {
@@ -237,6 +239,8 @@ const useProductStore = create<ProductState>((set, get) => ({
         updated_at: response.updated_at,
         availability: response.availability,
         categories: response.categories || [],
+        reviews: response.reviews || [],
+        totalReviews: response.reviews?.length || 0,
       };
 
       set({ currentProduct: transformedProduct });
