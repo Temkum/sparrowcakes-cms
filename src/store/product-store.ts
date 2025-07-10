@@ -64,6 +64,8 @@ interface ProductState {
   loadingProduct: boolean;
   submitting: boolean;
   deleting: boolean;
+  popularProducts: Product[];
+  loadingPopularProducts: boolean;
 
   // Error state management
   error: string | null;
@@ -88,6 +90,7 @@ interface ProductState {
   clearCurrentProduct: () => void;
   clearValidationErrors: () => void;
   setError: (error: string | null) => void;
+  loadPopularProducts: (limit?: number) => Promise<void>;
 }
 
 const useProductStore = create<ProductState>((set, get) => ({
@@ -105,6 +108,8 @@ const useProductStore = create<ProductState>((set, get) => ({
   loadingProduct: false,
   submitting: false,
   deleting: false,
+  popularProducts: [],
+  loadingPopularProducts: false,
 
   // Error state
   error: null,
@@ -157,7 +162,7 @@ const useProductStore = create<ProductState>((set, get) => ({
 
     try {
       const stats = await productService.getProductStats();
-      console.log('product stats', stats);
+
       set({ stats });
     } catch (error) {
       console.error('Error loading product stats:', error);
@@ -439,6 +444,21 @@ const useProductStore = create<ProductState>((set, get) => ({
   // Clear validation errors
   clearValidationErrors: () => {
     set({ validationErrors: [] });
+  },
+
+  // Load popular products
+  loadPopularProducts: async (limit = 5) => {
+    set({ loadingPopularProducts: true });
+    try {
+      const products = await productService.getPopularProducts(limit);
+      set({ popularProducts: products });
+    } catch (error) {
+      console.error('Error loading popular products:', error);
+      toast.error('Failed to load popular products');
+      set({ popularProducts: [] });
+    } finally {
+      set({ loadingPopularProducts: false });
+    }
   },
 }));
 

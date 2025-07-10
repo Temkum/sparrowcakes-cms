@@ -22,7 +22,6 @@ export default function ProductCard({
           alt={title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 rounded-sm"
         />
-
         {/* Hover Icons */}
         <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
@@ -40,15 +39,6 @@ export default function ProductCard({
             <Eye className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Shopping Bag Icon */}
-        {/* <button
-          onClick={onAddToCart}
-          className="absolute -bottom-4 left-1/2 -translate-x-1/2 p-2 rounded-full shadow-md hover:bg-white transition-colors z-10 cart-button"
-          aria-label="Add to cart"
-        >
-          <ShoppingBag className="w-5 h-5 text-emerald-600 z-50" />
-        </button> */}
       </div>
 
       <CardContent className="p-4 text-center">

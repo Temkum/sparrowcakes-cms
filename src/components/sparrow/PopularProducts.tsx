@@ -8,7 +8,10 @@ import {
   type CarouselApi,
 } from '../ui/carousel';
 import { useEffect, useState } from 'react';
-import { PopularProductsProps, UIProduct } from '@/types';
+import { UIProduct } from '@/types';
+import useProductStore from '@/store/product-store';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Product } from '@/types/product';
 
 function ProductCard({
   title,
@@ -67,12 +70,10 @@ function ProductCard({
 
         {/* Price */}
         <div className="flex justify-center items-center gap-2">
-          <span className="text-emerald-500 font-semibold">
-            ${price.toFixed(2)}
-          </span>
+          <span className="text-emerald-500 font-semibold">${price}</span>
           {originalPrice > price && (
             <span className="text-sm text-muted-foreground line-through">
-              ${originalPrice.toFixed(2)}
+              ${originalPrice}
             </span>
           )}
         </div>
@@ -102,11 +103,88 @@ function PromoBanner() {
   );
 }
 
+function isCategoryObject(cat: unknown): cat is { id: number; name: string } {
+  return (
+    typeof cat === 'object' && cat !== null && 'id' in cat && 'name' in cat
+  );
+}
+
+// Helper to map Product (from store) to UIProduct for ProductCard
+function toUIProduct(product: Product): UIProduct {
+  // Handle category extraction
+  let category = '';
+  let categories: { id: number; name: string }[] = [];
+  if (Array.isArray(product.categories) && product.categories.length > 0) {
+    const catArr = product.categories.reduce<{ id: number; name: string }[]>(
+      (acc, cat) => {
+        if (isCategoryObject(cat)) acc.push({ id: cat.id, name: cat.name });
+        return acc;
+      },
+      []
+    );
+    if (catArr.length > 0) {
+      category = catArr[0].name || '';
+      categories = catArr;
+    }
+  }
+  // Handle image extraction (only string URLs)
+  const imageUrl =
+    Array.isArray(product.imageUrls) && product.imageUrls.length > 0
+      ? product.imageUrls.find((img) => typeof img === 'string')
+      : Array.isArray(product.images) && product.images.length > 0
+      ? product.images.find((img) => typeof img === 'string')
+      : '/placeholder.svg';
+  // Handle images array (only string URLs)
+  const images = Array.isArray(product.images)
+    ? (product.images.filter((img) => typeof img === 'string') as string[])
+    : [];
+  // Handle availability as Date
+  let availability: Date | undefined = undefined;
+  if (product.availability) {
+    if (typeof product.availability === 'string') {
+      availability = new Date(product.availability);
+    } else {
+      availability = product.availability;
+    }
+  }
+  return {
+    id: product.id,
+    title: product.name || '',
+    category,
+    price: product.price,
+    originalPrice: product.price + (product.discount || 0),
+    image: imageUrl || '/placeholder.svg',
+    display: true,
+    quantity: product.quantity,
+    description: product.description,
+    discount: product.discount,
+    costPerUnit: product.costPerUnit,
+    slug: product.slug,
+    isActive: product.isActive,
+    availability,
+    categories,
+    images,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+  };
+}
+
 export default function PopularProducts({
-  products,
   onAddToCart,
-}: PopularProductsProps) {
+}: {
+  onAddToCart?: (id: number) => void;
+}) {
+  const { popularProducts, loadingPopularProducts, loadPopularProducts } =
+    useProductStore();
+  const [initialized, setInitialized] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
+
+  useEffect(() => {
+    if (!initialized) {
+      loadPopularProducts();
+      setInitialized(true);
+    }
+  }, [initialized, loadPopularProducts]);
 
   useEffect(() => {
     if (!api) return;
@@ -139,19 +217,33 @@ export default function PopularProducts({
               setApi={setApi}
             >
               <CarouselContent>
-                {products.map((product) => (
-                  <CarouselItem
-                    key={product.id}
-                    className="sm:basis-1/2 lg:basis-1/3"
-                  >
-                    <div className="p-1">
-                      <ProductCard
-                        {...product}
-                        onAddToCart={() => onAddToCart?.(product.id)}
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
+                {loadingPopularProducts
+                  ? Array.from({ length: 3 }).map((_, i) => (
+                      <CarouselItem
+                        key={i}
+                        className="sm:basis-1/2 lg:basis-1/3"
+                      >
+                        <div className="p-1">
+                          <Skeleton className="h-80 w-full rounded-lg" />
+                        </div>
+                      </CarouselItem>
+                    ))
+                  : popularProducts.map((product) => {
+                      const uiProduct = toUIProduct(product);
+                      return (
+                        <CarouselItem
+                          key={uiProduct.id}
+                          className="sm:basis-1/2 lg:basis-1/3"
+                        >
+                          <div className="p-1">
+                            <ProductCard
+                              {...uiProduct}
+                              onAddToCart={() => onAddToCart?.(uiProduct.id)}
+                            />
+                          </div>
+                        </CarouselItem>
+                      );
+                    })}
               </CarouselContent>
             </Carousel>
           </div>

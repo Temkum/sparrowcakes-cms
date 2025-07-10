@@ -22,6 +22,7 @@ import EditOrder from '@/pages/admin/orders/EditOrder';
 import ReviewsPage from '@/pages/admin/reviews/Reviews';
 import NotFound from '@/pages/NotFound';
 import TestError from '@/pages/TestError';
+import Products from '@/pages/Products';
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
       {
         path: '/',
         element: <Home />,
+      },
+      {
+        path: '/products',
+        element: <Products />,
       },
     ],
   },

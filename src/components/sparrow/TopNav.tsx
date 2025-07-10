@@ -8,15 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import {
-  Search,
-  User,
-  LogOut,
-  LogIn,
-  UserPlus,
-  Globe,
-  ChevronDown,
-} from 'lucide-react';
+import { Search, User, LogOut, LogIn, UserPlus, Globe } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 
@@ -48,22 +40,6 @@ const TopNav = () => {
             placeholder="Search..."
             className="w-full pl-10 pr-28 py-2 rounded-md border border-gray-300 focus:border-primary focus:outline-none"
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md"
-              >
-                Categories <ChevronDown size={16} className="ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem>Category 1</DropdownMenuItem>
-              <DropdownMenuItem>Category 2</DropdownMenuItem>
-              <DropdownMenuItem>Category 3</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

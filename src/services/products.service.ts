@@ -22,29 +22,26 @@ export const productService = {
         | 'ASC'
         | 'DESC';
 
-      const response = await axiosInstance.get<PaginatedProductsResponse>(
-        '/products',
-        {
-          params: {
-            page: Number(page),
-            limit: Number(limit),
-            searchTerm,
-            sortBy,
-            sortDirection: backendSortDirection,
-          },
-          paramsSerializer: (params) => {
-            return Object.entries(params)
-              .filter(
-                ([, value]) =>
-                  value !== undefined && value !== null && value !== ''
-              )
-              .map(
-                ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
-              )
-              .join('&');
-          },
-        }
-      );
+      const response = await axiosInstance.get('/products', {
+        params: {
+          page: Number(page),
+          limit: Number(limit),
+          searchTerm,
+          sortBy,
+          sortDirection: backendSortDirection,
+        },
+        paramsSerializer: (params) => {
+          return Object.entries(params)
+            .filter(
+              ([, value]) =>
+                value !== undefined && value !== null && value !== ''
+            )
+            .map(
+              ([key, value]) => `${key}=${encodeURIComponent(String(value))}`
+            )
+            .join('&');
+        },
+      });
 
       return response.data;
     } catch (error) {
@@ -59,7 +56,7 @@ export const productService = {
 
   async getProductStats(): Promise<ProductStats> {
     try {
-      const response = await axiosInstance.get<ProductStats>('/products/stats');
+      const response = await axiosInstance.get('/products/stats');
       return response.data;
     } catch (error) {
       console.error('Error fetching product stats:', error);
@@ -74,9 +71,7 @@ export const productService = {
   // Get a single product by ID
   async getProductById(id: number): Promise<ProductAPIResponse> {
     try {
-      const response = await axiosInstance.get<ProductAPIResponse>(
-        `/products/${id}`
-      );
+      const response = await axiosInstance.get(`/products/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
@@ -93,15 +88,11 @@ export const productService = {
   // Create a new product
   async createProduct(productData: FormData): Promise<ProductAPIResponse> {
     try {
-      const response = await axiosInstance.post<ProductAPIResponse>(
-        '/products',
-        productData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      const response = await axiosInstance.post('/products', productData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -139,15 +130,11 @@ export const productService = {
     productData: FormData
   ): Promise<ProductAPIResponse> {
     try {
-      const response = await axiosInstance.put<ProductAPIResponse>(
-        `/products/${id}`,
-        productData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      const response = await axiosInstance.put(`/products/${id}`, productData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -181,9 +168,7 @@ export const productService = {
 
   async deleteProduct(id: number): Promise<{ success: boolean }> {
     try {
-      const response = await axiosInstance.delete<{ success: boolean }>(
-        `/products/${id}`
-      );
+      const response = await axiosInstance.delete(`/products/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error deleting product with ID ${id}:`, error);
@@ -216,11 +201,7 @@ export const productService = {
     }
 
     try {
-      const response = await axiosInstance.delete<{
-        success: boolean;
-        deleted: number;
-        errors?: BulkDeletionError[];
-      }>('/products/bulk', {
+      const response = await axiosInstance.delete('/products/bulk', {
         data: { ids: validatedIds },
       });
 
@@ -259,6 +240,19 @@ export const productService = {
 
       // For non-Axios errors, rethrow as is
       throw error;
+    }
+  },
+
+  // Fetch popular products from the backend
+  async getPopularProducts(limit: number = 5) {
+    try {
+      const response = await axiosInstance.get('/products/popular', {
+        params: { limit },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching popular products:', error);
+      throw new Error('Failed to fetch popular products. Please try again.');
     }
   },
 };
