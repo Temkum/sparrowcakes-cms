@@ -34,6 +34,7 @@ export interface BlogCardProps {
 }
 
 export interface ProductCardProps {
+  id: number;
   title: string;
   category: string;
   price: number;

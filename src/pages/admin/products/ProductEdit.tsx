@@ -3,7 +3,7 @@ import ProductForm from './ProductForm';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
-import useProductStore from '@/store/product-store';
+import useProductStore from '@/store/product-storeold';
 import { useEffect } from 'react';
 
 const breadcrumbItems = [

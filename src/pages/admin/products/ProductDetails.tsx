@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import { Skeleton } from '@/components/ui/skeleton';
-import useProductStore from '@/store/product-store';
+import useProductStore from '@/store/product-storeold';
 import toast from 'react-hot-toast';
 import DOMPurify from 'dompurify';
 

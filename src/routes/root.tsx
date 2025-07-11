@@ -23,6 +23,7 @@ import ReviewsPage from '@/pages/admin/reviews/Reviews';
 import NotFound from '@/pages/NotFound';
 import TestError from '@/pages/TestError';
 import Products from '@/pages/Products';
+import ProductDetailsUI from '@/pages/ProductDetailsUI';
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
       {
         path: '/products',
         element: <Products />,
+      },
+      {
+        path: '/products/:id',
+        element: <ProductDetailsUI />,
       },
     ],
   },

@@ -2,7 +2,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast, Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
-import useProductStore from '@/store/product-store';
+import useProductStore from '@/store/product-storeold';
 import { Loader2 } from 'lucide-react';
 import useCustomerStore from '@/store/customer-store';
 import useOrderStore from '@/store/order-store';
@@ -72,7 +72,11 @@ export function OrderForm({
   const navigate = useNavigate();
   const { createOrder, submitting: createSubmitting } = useOrderStore();
   const { products, loadingProducts, loadProducts } = useProductStore();
-  const { customers, loading: loadingCustomers, fetchCustomers } = useCustomerStore();
+  const {
+    customers,
+    loading: loadingCustomers,
+    fetchCustomers,
+  } = useCustomerStore();
 
   const isSubmitting = propSubmitting || createSubmitting;
 

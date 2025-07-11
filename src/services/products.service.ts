@@ -57,6 +57,7 @@ export const productService = {
   async getProductStats(): Promise<ProductStats> {
     try {
       const response = await axiosInstance.get('/products/stats');
+      console.log('product stats', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching product stats:', error);
@@ -72,6 +73,7 @@ export const productService = {
   async getProductById(id: number): Promise<ProductAPIResponse> {
     try {
       const response = await axiosInstance.get(`/products/${id}`);
+      console.log('product', response.data);
       return response.data;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);

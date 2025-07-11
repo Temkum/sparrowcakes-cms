@@ -10,7 +10,7 @@ import PopularProducts from '@/components/sparrow/PopularProducts';
 import ProductBanners from '@/components/sparrow/ProductBanners';
 import ProductGrid from '@/components/sparrow/ProductGrid';
 import Services from '@/components/sparrow/Services';
-import useProductStore from '@/store/product-store';
+import useProductStore from '@/store/product-storeold';
 import { useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Product } from '@/types/product';

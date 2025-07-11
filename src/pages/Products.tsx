@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import useProductStore from '@/store/product-store';
+import useProductStore from '@/store/product-storeold';
 import ProductGrid from '@/components/sparrow/ProductGrid';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Product } from '@/types/product';

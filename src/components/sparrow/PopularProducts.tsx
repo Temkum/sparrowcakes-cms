@@ -9,7 +9,7 @@ import {
 } from '../ui/carousel';
 import { useEffect, useState } from 'react';
 import { UIProduct } from '@/types';
-import useProductStore from '@/store/product-store';
+import useProductStore from '@/store/product-storeold';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductAPIResponse } from '@/types/product';
 
@@ -23,7 +23,6 @@ function ProductCard({
   image,
   onAddToCart,
 }: UIProduct & { onAddToCart?: () => void }) {
-  console.log('product image', image);
   return (
     <Card className="group overflow-hidden">
       {/* Product Image */}

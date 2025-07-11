@@ -2,8 +2,10 @@ import { Heart, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star } from 'lucide-react';
 import { ProductCardProps } from '@/types';
+import { Link } from 'react-router-dom';
 
 export default function ProductCard({
+  id,
   title = 'Best snakes with hazel nut mix pack 200gm',
   category = 'Snacks',
   price = 120.25,
@@ -18,11 +20,13 @@ export default function ProductCard({
     <Card className="group relative max-w-sm overflow-hidden p-4">
       {/* Product Image with Hover Icons */}
       <div className="relative aspect-square overflow-hidden">
-        <img
-          src={image || '/placeholder.svg'}
-          alt={title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 rounded-sm"
-        />
+        <Link to={`/products/${id}`}>
+          <img
+            src={image || '/placeholder.svg'}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 rounded-sm"
+          />
+        </Link>
         {/* Hover Icons */}
         <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
