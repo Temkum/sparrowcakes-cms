@@ -27,6 +27,7 @@ function toUIProduct(product: Product): UIProduct {
       categories = catArr;
     }
   }
+
   const imageUrl =
     Array.isArray(product.imageUrls) && product.imageUrls.length > 0
       ? product.imageUrls.find((img) => typeof img === 'string')
@@ -36,6 +37,7 @@ function toUIProduct(product: Product): UIProduct {
   const images = Array.isArray(product.images)
     ? (product.images.filter((img) => typeof img === 'string') as string[])
     : [];
+
   let availability: Date | undefined = undefined;
   if (product.availability) {
     if (typeof product.availability === 'string') {
@@ -110,7 +112,7 @@ const Products: React.FC = () => {
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, filter, setFilter]);
 
   // Pagination handlers
   const handlePrev = () => {

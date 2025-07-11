@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { UIProduct } from '@/types';
 import useProductStore from '@/store/product-store';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Product } from '@/types/product';
+import { ProductAPIResponse } from '@/types/product';
 
 function ProductCard({
   title,
@@ -23,15 +23,12 @@ function ProductCard({
   image,
   onAddToCart,
 }: UIProduct & { onAddToCart?: () => void }) {
+  console.log('product image', image);
   return (
     <Card className="group overflow-hidden">
       {/* Product Image */}
       <div className="relative aspect-square bg-gray-50 p-6">
-        <img
-          src={image || '/placeholder.svg'}
-          alt={title}
-          className="w-full h-full object-contain"
-        />
+        <img src={image} alt={title} className="w-full h-full object-contain" />
       </div>
 
       {/* Shopping Bag Button */}
@@ -113,7 +110,7 @@ function isCategoryObject(cat: unknown): cat is { id: number; name: string } {
 }
 
 // Helper to map Product (from store) to UIProduct for ProductCard
-function toUIProduct(product: Product): UIProduct {
+function toUIProduct(product: ProductAPIResponse): UIProduct {
   // Handle category extraction
   let category = '';
   let categories: { id: number; name: string }[] = [];
@@ -143,15 +140,10 @@ function toUIProduct(product: Product): UIProduct {
 
   // Handle image extraction (only string URLs)
   const imageUrl =
-    Array.isArray(product.imageUrls) && product.imageUrls.length > 0
-      ? product.imageUrls.find((img) => typeof img === 'string')
-      : Array.isArray(product.images) && product.images.length > 0
-      ? product.images.find((img) => typeof img === 'string')
+    Array.isArray(product.image_urls) && product.image_urls.length > 0
+      ? product.image_urls[0]
       : '/placeholder.svg';
-  // Handle images array (only string URLs)
-  const images = Array.isArray(product.images)
-    ? (product.images.filter((img) => typeof img === 'string') as string[])
-    : [];
+
   // Handle availability as Date
   let availability: Date | undefined = undefined;
   if (product.availability) {
@@ -172,16 +164,15 @@ function toUIProduct(product: Product): UIProduct {
     quantity: product.quantity,
     description: product.description,
     discount: product.discount,
-    costPerUnit: product.costPerUnit,
+    costPerUnit: product.cost_per_unit,
     slug: product.slug,
-    isActive: product.isActive,
+    isActive: product.is_active,
     availability,
     categories,
-    images,
     rating: averageRating,
     totalReviews,
-    createdAt: product.createdAt,
-    updatedAt: product.updatedAt,
+    createdAt: product.created_at,
+    updatedAt: product.updated_at,
   };
 }
 
