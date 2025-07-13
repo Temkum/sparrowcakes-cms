@@ -25,8 +25,8 @@ export const ProductDetails = () => {
   }, [id, loadProduct]);
 
   useEffect(() => {
-    if (currentProduct && currentProduct?.image_urls?.length > 0) {
-      setActiveImage(currentProduct.image_urls[0]);
+    if (currentProduct && currentProduct?.imageUrls?.length > 0) {
+      setActiveImage(currentProduct.imageUrls[0]);
     }
   }, [currentProduct]);
 
@@ -105,9 +105,9 @@ export const ProductDetails = () => {
               )}
             </div>
 
-            {currentProduct.image_urls?.length > 1 && (
+            {currentProduct.imageUrls?.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {currentProduct.image_urls.map((image, index) => (
+                {currentProduct.imageUrls.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveImage(image)}
@@ -131,14 +131,14 @@ export const ProductDetails = () => {
             <div className="flex justify-between items-start mb-4">
               <h1 className="text-3xl font-bold">{currentProduct.name}</h1>
               <Badge
-                variant={currentProduct.is_active ? 'default' : 'secondary'}
+                variant={currentProduct.isActive ? 'default' : 'secondary'}
                 className={
-                  currentProduct.is_active
+                  currentProduct.isActive
                     ? 'bg-green-100 text-green-800 hover:bg-green-200'
                     : 'bg-gray-100 text-gray-800'
                 }
               >
-                {currentProduct.is_active ? 'Active' : 'Inactive'}
+                {currentProduct.isActive ? 'Active' : 'Inactive'}
               </Badge>
             </div>
 
@@ -167,7 +167,7 @@ export const ProductDetails = () => {
               <div>
                 <h3 className="text-sm text-gray-500">Cost Per Unit</h3>
                 <p className="text-xl font-semibold">
-                  ${currentProduct.cost_per_unit.toFixed(2)}
+                  ${currentProduct.costPerUnit.toFixed(2)}
                 </p>
               </div>
               <div>
@@ -183,8 +183,8 @@ export const ProductDetails = () => {
                 <span className="text-sm text-gray-500 w-32">Categories:</span>
                 <div className="flex flex-wrap gap-2">
                   {currentProduct.categories?.map((category) => (
-                    <Badge key={category.id} variant="outline">
-                      {category.name}
+                    <Badge key={category} variant="outline">
+                      {category}
                     </Badge>
                   ))}
                 </div>
@@ -205,22 +205,16 @@ export const ProductDetails = () => {
               <div className="flex items-center">
                 <span className="text-sm text-gray-500 w-32">Created:</span>
                 <span>
-                  {currentProduct.created_at
-                    ? format(
-                        new Date(currentProduct.created_at),
-                        'MMM dd, yyyy'
-                      )
+                  {currentProduct.createdAt
+                    ? format(new Date(currentProduct.createdAt), 'MMM dd, yyyy')
                     : '-'}
                 </span>
               </div>
               <div className="flex items-center">
                 <span className="text-sm text-gray-500 w-32">Updated:</span>
                 <span>
-                  {currentProduct.updated_at
-                    ? format(
-                        new Date(currentProduct.updated_at),
-                        'MMM dd, yyyy'
-                      )
+                  {currentProduct.updatedAt
+                    ? format(new Date(currentProduct.updatedAt), 'MMM dd, yyyy')
                     : '-'}
                 </span>
               </div>

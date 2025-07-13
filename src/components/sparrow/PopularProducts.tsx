@@ -1,6 +1,4 @@
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star, ShoppingBag } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -8,79 +6,12 @@ import {
   type CarouselApi,
 } from '../ui/carousel';
 import { useEffect, useState } from 'react';
-import { UIProduct } from '@/types';
 import useProductStore from '@/store/product-store';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ProductAPIResponse } from '@/types/product';
 import { Link } from 'react-router-dom';
-
-function ProductCard({
-  title,
-  category,
-  price,
-  originalPrice,
-  rating,
-  totalReviews,
-  image,
-  onAddToCart,
-}: UIProduct & { onAddToCart?: () => void }) {
-  return (
-    <Card className="group overflow-hidden">
-      {/* Product Image */}
-      <div className="relative aspect-square bg-gray-50 p-6">
-        <img src={image} alt={title} className="w-full h-full object-contain" />
-      </div>
-
-      {/* Shopping Bag Button */}
-      <div className="relative -mt-6 mb-2 z-10 flex justify-center">
-        <button
-          onClick={onAddToCart}
-          className="p-2 bg-gray-50 rounded-full shadow-md hover:bg-white transition-colors border border-gray"
-          aria-label="Add to cart"
-        >
-          <ShoppingBag className="w-4 h-4" color="green" />
-        </button>
-      </div>
-
-      {/* Product Details */}
-      <div className="p-4 text-center">
-        <p className="text-sm text-muted-foreground mb-1">{category}</p>
-
-        {/* Rating */}
-        <div className="flex justify-center items-center gap-1 mb-2">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-4 h-4 ${
-                i < Math.floor(rating)
-                  ? 'fill-yellow-300 text-yellow-300'
-                  : i < rating
-                  ? 'fill-rose-200 text-rose-200 opacity-50'
-                  : 'fill-gray-200 text-gray-200'
-              }`}
-            />
-          ))}
-          <span className="text-sm text-muted-foreground ml-1">
-            ({totalReviews})
-          </span>
-        </div>
-
-        {/* Title */}
-        <h3 className="font-medium text-sm mb-2 line-clamp-2">{title}</h3>
-
-        {/* Price */}
-        <div className="flex justify-center items-center gap-2">
-          <span className="text-emerald-500 font-semibold">${price}</span>
-          {originalPrice > price && (
-            <span className="text-sm text-muted-foreground line-through">
-              ${originalPrice}
-            </span>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-}
+import PopularProductCard from './PopularProductCard';
+import { Product } from '@/types/product';
+import { UIProduct } from '@/types';
 
 function PromoBanner() {
   return (
@@ -112,8 +43,7 @@ function isCategoryObject(cat: unknown): cat is { id: number; name: string } {
   );
 }
 
-// Helper to map Product (from store) to UIProduct for ProductCard
-function toUIProduct(product: ProductAPIResponse): UIProduct {
+function toUIProduct(product: Product): UIProduct {
   // Handle category extraction
   let category = '';
   let categories: { id: number; name: string }[] = [];
@@ -130,23 +60,17 @@ function toUIProduct(product: ProductAPIResponse): UIProduct {
       categories = catArr;
     }
   }
-
-  // get the average rating of the product
-  const averageRating =
-    product.reviews.length > 0
-      ? product.reviews.reduce((acc, review) => acc + review.rating, 0) /
-        product.reviews.length
-      : 0;
-
-  // get total number of reviews of the product
-  const totalReviews = product.reviews.length;
-
   // Handle image extraction (only string URLs)
   const imageUrl =
-    Array.isArray(product.image_urls) && product.image_urls.length > 0
-      ? product.image_urls[0]
+    Array.isArray(product.imageUrls) && product.imageUrls.length > 0
+      ? product.imageUrls.find((img) => typeof img === 'string')
+      : Array.isArray(product.images) && product.images.length > 0
+      ? product.images.find((img) => typeof img === 'string')
       : '/placeholder.svg';
-
+  // Handle images array (only string URLs)
+  const images = Array.isArray(product.images)
+    ? (product.images.filter((img) => typeof img === 'string') as string[])
+    : [];
   // Handle availability as Date
   let availability: Date | undefined = undefined;
   if (product.availability) {
@@ -156,34 +80,41 @@ function toUIProduct(product: ProductAPIResponse): UIProduct {
       availability = product.availability;
     }
   }
-  return {
+  const reviews = Array.isArray(product.reviews) ? product.reviews : [];
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+      : 0;
+  const totalReviews = reviews.length;
+
+  const uiProduct: UIProduct = {
     id: product.id,
     title: product.name || '',
     category,
     price: product.price,
     originalPrice: product.price + (product.discount || 0),
+    reviews,
+    rating: averageRating,
+    totalReviews,
     image: imageUrl || '/placeholder.svg',
     display: true,
     quantity: product.quantity,
     description: product.description,
     discount: product.discount,
-    costPerUnit: product.cost_per_unit,
+    costPerUnit: product.costPerUnit,
     slug: product.slug,
-    isActive: product.is_active,
+    isActive: product.isActive,
     availability,
     categories,
-    rating: averageRating,
-    totalReviews,
-    createdAt: product.created_at,
-    updatedAt: product.updated_at,
+    images,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
   };
+
+  return uiProduct;
 }
 
-export default function PopularProducts({
-  onAddToCart,
-}: {
-  onAddToCart?: (id: number) => void;
-}) {
+const PopularProducts = () => {
   const { popularProducts, loadingPopularProducts, loadPopularProducts } =
     useProductStore();
   const [initialized, setInitialized] = useState(false);
@@ -239,17 +170,13 @@ export default function PopularProducts({
                       </CarouselItem>
                     ))
                   : popularProducts.map((product) => {
-                      const uiProduct = toUIProduct(product);
                       return (
                         <CarouselItem
-                          key={uiProduct.id}
+                          key={product.id}
                           className="sm:basis-1/2 lg:basis-1/3"
                         >
                           <div className="p-1">
-                            <ProductCard
-                              {...uiProduct}
-                              onAddToCart={() => onAddToCart?.(uiProduct.id)}
-                            />
+                            <PopularProductCard {...toUIProduct(product)} />
                           </div>
                         </CarouselItem>
                       );
@@ -264,4 +191,6 @@ export default function PopularProducts({
       </div>
     </section>
   );
-}
+};
+
+export default PopularProducts;

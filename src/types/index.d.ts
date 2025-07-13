@@ -65,7 +65,7 @@ export interface UIProduct {
   isActive?: boolean;
   availability?: Date;
   categories?: { id: number; name: string }[];
-  reviews?: Review[];
+  reviews?: ReviewUI[];
   totalReviews?: number;
   images?: string[];
   createdAt?: string;

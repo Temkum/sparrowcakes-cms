@@ -139,7 +139,7 @@ const Home = () => {
           />
         )}
       </div>
-      <PopularProducts onAddToCart={handleAddToCart} />
+      <PopularProducts />
       <ProductBanners />
       <Services />
       <BannerDeal />
