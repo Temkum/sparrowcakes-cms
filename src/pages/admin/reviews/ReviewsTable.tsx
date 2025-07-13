@@ -296,10 +296,10 @@ const ReviewsTable: React.FC<ReviewsTableProps> = ({
                     </div>
                   ) : currentProduct ? (
                     <div className="flex items-start gap-4">
-                      {currentProduct.image_urls?.[0] && (
+                      {currentProduct.imageUrls?.[0] && (
                         <div className="w-20 h-20 rounded border overflow-hidden">
                           <img
-                            src={currentProduct.image_urls[0]}
+                            src={currentProduct.imageUrls[0]}
                             alt={currentProduct.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {

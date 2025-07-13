@@ -28,11 +28,9 @@ import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
 import Editor from '../Editor';
 import { DynamicCategories } from '../categories/DynamicCategories';
-// import { useNavigate } from 'react-router-dom'; // Unused
 import { productFormSchema } from '@/form-schema/productFormSchema';
 import { ImageUpload } from './ImageUpload';
 import useProductStore from '@/store/product-store';
-// import { useAuthStore } from '@/store/auth'; // Unused
 
 interface Product {
   id: number;
@@ -99,8 +97,6 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
   ) => {
     clearValidationErrors();
     const formData = new FormData();
-    // Token is handled internally by the store functions
-    // const { token } = useAuthStore.getState();
 
     // Format form data
     formData.append('name', values.name);
