@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { categories } from '@/utilities/data';
 import axios from 'axios';
 import { Banner, CategoryForDisplay } from '@/types';
+import { Link } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -91,8 +92,11 @@ function BannerCard({ banner }: { banner: Banner }) {
       </div>
       <div className="absolute bottom-0 left-0 p-6 flex flex-col justify-end items-center w-full">
         <h3 className="text-2xl font-bold text-white mb-4">{banner.title}</h3>
-        <Button className="w-fit bg-emerald-500 hover:bg-black hover:text-white hover:border-white">
-          Shop Now
+        <Button
+          asChild
+          className="w-fit bg-emerald-500 hover:bg-black hover:text-white hover:border-white"
+        >
+          <Link to="/products">Shop Now</Link>
         </Button>
       </div>
     </div>

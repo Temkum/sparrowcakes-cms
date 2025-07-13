@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, ArrowUp } from 'lucide-react';
+import { Plus, ArrowUp } from 'lucide-react';
 import '../../styles/dynamic-categories.css';
+import { Link } from 'react-router-dom';
 // Types
 interface Category {
   id: string;
@@ -188,8 +189,9 @@ const BannerCard: React.FC<{ category: Category; onNavigate: () => void }> = ({
             onClick={onNavigate}
             className="group bg-emerald-500 text-white px-8 py-3 rounded-md font-semibold hover:bg-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center space-x-2"
           >
-            <ShoppingBag className="w-5 h-5" />
-            <span>Order Now</span>
+            <Link to="/products">
+              <span>Order Now</span>
+            </Link>
           </button>
         </div>
       </div>

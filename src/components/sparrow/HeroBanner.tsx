@@ -6,6 +6,7 @@ import {
   CarouselItem,
   type CarouselApi,
 } from '@/components/ui/carousel';
+import { Link } from 'react-router-dom';
 
 interface Slide {
   tag: string;
@@ -126,8 +127,11 @@ export default function HeroSlider() {
                     <p className="text-gray-700 text-lg max-w-lg">
                       {slide.description}
                     </p>
-                    <Button className="bg-emerald-500 hover:bg-black hover:text-white">
-                      Shop Now
+                    <Button
+                      asChild
+                      className="bg-emerald-500 hover:bg-black hover:text-white"
+                    >
+                      <Link to="/products">Shop Now</Link>
                     </Button>
                   </div>
                 </div>

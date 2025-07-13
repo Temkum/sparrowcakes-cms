@@ -8,6 +8,8 @@ import {
   Sparkles,
   Heart,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const HeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -188,12 +190,13 @@ const HeroCarousel = () => {
 
                   {/* CTA Button */}
                   <div className="pt-4">
-                    <button
+                    <Button
+                      asChild
                       className={`inline-flex items-center px-6 py-2 text-white font-semibold rounded-md transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-opacity-50 ${slide.dominantColor} shadow-lg`}
                       aria-label={`Shop ${slide.headline} now`}
                     >
-                      Shop Now
-                    </button>
+                      <Link to="/products">Shop Now</Link>
+                    </Button>
                   </div>
                 </div>
 

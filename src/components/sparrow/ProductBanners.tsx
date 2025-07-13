@@ -1,14 +1,18 @@
 import { Button } from '@/components/ui/button';
-import { BannerProps } from '@/types';
 import { banners } from '@/utilities/data';
+import { Link } from 'react-router-dom';
 
 function ProductBanner({
   title,
   discount,
   image,
   backgroundColor,
-  onClick,
-}: BannerProps) {
+}: {
+  title: string;
+  discount: number;
+  image: string;
+  backgroundColor: string;
+}) {
   return (
     <div
       className={`${backgroundColor} rounded-2xl overflow-hidden relative h-[280px] flex items-center`}
@@ -28,11 +32,8 @@ function ProductBanner({
           </span>
           <span className="text-gray-600 ml-2">Off on first order</span>
         </p>
-        <Button
-          onClick={onClick}
-          className="bg-emerald-500 hover:bg-black text-white"
-        >
-          Shop Now
+        <Button asChild className="bg-emerald-500 hover:bg-black text-white">
+          <Link to="/products">Shop Now</Link>
         </Button>
       </div>
 
@@ -58,8 +59,10 @@ export default function ProductBanners() {
           {banners.map((banner, index) => (
             <ProductBanner
               key={index}
-              {...banner}
-              onClick={() => console.log(`Clicked on banner ${index + 1}`)}
+              title={banner.title}
+              discount={banner.discount}
+              image={banner.image}
+              backgroundColor={banner.backgroundColor}
             />
           ))}
         </div>

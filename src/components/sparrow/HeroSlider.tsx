@@ -7,6 +7,7 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { slides } from '@/utilities/data';
+import { Link } from 'react-router-dom';
 
 export default function HeroSlider() {
   const [api, setApi] = useState<CarouselApi | null>();
@@ -54,8 +55,11 @@ export default function HeroSlider() {
                     <p className="text-gray-600 text-lg max-w-lg">
                       {slide.description}
                     </p>
-                    <Button className="bg-emerald-500 hover:bg-emerald-600">
-                      Shop Now
+                    <Button
+                      asChild
+                      className="bg-emerald-500 hover:bg-emerald-600"
+                    >
+                      <Link to="/products">Shop Now</Link>
                     </Button>
                   </div>
 

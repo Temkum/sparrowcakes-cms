@@ -12,6 +12,7 @@ import { UIProduct } from '@/types';
 import useProductStore from '@/store/product-storeold';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductAPIResponse } from '@/types/product';
+import { Link } from 'react-router-dom';
 
 function ProductCard({
   title,
@@ -94,8 +95,11 @@ function PromoBanner() {
           Organic & Healthy Vegetables
         </h3>
         <p className="text-white text-lg font-semibold mb-4">25% OFF</p>
-        <Button className="bg-emerald-500 hover:bg-emerald-600 text-white w-fit">
-          Shop Now
+        <Button
+          asChild
+          className="bg-emerald-500 hover:bg-emerald-600 text-white w-fit"
+        >
+          <Link to="/products">Shop Now</Link>
         </Button>
       </div>
     </div>
