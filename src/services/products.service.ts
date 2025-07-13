@@ -257,4 +257,48 @@ export const productService = {
       throw new Error('Failed to fetch popular products. Please try again.');
     }
   },
+
+  async getSimilarProducts(productId: number, limit: number = 5) {
+    try {
+      const response = await axiosInstance.get('/products/similar', {
+        params: { productId, limit },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching similar products:', error);
+      throw new Error('Failed to fetch similar products. Please try again.');
+    }
+  },
+
+  async getProductReviews(productId: number) {
+    try {
+      const response = await axiosInstance.get('/products/product-reviews', {
+        params: { productId },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product reviews:', error);
+      throw new Error('Failed to fetch product reviews. Please try again.');
+    }
+  },
+
+  async getProductWithReviews(productId: number) {
+    // Validate productId is a valid number
+    const parsedId = Number(productId);
+    if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      throw new Error('Invalid product ID');
+    }
+
+    try {
+      // Use route parameter instead of query parameter
+      const response = await axiosInstance.get(`/products/details/${parsedId}`);
+      console.log('product with reviews', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product with reviews:', error);
+      throw new Error(
+        'Failed to fetch product with reviews. Please try again.'
+      );
+    }
+  },
 };

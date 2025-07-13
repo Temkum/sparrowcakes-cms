@@ -1,90 +1,110 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import useProductStore from '@/store/product-store';
-import { useReviewsStore } from '@/store/reviews-store';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import toast from 'react-hot-toast';
+import DOMPurify from 'dompurify';
+import { format, parseISO } from 'date-fns';
 
-// Review form schema
-const reviewSchema = z.object({
-  rating: z.number().min(1).max(5, 'Rating must be between 1 and 5'),
-  comment: z.string().min(10, 'Comment must be at least 10 characters'),
+interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+  display: boolean;
+  is_reported: boolean;
+  is_approved: boolean;
+  is_rejected: boolean;
+  is_edited: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  customer: { name: string };
+}
+
+// Memoized Review Item
+const ReviewItem = memo(({ review }: { review: Review }) => {
+  let formattedDate = 'Unknown Date';
+  try {
+    formattedDate = format(parseISO(review.created_at), 'MMM dd, yyyy');
+  } catch (error) {
+    console.error('Failed to parse review date:', review.created_at, error);
+  }
+
+  return (
+    <div
+      key={review.id}
+      className="border-b pb-4 transition-opacity duration-300"
+    >
+      <div className="flex items-center mb-2">
+        {[...Array(5)].map((_, i) => (
+          <StarIcon
+            key={i}
+            className={`w-5 h-5 ${
+              i < review.rating
+                ? 'text-yellow-400 fill-yellow-400'
+                : 'text-gray-300 fill-gray-300'
+            }`}
+          />
+        ))}
+        <span className="ml-2 text-sm text-gray-500">{formattedDate}</span>
+      </div>
+      <p className="text-gray-700">{review.comment}</p>
+      <p className="text-sm text-gray-500 mt-1">
+        — {review.customer.name || 'Anonymous'}
+      </p>
+    </div>
+  );
 });
 
-type ReviewFormValues = z.infer<typeof reviewSchema>;
+// Memoized Similar Product Item
+const SimilarProductItem = memo(
+  ({
+    product,
+  }: {
+    product: { id: number; name: string; price: number; imageUrls: string[] };
+  }) => (
+    <Link
+      to={`/products/details/${product.id}`}
+      className="group block p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+    >
+      <img
+        src={product.imageUrls[0] || '/placeholder.jpg'}
+        alt={product.name}
+        className="w-full h-32 object-cover rounded-md mb-2 group-hover:scale-105 transition-transform duration-300"
+        loading="lazy"
+      />
+      <h3 className="text-sm font-semibold">{product.name}</h3>
+      <p className="text-sm text-gray-600">{product.price.toFixed(2)}Fcfa</p>
+    </Link>
+  )
+);
 
 const ProductDetailsUI = () => {
   const { id } = useParams<{ id: string }>();
   const {
     currentProduct,
     similarProducts,
-    loadingProduct,
     error,
-    loadProduct,
+    loadProductDetails,
+    loadingProductDetails,
     loadSimilarProducts,
   } = useProductStore();
-  const {
-    reviews,
-    totalCount,
-    currentPage,
-    pageSize,
-    fetchReviews,
-    createReview,
-    loading,
-  } = useReviewsStore();
   const [imageIndex, setImageIndex] = useState(0);
-
-  // Review form setup
-  const form = useForm<ReviewFormValues>({
-    resolver: zodResolver(reviewSchema),
-    defaultValues: { rating: 1, comment: '' },
-  });
+  const [reviewPage, setReviewPage] = useState(1);
+  const reviewsPerPage = 5;
 
   useEffect(() => {
     if (id) {
-      loadProduct(Number(id));
-      fetchReviews({ productId: Number(id), page: 1, limit: 5, display: true });
-    }
-  }, [id, loadProduct, fetchReviews]);
-
-  const handlePageChange = (page: number) => {
-    if (id && page >= 1 && page <= Math.ceil(totalCount / pageSize)) {
-      fetchReviews({
-        productId: Number(id),
-        page,
-        limit: pageSize,
-        display: true,
+      loadProductDetails(Number(id)).then((product) => {
+        if (product && product.categories?.length) {
+          loadSimilarProducts(product.categories, product.id);
+        }
       });
     }
-  };
-
-  const onSubmitReview = async (data: ReviewFormValues) => {
-    if (!id) return;
-    try {
-      await createReview({ ...data, product: Number(id), display: true });
-      form.reset();
-      toast.success('Review submitted successfully');
-    } catch (error) {
-      console.error('Error submitting review:', error);
-      toast.error('Failed to submit review');
-    }
-  };
+  }, [id, loadProductDetails, loadSimilarProducts]);
 
   const handleImageChange = (direction: 'next' | 'prev') => {
     if (!currentProduct?.imageUrls) return;
@@ -96,22 +116,88 @@ const ProductDetailsUI = () => {
     );
   };
 
-  if (loadingProduct || loading)
+  // Show loading state
+  if (loadingProductDetails) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
-  if (error)
+  }
+
+  // Show error state
+  if (error) {
     return (
-      <div className="flex justify-center items-center h-screen text-red-500">
-        {error}
+      <div className="container mx-auto p-8">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-500"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <Button asChild variant="outline">
+            <Link to="/products">Back to Products</Link>
+          </Button>
+        </div>
       </div>
     );
-  if (!currentProduct) return null;
+  }
+
+  // Show not found state
+  if (!currentProduct) {
+    return (
+      <div className="container mx-auto p-8 text-center">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          Product not found
+        </h2>
+        <p className="text-gray-600 mb-4">
+          The product you're looking for doesn't exist or has been removed.
+        </p>
+        <Button asChild>
+          <Link to="/products">Browse Products</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // Calculate average rating
+  const averageRating = currentProduct.reviews?.length
+    ? Math.round(
+        currentProduct.reviews.reduce((sum, r) => sum + r.rating, 0) /
+          currentProduct.reviews.length
+      )
+    : 0;
+
+  // Paginated reviews
+  const paginatedReviews = currentProduct.reviews
+    ? currentProduct.reviews.slice(
+        (reviewPage - 1) * reviewsPerPage,
+        reviewPage * reviewsPerPage
+      )
+    : [];
+  const totalReviewPages = currentProduct.reviews
+    ? Math.ceil(currentProduct.reviews.length / reviewsPerPage)
+    : 1;
 
   return (
     <div className="container mx-auto p-4 md:p-8">
+      <h1 className="text-2xl font-bold mb-4">Product Details</h1>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Product Details */}
         <div className="lg:col-span-3">
@@ -125,6 +211,7 @@ const ProductDetailsUI = () => {
                   }
                   alt={currentProduct.name}
                   className="w-full max-w-md h-auto object-cover rounded-lg transition-transform duration-300 hover:scale-105"
+                  loading="lazy"
                 />
                 {currentProduct.imageUrls.length > 1 && (
                   <div className="absolute top-1/2 left-0 right-0 flex justify-between px-4 transform -translate-y-1/2">
@@ -133,6 +220,7 @@ const ProductDetailsUI = () => {
                       size="icon"
                       onClick={() => handleImageChange('prev')}
                       disabled={imageIndex === 0}
+                      className="bg-white/80 hover:bg-white"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -143,6 +231,7 @@ const ProductDetailsUI = () => {
                       disabled={
                         imageIndex === currentProduct.imageUrls.length - 1
                       }
+                      className="bg-white/80 hover:bg-white"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -157,7 +246,7 @@ const ProductDetailsUI = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-semibold mb-2">
-                    ${currentProduct.price.toFixed(2)}
+                    {Number(currentProduct.price).toFixed(2)}Fcfa
                   </p>
                   {currentProduct.discount > 0 && (
                     <p className="text-sm text-green-600 mb-2">
@@ -166,96 +255,40 @@ const ProductDetailsUI = () => {
                   )}
                   <Badge
                     variant={
-                      currentProduct.availability ? 'default' : 'destructive'
+                      new Date(currentProduct.availability) > new Date()
+                        ? 'default'
+                        : 'destructive'
                     }
                   >
-                    {currentProduct.availability ? 'In Stock' : 'Out of Stock'}
+                    {new Date(currentProduct.availability) > new Date()
+                      ? 'In Stock'
+                      : 'Out of Stock'}
                   </Badge>
-                  <p className="text-gray-600 mt-4">
-                    {currentProduct.description}
-                  </p>
+                  <div
+                    className="text-gray-600 mt-4 prose"
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(currentProduct.description),
+                    }}
+                  />
                   <div className="mt-4 flex items-center">
                     {[...Array(5)].map((_, i) => (
                       <StarIcon
                         key={i}
                         className={`w-5 h-5 ${
-                          i <
-                          Math.round(
-                            currentProduct.reviews.reduce(
-                              (sum, r) => sum + r.rating,
-                              0
-                            ) / (currentProduct.totalReviews || 1)
-                          )
-                            ? 'text-yellow-400'
+                          i < averageRating
+                            ? 'text-yellow-400 fill-current'
                             : 'text-gray-300'
                         }`}
                       />
                     ))}
                     <span className="ml-2 text-sm text-gray-500">
-                      {currentProduct.totalReviews} review
-                      {currentProduct.totalReviews !== 1 ? 's' : ''}
+                      {currentProduct.reviews.length} review
+                      {currentProduct.reviews.length !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </CardContent>
               </div>
             </div>
-          </Card>
-
-          {/* Review Form */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Submit a Review</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmitReview)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={form.control}
-                    name="rating"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Rating</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="5"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                            className="w-20"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="comment"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Comment</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            placeholder="Write your review..."
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    Submit Review
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
           </Card>
 
           {/* Reviews Section */}
@@ -264,61 +297,38 @@ const ProductDetailsUI = () => {
               <CardTitle>Customer Reviews</CardTitle>
             </CardHeader>
             <CardContent>
-              {reviews.length === 0 ? (
+              {paginatedReviews.length === 0 ? (
                 <p className="text-gray-500">No reviews yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {reviews.map(
-                    (review) =>
-                      review.display &&
-                      !review.is_deleted && (
-                        <div
-                          key={review.id}
-                          className="border-b pb-4 transition-opacity duration-300"
-                        >
-                          <div className="flex items-center mb-2">
-                            {[...Array(5)].map((_, i) => (
-                              <StarIcon
-                                key={i}
-                                className={`w-5 h-5 ${
-                                  i < review.rating
-                                    ? 'text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                            <span className="ml-2 text-sm text-gray-500">
-                              {new Date(review.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="text-gray-700">{review.comment}</p>
-                          <p className="text-sm text-gray-500 mt-1">
-                            — {review.customer?.name || 'Anonymous'}
-                          </p>
-                        </div>
-                      )
+                  {paginatedReviews.map((review) => (
+                    <ReviewItem key={review.id} review={review} />
+                  ))}
+                  {totalReviewPages > 1 && (
+                    <div className="flex justify-between mt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => setReviewPage((p) => Math.max(p - 1, 1))}
+                        disabled={reviewPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span>
+                        Page {reviewPage} of {totalReviewPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          setReviewPage((p) =>
+                            Math.min(p + 1, totalReviewPages)
+                          )
+                        }
+                        disabled={reviewPage === totalReviewPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
                   )}
-                </div>
-              )}
-              {totalCount > pageSize && (
-                <div className="flex justify-between mt-4">
-                  <Button
-                    variant="outline"
-                    disabled={currentPage === 1}
-                    onClick={() => handlePageChange(currentPage - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm text-gray-500">
-                    Page {currentPage} of {Math.ceil(totalCount / pageSize)}
-                  </span>
-                  <Button
-                    variant="outline"
-                    disabled={currentPage === Math.ceil(totalCount / pageSize)}
-                    onClick={() => handlePageChange(currentPage + 1)}
-                  >
-                    Next
-                  </Button>
                 </div>
               )}
             </CardContent>
@@ -332,30 +342,13 @@ const ProductDetailsUI = () => {
               <CardTitle>Similar Products</CardTitle>
             </CardHeader>
             <CardContent>
-              {similarProducts && similarProducts.length === 0 ? (
+              {similarProducts.length === 0 ? (
                 <p className="text-gray-500">No similar products found.</p>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {similarProducts &&
-                    similarProducts.map((product) => (
-                      <Link
-                        key={product.id}
-                        to={`/products/${product.id}`}
-                        className="group block p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                      >
-                        <img
-                          src={product.imageUrls[0] || '/placeholder.jpg'}
-                          alt={product.name}
-                          className="w-full h-32 object-cover rounded-md mb-2 group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <h3 className="text-sm font-semibold">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          ${product.price.toFixed(2)}
-                        </p>
-                      </Link>
-                    ))}
+                  {similarProducts.slice(0, 5).map((product) => (
+                    <SimilarProductItem key={product.id} product={product} />
+                  ))}
                 </div>
               )}
             </CardContent>

@@ -21,7 +21,6 @@ export interface Product {
   totalReviews: number;
 }
 
-// API response interface (snake_case)
 export interface ProductAPIResponse {
   id: number;
   name: string;

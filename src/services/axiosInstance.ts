@@ -4,6 +4,25 @@ import axios, {
   InternalAxiosRequestConfig,
   AxiosInstance,
 } from 'axios';
+import { useAuthStore } from '@/store/auth';
+import toast from 'react-hot-toast';
+
+// Extend the Window interface to include custom config
+interface AxiosConfig {
+  logging?: {
+    enabled: boolean;
+    filter?: {
+      method?: string;
+      urlPattern?: RegExp;
+    };
+  };
+}
+
+declare global {
+  interface Window {
+    __MY_APP_AXIOS_CONFIG__?: AxiosConfig;
+  }
+}
 
 // Extend the Axios config interface to include metadata
 declare module 'axios' {
@@ -17,20 +36,34 @@ declare module 'axios' {
   }
 }
 
-import { useAuthStore } from '@/store/auth';
-import toast from 'react-hot-toast';
-
 // Environment-specific configuration
 const isDevelopment = import.meta.env.DEV;
-// const isProduction = import.meta.env.PROD;
+
+// Enhanced error response type
+interface ApiErrorResponse {
+  message?: string;
+  errors?: string[] | Record<string, string[]>;
+  code?: string;
+  details?: unknown;
+  status?: number;
+  timestamp?: string;
+}
 
 interface AxiosInstanceWithUtils extends AxiosInstance {
   cancelAllRequests: () => void;
   cancelRequestsMatching: (pattern: string | RegExp) => void;
   getPendingRequestCount: () => number;
-  getRequestHealth: () => { activeRequests: number; recentErrors: number };
-  configureLogging: (enabled: boolean) => void;
+  getRequestHealth: () => {
+    pendingCount: number;
+    oldestRequest: number;
+    averageAge: number;
+  };
+  configureLogging: (config: {
+    enabled: boolean;
+    filter?: { method?: string; urlPattern?: RegExp };
+  }) => void;
   configureRetries: (config: Partial<typeof RETRY_CONFIG>) => void;
+  configureCleanup: (config: Partial<typeof CLEANUP_CONFIG>) => void;
 }
 
 const axiosInstance: AxiosInstanceWithUtils = axios.create({
@@ -45,10 +78,8 @@ const axiosInstance: AxiosInstanceWithUtils = axios.create({
       try {
         return data ? JSON.parse(data) : data;
       } catch (error) {
-        if (error instanceof Error) {
-          console.error('Failed to parse response:', error.message);
-        }
-        return data;
+        console.error('Failed to parse response:', error);
+        throw new Error('Invalid JSON response from server');
       }
     },
   ],
@@ -62,14 +93,17 @@ interface PendingRequest {
 
 const pendingRequests = new Map<string, PendingRequest>();
 
-// Cleanup old requests periodically
-const CLEANUP_INTERVAL = 60000; // 1 minute
-const REQUEST_TIMEOUT = 300000; // 5 minutes
+// Cleanup configuration
+const CLEANUP_CONFIG = {
+  interval: 60000, // 1 minute
+  requestTimeout: 300000, // 5 minutes
+};
 
+// Cleanup old requests periodically
 const cleanupOldRequests = (): void => {
   const now = Date.now();
   pendingRequests.forEach((request, key) => {
-    if (now - request.timestamp > REQUEST_TIMEOUT) {
+    if (now - request.timestamp > CLEANUP_CONFIG.requestTimeout) {
       request.controller.abort('Request expired');
       pendingRequests.delete(key);
     }
@@ -77,29 +111,30 @@ const cleanupOldRequests = (): void => {
 };
 
 // Start cleanup interval
-setInterval(cleanupOldRequests, CLEANUP_INTERVAL);
+let cleanupIntervalId = setInterval(
+  cleanupOldRequests,
+  CLEANUP_CONFIG.interval
+);
 
 // Generate unique key for request deduplication
 const generateRequestKey = (config: InternalAxiosRequestConfig): string => {
   const { method, url, params, data } = config;
-
-  // Create a more stable hash for data
   const dataHash = data
     ? JSON.stringify(data, Object.keys(data as object).sort())
     : '';
   const paramsHash = params
     ? JSON.stringify(params, Object.keys(params as object).sort())
     : '';
-
   return `${method?.toUpperCase()}-${url}-${paramsHash}-${dataHash}`;
 };
 
-// Request interceptor with improved token handling
+// Request interceptor with token handling
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     try {
-      // Get fresh token from store each time
+      // Get fresh token synchronously
       const token = useAuthStore.getState().token;
+
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -111,22 +146,20 @@ axiosInstance.interceptors.request.use(
         startTime: Date.now(),
       };
 
-      // Request deduplication (only for GET requests by default)
+      // Request deduplication
       const shouldDedupe =
-        config.method?.toLowerCase() === 'get' ||
+        (config.method?.toLowerCase() === 'get' &&
+          config.headers?.['x-dedupe'] !== 'false') ||
         config.headers?.['x-dedupe'] === 'true';
 
       if (shouldDedupe) {
         const requestKey = generateRequestKey(config);
-
-        // Cancel previous identical request if still pending
         if (pendingRequests.has(requestKey)) {
           const pendingRequest = pendingRequests.get(requestKey);
           pendingRequest?.controller.abort('Duplicate request cancelled');
           pendingRequests.delete(requestKey);
         }
 
-        // Create new abort controller for this request
         const controller = new AbortController();
         config.signal = controller.signal;
         pendingRequests.set(requestKey, {
@@ -135,32 +168,39 @@ axiosInstance.interceptors.request.use(
         });
       }
 
-      // Enhanced logging in development
-      if (isDevelopment) {
-        console.group(
-          `🚀 [${config.metadata.requestId}] ${config.method?.toUpperCase()} ${
-            config.url
-          }`
-        );
-        console.log('Config:', {
-          url: config.url,
-          method: config.method,
-          headers: {
-            ...config.headers,
-            Authorization: token ? '[REDACTED]' : undefined,
-          },
-          params: config.params,
-          data: config.data,
-          timeout: config.timeout,
-        });
-        console.groupEnd();
-      }
+      // Enhanced logging with filtering
+      /* if (isDevelopment && window.__MY_APP_AXIOS_CONFIG__?.logging?.enabled) {
+        const loggingConfig = window.__MY_APP_AXIOS_CONFIG__?.logging;
+        const shouldLog =
+          !loggingConfig?.filter ||
+          loggingConfig.filter.method?.toLowerCase() ===
+            config.method?.toLowerCase() ||
+          loggingConfig.filter.urlPattern?.test(config.url || '');
+
+        if (shouldLog) {
+          console.group(
+            `🚀 [${
+              config.metadata.requestId
+            }] ${config.method?.toUpperCase()} ${config.url}`
+          );
+          console.log('Config:', {
+            url: config.url,
+            method: config.method,
+            headers: {
+              ...config.headers,
+              Authorization: token ? '[REDACTED]' : undefined,
+            },
+            params: config.params,
+            data: config.data,
+            timeout: config.timeout,
+          });
+          console.groupEnd();
+        }
+      } */
 
       return config;
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Request Setup Error:', error.message);
-      }
+      console.error('Request Setup Error:', error);
       return Promise.reject(error);
     }
   },
@@ -172,40 +212,73 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Enhanced HTTP error messages
-const httpErrorMessages: Record<number, string> = {
-  400: 'Bad request. Please check your input.',
-  401: 'Your session has expired. Please log in again.',
-  403: 'You do not have permission to perform this action.',
-  404: 'The requested resource was not found.',
-  408: 'Request timeout. Please try again.',
-  409: 'A conflict occurred. The resource may have been modified.',
-  422: 'The provided data is invalid. Please check your input.',
-  429: 'Too many requests. Please wait a moment before trying again.',
-  500: 'A server error occurred. Please try again later.',
-  502: 'Service temporarily unavailable. Please try again later.',
-  503: 'Service is currently under maintenance.',
-  504: 'The request took too long to complete. Please try again.',
+// Enhanced HTTP error messages with severity
+const httpErrorMessages: Record<
+  number,
+  { message: string; severity: 'low' | 'medium' | 'high' }
+> = {
+  400: { message: 'Bad request. Please check your input.', severity: 'medium' },
+  401: {
+    message: 'Your session has expired. Please log in again.',
+    severity: 'high',
+  },
+  403: {
+    message: 'You do not have permission to perform this action.',
+    severity: 'medium',
+  },
+  404: { message: 'The requested resource was not found.', severity: 'medium' },
+  408: { message: 'Request timeout. Please try again.', severity: 'low' },
+  409: {
+    message: 'A conflict occurred. The resource may have been modified.',
+    severity: 'medium',
+  },
+  422: {
+    message: 'The provided data is invalid. Please check your input.',
+    severity: 'medium',
+  },
+  429: {
+    message: 'Too many requests. Please wait a moment before trying again.',
+    severity: 'low',
+  },
+  500: {
+    message: 'A server error occurred. Please try again later.',
+    severity: 'high',
+  },
+  502: {
+    message: 'Service temporarily unavailable. Please try again later.',
+    severity: 'high',
+  },
+  503: { message: 'Service is currently under maintenance.', severity: 'high' },
+  504: {
+    message: 'The request took too long to complete. Please try again.',
+    severity: 'low',
+  },
 };
 
 // Enhanced database error codes
-const dbErrorMessages: Record<string, string> = {
-  '23505': 'This value already exists. Please choose a different one.',
-  '23503': 'Cannot delete this item as it is referenced by other records.',
-  '23514': 'The provided value violates a business rule.',
-  '23000': 'A data integrity violation occurred.',
-  '42P01': 'Database table not found.',
-  '42703': 'Database column not found.',
+const dbErrorMessages: Record<
+  string,
+  { message: string; severity: 'low' | 'medium' | 'high' }
+> = {
+  '23505': {
+    message: 'This value already exists. Please choose a different one.',
+    severity: 'medium',
+  },
+  '23503': {
+    message: 'Cannot delete this item as it is referenced by other records.',
+    severity: 'medium',
+  },
+  '23514': {
+    message: 'The provided value violates a business rule.',
+    severity: 'medium',
+  },
+  '23000': {
+    message: 'A data integrity violation occurred.',
+    severity: 'medium',
+  },
+  '42P01': { message: 'Database table not found.', severity: 'high' },
+  '42703': { message: 'Database column not found.', severity: 'high' },
 };
-
-interface ApiErrorResponse {
-  message?: string;
-  errors?: string[] | Record<string, string[]>;
-  code?: string;
-  details?: unknown;
-  status?: number;
-  timestamp?: string;
-}
 
 // Enhanced retry configuration
 const RETRY_CONFIG = {
@@ -217,11 +290,11 @@ const RETRY_CONFIG = {
   retryableErrorCodes: ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND'],
 };
 
-// Calculate delay with jitter to prevent thundering herd
+// Calculate delay with jitter
 const calculateRetryDelay = (attempt: number): number => {
   const delay =
     RETRY_CONFIG.baseDelay * Math.pow(RETRY_CONFIG.backoffFactor, attempt - 1);
-  const jitter = Math.random() * 0.1 * delay; // 10% jitter
+  const jitter = Math.random() * 0.1 * delay;
   return Math.min(delay + jitter, RETRY_CONFIG.maxDelay);
 };
 
@@ -229,23 +302,25 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 // Check if error is retryable
-const isRetryableError = (error: AxiosError): boolean => {
-  // Network errors
+const isRetryableError = (
+  error: AxiosError,
+  config: InternalAxiosRequestConfig
+): boolean => {
+  if (config.headers?.['x-retry-enabled'] === 'false') {
+    return false;
+  }
   if (
     !error.response &&
     RETRY_CONFIG.retryableErrorCodes.includes(error.code || '')
   ) {
     return true;
   }
-
-  // HTTP status codes
   if (
     error.response?.status &&
     RETRY_CONFIG.retryableStatusCodes.includes(error.response.status)
   ) {
     return true;
   }
-
   return false;
 };
 
@@ -253,65 +328,97 @@ const isRetryableError = (error: AxiosError): boolean => {
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
     const config = response.config as InternalAxiosRequestConfig;
-
-    // Clean up pending request
     const requestKey = generateRequestKey(config);
     pendingRequests.delete(requestKey);
 
-    // Enhanced response logging
-    if (isDevelopment && config.metadata?.startTime) {
-      const duration = Date.now() - config.metadata.startTime;
-      console.group(
-        `✅ [${config.metadata.requestId}] ${config.method?.toUpperCase()} ${
-          config.url
-        } (${duration}ms)`
-      );
-      console.log('Status:', response.status);
-      console.log('Headers:', response.headers);
-      console.log('Data:', response.data);
-      console.groupEnd();
-    }
+    /* if (
+      isDevelopment &&
+      config.metadata?.startTime &&
+      window.__MY_APP_AXIOS_CONFIG__?.logging?.enabled
+    ) {
+      const loggingConfig = window.__MY_APP_AXIOS_CONFIG__?.logging;
+      const shouldLog =
+        !loggingConfig?.filter ||
+        loggingConfig.filter.method?.toLowerCase() ===
+          config.method?.toLowerCase() ||
+        loggingConfig.filter.urlPattern?.test(config.url || '');
+
+      if (shouldLog) {
+        const duration = Date.now() - config.metadata.startTime;
+        console.group(
+          `✅ [${config.metadata.requestId}] ${config.method?.toUpperCase()} ${
+            config.url
+          } (${duration}ms)`
+        );
+        console.log('Status:', response.status);
+        console.log('Headers:', response.headers);
+        console.log('Data:', response.data);
+        console.groupEnd();
+      }
+    } */
 
     return response;
   },
   async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig;
 
-    // Clean up pending request
     if (originalRequest) {
       const requestKey = generateRequestKey(originalRequest);
       pendingRequests.delete(requestKey);
     }
 
-    // Enhanced error logging
-    if (isDevelopment && originalRequest?.metadata?.startTime) {
-      const duration = Date.now() - originalRequest.metadata.startTime;
-      console.group(
-        `❌ [${
-          originalRequest.metadata.requestId
-        }] ${originalRequest?.method?.toUpperCase()} ${
-          originalRequest?.url
-        } (${duration}ms)`
-      );
-      console.log('Status:', error.response?.status);
-      console.log('Error Code:', error.code);
-      console.log('Error Message:', error.message);
-      console.log('Response Data:', error.response?.data);
-      console.groupEnd();
-    }
+    /* if (
+      isDevelopment &&
+      originalRequest?.metadata?.startTime &&
+      window.__MY_APP_AXIOS_CONFIG__?.logging?.enabled
+    ) {
+      const loggingConfig = window.__MY_APP_AXIOS_CONFIG__?.logging;
+      const shouldLog =
+        !loggingConfig?.filter ||
+        loggingConfig.filter.method?.toLowerCase() ===
+          originalRequest?.method?.toLowerCase() ||
+        loggingConfig.filter.urlPattern?.test(originalRequest?.url || '');
 
-    // Enhanced retry logic
+      if (shouldLog) {
+        const duration = Date.now() - originalRequest.metadata.startTime;
+        console.group(
+          `❌ [${
+            originalRequest.metadata.requestId
+          }] ${originalRequest?.method?.toUpperCase()} ${
+            originalRequest?.url
+          } (${duration}ms)`
+        );
+        console.log('Status:', error.response?.status);
+        console.log('Error Code:', error.code);
+        console.log('Error Message:', error.message);
+        console.log('Response Data:', error.response?.data);
+        console.groupEnd();
+      }
+    } */
+
+    // Enhanced retry logic with rate limiting support
     const shouldRetry =
       originalRequest &&
       !originalRequest._retryCount &&
-      isRetryableError(error) &&
+      isRetryableError(error, originalRequest) &&
       error.code !== 'ERR_CANCELED';
 
     if (shouldRetry) {
       originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
 
       if (originalRequest._retryCount <= RETRY_CONFIG.maxRetries) {
-        const delay = calculateRetryDelay(originalRequest._retryCount);
+        let delay = calculateRetryDelay(originalRequest._retryCount);
+
+        // Handle 429 with Retry-After header
+        if (error.response?.status === 429) {
+          const retryAfter = error.response.headers['retry-after'];
+          if (retryAfter) {
+            const retryAfterMs = parseInt(retryAfter, 10) * 1000;
+            if (!isNaN(retryAfterMs)) {
+              delay = retryAfterMs;
+            }
+          }
+        }
 
         if (isDevelopment) {
           console.log(
@@ -321,7 +428,6 @@ axiosInstance.interceptors.response.use(
 
         await sleep(delay);
 
-        // Create new abort controller for retry
         const controller = new AbortController();
         originalRequest.signal = controller.signal;
         const requestKey = generateRequestKey(originalRequest);
@@ -334,69 +440,65 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Enhanced error handling after retry attempts
     return handleApiError(error);
   }
 );
 
-// Separate error handling function for better organization
+// Separate error handling function
 const handleApiError = (error: AxiosError<ApiErrorResponse>) => {
-  // Cancelled requests shouldn't show errors
   if (error.code === 'ERR_CANCELED') {
     return Promise.reject(error);
   }
 
-  // Network error (no response)
   if (!error.response) {
     let message = 'Network error. Please check your connection.';
+    let severity: 'low' | 'medium' | 'high' = 'medium';
 
     if (error.code === 'ECONNABORTED') {
       message = 'Request timeout. Please try again.';
+      severity = 'low';
     } else if (error.code === 'ENOTFOUND') {
       message = 'Server not found. Please try again later.';
+      severity = 'high';
     }
 
-    showError(message);
+    showError(message, severity);
     return Promise.reject(error);
   }
 
   const { status, data } = error.response;
 
-  // Handle server-provided error messages first
   if (data?.message) {
-    showError(data.message);
-
+    showError(data.message, httpErrorMessages[status]?.severity || 'medium');
     if (status === 401) {
       handleUnauthorized();
     }
-
     return Promise.reject(new Error(data.message));
   }
 
-  // Handle validation errors (array format)
   if (Array.isArray(data?.errors)) {
     const messages = data.errors.join(', ');
-    showError(messages);
+    showError(messages, 'medium');
     return Promise.reject(new Error(messages));
   }
 
-  // Handle validation errors (object format like Laravel)
   if (data?.errors && typeof data.errors === 'object') {
     const messages = Object.values(data.errors).flat().join(', ');
-    showError(messages);
+    showError(messages, 'medium');
     return Promise.reject(new Error(messages));
   }
 
-  // Handle database error codes
   if (data?.code && dbErrorMessages[data.code]) {
-    const message = dbErrorMessages[data.code];
-    showError(message);
+    const { message, severity } = dbErrorMessages[data.code];
+    showError(message, severity);
     return Promise.reject(new Error(message));
   }
 
-  // Fallback to HTTP status error messages
-  const message = httpErrorMessages[status] || 'An unexpected error occurred';
-  showError(message);
+  const { message, severity } = httpErrorMessages[status] || {
+    message: 'An unexpected error occurred',
+    severity: 'high' as const,
+  };
+  showError(message, severity);
 
   if (status === 401) {
     handleUnauthorized();
@@ -405,30 +507,31 @@ const handleApiError = (error: AxiosError<ApiErrorResponse>) => {
   return Promise.reject(error);
 };
 
-// Centralized error display function
-const showError = (message: string) => {
+// Centralized error display function with severity-based duration
+const showError = (message: string, severity: 'low' | 'medium' | 'high') => {
+  const duration = {
+    low: 3000,
+    medium: 5000,
+    high: 8000,
+  }[severity];
+
   toast.error(message, {
     position: 'bottom-center',
-    duration: 5000,
-    id: message, // Prevent duplicate toasts
+    duration,
+    id: message,
   });
 };
 
 // Enhanced unauthorized handling
 const handleUnauthorized = () => {
   const authStore = useAuthStore.getState();
-
-  // Cancel all pending requests to prevent further 401s
   cancelAllRequests();
-
   authStore.logoutUser();
 
-  // Avoid redirect loops
   const currentPath = window.location.pathname;
   const authPaths = ['/login', '/register', '/forgot-password'];
 
   if (!authPaths.some((path) => currentPath.includes(path))) {
-    // Store current path for redirect after login
     sessionStorage.setItem('redirectAfterLogin', currentPath);
     window.location.href = '/login';
   }
@@ -437,7 +540,6 @@ const handleUnauthorized = () => {
 // Enhanced utility functions
 export const cancelAllRequests = () => {
   let cancelledCount = 0;
-
   pendingRequests.forEach((request) => {
     request.controller.abort('All requests cancelled');
     cancelledCount++;
@@ -457,7 +559,6 @@ export const cancelRequestsMatching = (pattern: string | RegExp) => {
     const matches = isRegex
       ? pattern.test(key)
       : key.includes(pattern as string);
-
     if (matches) {
       request.controller.abort(`Request matching "${pattern}" cancelled`);
       pendingRequests.delete(key);
@@ -476,13 +577,13 @@ export const getPendingRequestCount = (): number => {
   return pendingRequests.size;
 };
 
-// Request health monitoring
 export const getRequestHealth = () => {
   return {
     pendingCount: pendingRequests.size,
-    oldestRequest: Math.min(
-      ...Array.from(pendingRequests.values()).map((r) => r.timestamp)
-    ),
+    oldestRequest:
+      Math.min(
+        ...Array.from(pendingRequests.values()).map((r) => r.timestamp)
+      ) || Date.now(),
     averageAge:
       Array.from(pendingRequests.values()).reduce(
         (sum, r) => sum + (Date.now() - r.timestamp),
@@ -492,20 +593,29 @@ export const getRequestHealth = () => {
 };
 
 // Configuration utilities
-export const configureLogging = (enabled: boolean) => {
-  Object.defineProperty(window, '__AXIOS_LOGGING_ENABLED__', {
-    value: enabled,
-    writable: true,
-  });
+export const configureLogging = (config: {
+  enabled: boolean;
+  filter?: { method?: string; urlPattern?: RegExp };
+}) => {
+  window.__MY_APP_AXIOS_CONFIG__ = {
+    ...window.__MY_APP_AXIOS_CONFIG__,
+    logging: config,
+  };
 };
 
 export const configureRetries = (config: Partial<typeof RETRY_CONFIG>) => {
   Object.assign(RETRY_CONFIG, config);
 };
 
+export const configure = (config: Partial<typeof CLEANUP_CONFIG>) => {
+  Object.assign(CLEANUP_CONFIG, config);
+  clearInterval(cleanupIntervalId);
+  cleanupIntervalId = setInterval(cleanupOldRequests, CLEANUP_CONFIG.interval);
+};
+
 // Initialize based on environment
 if (isDevelopment) {
-  configureLogging(true);
+  configureLogging({ enabled: true });
 }
 
 // Cleanup on page unload

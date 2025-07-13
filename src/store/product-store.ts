@@ -8,6 +8,7 @@ import {
   ProductFilter,
   ValidationError,
 } from '@/types/product';
+import { Review } from '@/types/review';
 
 const transformApiResponseToProduct = (
   response: ProductAPIResponse
@@ -51,6 +52,9 @@ interface ProductState {
   validationErrors: ValidationError[];
   loadingPopularProducts: boolean;
   popularProducts: Product[];
+  loadingProductReviews: boolean;
+  productReviews: Review[];
+  loadingProductDetails: boolean;
 
   setFilter: (filter: Partial<ProductFilter>) => Promise<void>;
   resetFilter: () => Promise<void>;
@@ -69,6 +73,7 @@ interface ProductState {
   clearValidationErrors: () => void;
   setError: (error: string | null) => void;
   loadPopularProducts: (limit?: number) => Promise<void>;
+  loadProductDetails: (id: number) => Promise<Product | null>;
 }
 
 const useProductStore = create<ProductState>((set, get) => ({
@@ -81,6 +86,9 @@ const useProductStore = create<ProductState>((set, get) => ({
   loadingProduct: false,
   loadingSimilarProducts: false,
   loadingPopularProducts: false,
+  loadingProductReviews: false,
+  loadingProductDetails: false,
+  productReviews: [],
   popularProducts: [],
   submitting: false,
   deleting: false,
@@ -180,6 +188,37 @@ const useProductStore = create<ProductState>((set, get) => ({
       return null;
     } finally {
       set({ loadingProduct: false });
+    }
+  },
+
+  loadProductDetails: async (id: number): Promise<Product | null> => {
+    // Validate ID is a positive integer
+    const parsedId = Number(id);
+    if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      set({ error: 'Invalid product ID', loadingProductDetails: false });
+      toast.error('Invalid product ID');
+      return null;
+    }
+
+    set({ loadingProductDetails: true, error: null });
+    try {
+      const response = await productService.getProductWithReviews(parsedId);
+      const transformedProduct: Product =
+        transformApiResponseToProduct(response);
+      set({ currentProduct: transformedProduct });
+      console.log('currentProduct', transformedProduct);
+      return transformedProduct;
+    } catch (error) {
+      console.error('Error loading product details:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Failed to load product details';
+      set({ error: errorMessage });
+      toast.error(errorMessage);
+      return null;
+    } finally {
+      set({ loadingProductDetails: false });
     }
   },
 
@@ -293,6 +332,35 @@ const useProductStore = create<ProductState>((set, get) => ({
       set({ similarProducts: [] });
     } finally {
       set({ loadingPopularProducts: false });
+    }
+  },
+
+  getProductReviews: async (productId: number) => {
+    set({ loadingProductReviews: true });
+    try {
+      const reviews = await productService.getProductReviews(productId);
+      set({ productReviews: reviews });
+    } catch (error) {
+      console.error('Error loading product reviews:', error);
+      toast.error('Failed to load product reviews');
+    } finally {
+      set({ loadingProductReviews: false });
+    }
+  },
+
+  getSimilarProducts: async (productId: number, limit = 5) => {
+    set({ loadingSimilarProducts: true });
+    try {
+      const products = await productService.getSimilarProducts(
+        productId,
+        limit
+      );
+      set({ similarProducts: products.map(transformApiResponseToProduct) });
+    } catch (error) {
+      console.error('Error loading similar products:', error);
+      toast.error('Failed to load similar products');
+    } finally {
+      set({ loadingSimilarProducts: false });
     }
   },
 }));

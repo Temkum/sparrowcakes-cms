@@ -9,6 +9,10 @@ export interface Review {
   updatedAt: string;
 }
 
+export interface ReviewUI extends Review {
+  customer: Customer;
+}
+
 export interface ReviewProps {
   review: Review;
   onEdit: (reviewId: number) => void;

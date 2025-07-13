@@ -20,7 +20,7 @@ export default function ProductCard({
     <Card className="group relative max-w-sm overflow-hidden p-4">
       {/* Product Image with Hover Icons */}
       <div className="relative aspect-square overflow-hidden">
-        <Link to={`/products/${id}`}>
+        <Link to={`/products/details/${id}`}>
           <img
             src={image || '/placeholder.svg'}
             alt={title}

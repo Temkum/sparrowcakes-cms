@@ -125,22 +125,22 @@ const Products: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2 text-center">All Products</h1>
+      <h1 className="text-3xl font-bold mb-2 text-center">Our Bakery</h1>
       <p className="text-center mb-8 text-muted-foreground">
-        Browse our full selection of products. Use the search to filter by name
-        or description.
+        Browse our full selection of cakes and pastries. Use the search to
+        filter by name or description.
       </p>
       <div className="flex justify-center mb-6">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search products..."
+          placeholder="Search cakes and pastries..."
           className="w-full max-w-md px-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-400 bg-inherit"
         />
       </div>
       {loadingProducts ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-5 gap-6 mb-8">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-80 w-full rounded-lg" />
           ))}
