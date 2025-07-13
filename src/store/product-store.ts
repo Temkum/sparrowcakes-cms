@@ -26,7 +26,17 @@ const transformApiResponseToProduct = (
   isActive: response.is_active,
   availability: response.availability,
   categories: response.categories?.map((cat) => cat.id) || [],
-  reviews: response.reviews || [],
+  reviews:
+    response.reviews?.map((review) => ({
+      id: review.id,
+      productId: review.product?.id || 0,
+      customerId: review.customer?.id || 0,
+      rating: review.rating,
+      comment: review.comment,
+      isActive: review.display,
+      createdAt: review.created_at,
+      updatedAt: review.updated_at,
+    })) || [],
   totalReviews: response.reviews?.length || 0,
   createdAt: response.created_at,
   updatedAt: response.updated_at,
@@ -201,20 +211,49 @@ const useProductStore = create<ProductState>((set, get) => ({
     }
 
     set({ loadingProductDetails: true, error: null });
+
+    // Retry mechanism for network issues
+    const maxRetries = 2;
+    let lastError: Error | null = null;
+
     try {
-      const response = await productService.getProductWithReviews(parsedId);
-      const transformedProduct: Product =
-        transformApiResponseToProduct(response);
-      set({ currentProduct: transformedProduct });
-      console.log('currentProduct', transformedProduct);
-      return transformedProduct;
-    } catch (error) {
-      console.error('Error loading product details:', error);
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await productService.getProductWithReviews(parsedId);
+          if (!response) {
+            throw new Error('Product not found');
+          }
+          const transformedProduct: Product =
+            transformApiResponseToProduct(response);
+          set({ currentProduct: transformedProduct, error: null });
+          console.log('currentProduct', transformedProduct);
+          return transformedProduct;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          console.error(
+            `Error loading product details (attempt ${attempt}):`,
+            error
+          );
+
+          // Don't retry on 404 or 401 errors
+          if (
+            lastError.message.includes('not found') ||
+            lastError.message.includes('Authentication required')
+          ) {
+            break;
+          }
+
+          // Wait before retrying (except on last attempt)
+          if (attempt < maxRetries) {
+            await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+          }
+        }
+      }
+
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Failed to load product details';
-      set({ error: errorMessage });
+        lastError?.message ||
+        'Failed to fetch product with reviews. Please try again.';
+      set({ error: errorMessage, currentProduct: null });
       toast.error(errorMessage);
       return null;
     } finally {

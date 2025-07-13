@@ -1,4 +1,4 @@
-import { Review } from '../review';
+import { Review, ReviewResponseProps } from '../review';
 
 // Product interface for frontend use (camelCase)
 export interface Product {
@@ -32,7 +32,7 @@ export interface ProductAPIResponse {
   quantity: number;
   image_urls: string[];
   is_active: boolean;
-  reviews: Review[];
+  reviews: ReviewResponseProps[];
   created_at: string;
   updated_at: string;
   availability: string;

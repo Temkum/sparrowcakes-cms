@@ -7,30 +7,15 @@ import { StarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import useProductStore from '@/store/product-store';
 import DOMPurify from 'dompurify';
 import { format, parseISO } from 'date-fns';
-
-interface Review {
-  id: number;
-  rating: number;
-  comment: string;
-  display: boolean;
-  is_reported: boolean;
-  is_approved: boolean;
-  is_rejected: boolean;
-  is_edited: boolean;
-  is_deleted: boolean;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-  customer: { name: string };
-}
+import { Review } from '@/types/review';
 
 // Memoized Review Item
 const ReviewItem = memo(({ review }: { review: Review }) => {
   let formattedDate = 'Unknown Date';
   try {
-    formattedDate = format(parseISO(review.created_at), 'MMM dd, yyyy');
+    formattedDate = format(parseISO(review.createdAt), 'MMM dd, yyyy');
   } catch (error) {
-    console.error('Failed to parse review date:', review.created_at, error);
+    console.error('Failed to parse review date:', review.createdAt, error);
   }
 
   return (
@@ -52,9 +37,7 @@ const ReviewItem = memo(({ review }: { review: Review }) => {
         <span className="ml-2 text-sm text-gray-500">{formattedDate}</span>
       </div>
       <p className="text-gray-700">{review.comment}</p>
-      <p className="text-sm text-gray-500 mt-1">
-        — {review.customer.name || 'Anonymous'}
-      </p>
+      <p className="text-sm text-gray-500 mt-1">— Anonymous</p>
     </div>
   );
 });
