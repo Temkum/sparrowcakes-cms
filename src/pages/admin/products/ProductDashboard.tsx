@@ -4,7 +4,7 @@ import { TagIcon, Cake, BadgeDollarSign } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import ProductsTable from './ProductsTable';
-import useProductStore from '@/store/product-storeold';
+import useProductStore from '@/store/product-store';
 
 const ProductDashboard = () => {
   const { loadingProducts } = useProductStore();

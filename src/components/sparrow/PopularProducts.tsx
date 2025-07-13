@@ -9,7 +9,7 @@ import {
 } from '../ui/carousel';
 import { useEffect, useState } from 'react';
 import { UIProduct } from '@/types';
-import useProductStore from '@/store/product-storeold';
+import useProductStore from '@/store/product-store';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductAPIResponse } from '@/types/product';
 import { Link } from 'react-router-dom';

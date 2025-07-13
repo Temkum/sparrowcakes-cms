@@ -28,7 +28,7 @@ import {
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import useProductStore from '@/store/product-storeold';
+import useProductStore from '@/store/product-store';
 import {
   Select,
   SelectContent,

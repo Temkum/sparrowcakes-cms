@@ -31,7 +31,7 @@ import { DynamicCategories } from '../categories/DynamicCategories';
 // import { useNavigate } from 'react-router-dom'; // Unused
 import { productFormSchema } from '@/form-schema/productFormSchema';
 import { ImageUpload } from './ImageUpload';
-import useProductStore from '@/store/product-storeold';
+import useProductStore from '@/store/product-store';
 // import { useAuthStore } from '@/store/auth'; // Unused
 
 interface Product {

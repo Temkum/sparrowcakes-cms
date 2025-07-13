@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import useProductStore from '@/store/product-storeold';
+import useProductStore from '@/store/product-store';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from 'react-hot-toast';
 

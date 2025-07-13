@@ -5,7 +5,7 @@ import ReviewsForm from './ReviewsForm';
 import { ReviewResponseProps } from '@/types/review';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import useProductStore from '@/store/product-storeold';
+import useProductStore from '@/store/product-store';
 import useCustomerStore from '@/store/customer-store';
 import { BreadcrumbComponent } from '@/components/BreadcrumbComponent';
 import {
