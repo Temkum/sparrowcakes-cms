@@ -258,11 +258,16 @@ export const productService = {
     }
   },
 
-  async getSimilarProducts(productId: number, limit: number = 5) {
+  async getSimilarProducts(productId: number, limit: number = 6) {
+    const parsedId = Number(productId);
+    if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      throw new Error('Invalid productId');
+    }
     try {
       const response = await axiosInstance.get('/products/similar', {
-        params: { productId, limit },
+        params: { productId: parsedId, limit },
       });
+      console.log('similar products', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching similar products:', error);
@@ -298,6 +303,28 @@ export const productService = {
       console.error('Error fetching product with reviews:', error);
       throw new Error(
         'Failed to fetch product with reviews. Please try again.'
+      );
+    }
+  },
+
+  async getSimilarProductsByCategory(categoryId: number, limit: number = 6) {
+    const parsedId = Number(categoryId);
+    if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      throw new Error('Invalid categoryId');
+    }
+    try {
+      const response = await axiosInstance.get(
+        `/products/similar-by-category/${parsedId}`,
+        {
+          params: { limit },
+        }
+      );
+      console.log('similar products by category', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching similar products by category:', error);
+      throw new Error(
+        'Failed to fetch similar products by category. Please try again.'
       );
     }
   },

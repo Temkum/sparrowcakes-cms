@@ -9,6 +9,17 @@ import DOMPurify from 'dompurify';
 import { format, parseISO } from 'date-fns';
 import { Review } from '@/types/review';
 
+// Custom styles for scrollbar hiding
+const scrollbarHideStyles = `
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
 // Memoized Review Item
 const ReviewItem = memo(({ review }: { review: Review }) => {
   let formattedDate = 'Unknown Date';
@@ -74,9 +85,12 @@ const ProductDetailsUI = () => {
     loadProductDetails,
     loadingProductDetails,
     loadSimilarProducts,
+    loadingSimilarProducts,
   } = useProductStore();
   const [imageIndex, setImageIndex] = useState(0);
   const [reviewPage, setReviewPage] = useState(1);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   const reviewsPerPage = 5;
 
   useEffect(() => {
@@ -87,17 +101,57 @@ const ProductDetailsUI = () => {
         }
       });
     }
+    // Reset image index and loading state when product changes
+    setImageIndex(0);
+    setImageLoading(true);
+    setIsZoomed(false);
   }, [id, loadProductDetails, loadSimilarProducts]);
 
   const handleImageChange = (direction: 'next' | 'prev') => {
     if (!currentProduct?.imageUrls) return;
     const maxIndex = currentProduct.imageUrls.length - 1;
-    setImageIndex((prev) =>
-      direction === 'next'
-        ? Math.min(prev + 1, maxIndex)
-        : Math.max(prev - 1, 0)
-    );
+    setImageIndex((prev) => {
+      const newIndex =
+        direction === 'next'
+          ? Math.min(prev + 1, maxIndex)
+          : Math.max(prev - 1, 0);
+      // Reset loading state when changing images
+      setImageLoading(true);
+      return newIndex;
+    });
   };
+
+  const handleThumbnailClick = (index: number) => {
+    if (index !== imageIndex) {
+      setImageLoading(true);
+      setImageIndex(index);
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!currentProduct?.imageUrls || currentProduct.imageUrls.length <= 1)
+        return;
+
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault();
+          handleImageChange('prev');
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          handleImageChange('next');
+          break;
+        case 'Escape':
+          setIsZoomed(false);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentProduct?.imageUrls]);
 
   // Show loading state
   if (loadingProductDetails) {
@@ -153,7 +207,7 @@ const ProductDetailsUI = () => {
           The product you're looking for doesn't exist or has been removed.
         </p>
         <Button asChild>
-          <Link to="/products">Browse Products</Link>
+          <Link to="/products">Browse Bakery</Link>
         </Button>
       </div>
     );
@@ -180,6 +234,7 @@ const ProductDetailsUI = () => {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
+      <style dangerouslySetInnerHTML={{ __html: scrollbarHideStyles }} />
       <h1 className="text-2xl font-bold mb-4">Product Details</h1>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Product Details */}
@@ -188,14 +243,33 @@ const ProductDetailsUI = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Image Carousel */}
               <div className="relative">
-                <img
-                  src={
-                    currentProduct.imageUrls[imageIndex] || '/placeholder.jpg'
-                  }
-                  alt={currentProduct.name}
-                  className="w-full max-w-md h-auto object-cover rounded-lg transition-transform duration-300 hover:scale-105"
-                  loading="lazy"
-                />
+                <div
+                  className={`relative overflow-hidden rounded-lg transition-all duration-300 ${
+                    isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
+                  }`}
+                  onClick={() => setIsZoomed(!isZoomed)}
+                  title={isZoomed ? 'Click to zoom out' : 'Click to zoom in'}
+                >
+                  {imageLoading && (
+                    <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-gray-300 border-t-primary rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  <img
+                    src={
+                      currentProduct.imageUrls[imageIndex] || '/placeholder.jpg'
+                    }
+                    alt={currentProduct.name}
+                    className={`w-full max-w-md h-80 object-cover transition-all duration-300 ${
+                      isZoomed ? 'scale-150 transform-gpu' : 'hover:scale-105'
+                    } ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
+                    style={{ width: '320px', height: '320px' }}
+                    loading="lazy"
+                    onLoad={() => setImageLoading(false)}
+                    onError={() => setImageLoading(false)}
+                  />
+                </div>
+
                 {currentProduct.imageUrls.length > 1 && (
                   <div className="absolute top-1/2 left-0 right-0 flex justify-between px-4 transform -translate-y-1/2">
                     <Button
@@ -203,7 +277,7 @@ const ProductDetailsUI = () => {
                       size="icon"
                       onClick={() => handleImageChange('prev')}
                       disabled={imageIndex === 0}
-                      className="bg-white/80 hover:bg-white"
+                      className="bg-white/80 hover:bg-white shadow-md"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -214,10 +288,44 @@ const ProductDetailsUI = () => {
                       disabled={
                         imageIndex === currentProduct.imageUrls.length - 1
                       }
-                      className="bg-white/80 hover:bg-white"
+                      className="bg-white/80 hover:bg-white shadow-md"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
+                  </div>
+                )}
+
+                {/* Image Counter */}
+                {currentProduct.imageUrls.length > 1 && (
+                  <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded-md text-sm">
+                    {imageIndex + 1} / {currentProduct.imageUrls.length}
+                  </div>
+                )}
+
+                {/* Thumbnail Gallery */}
+                {currentProduct.imageUrls.length > 1 && (
+                  <div className="mt-4">
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                      {currentProduct.imageUrls.map((imageUrl, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleThumbnailClick(index)}
+                          className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-md overflow-hidden border-2 transition-all duration-200 ${
+                            index === imageIndex
+                              ? 'border-primary ring-2 ring-primary/20'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          title={`View image ${index + 1}`}
+                        >
+                          <img
+                            src={imageUrl || '/placeholder.jpg'}
+                            alt={`${currentProduct.name} - Image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -325,13 +433,30 @@ const ProductDetailsUI = () => {
               <CardTitle>Similar Products</CardTitle>
             </CardHeader>
             <CardContent>
-              {similarProducts.length === 0 ? (
+              {loadingSimilarProducts ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                </div>
+              ) : error ? (
+                <p className="text-red-500">{error}</p>
+              ) : similarProducts && similarProducts.length === 0 ? (
                 <p className="text-gray-500">No similar products found.</p>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {similarProducts.slice(0, 5).map((product) => (
+                  {similarProducts.slice(0, 6).map((product) => (
                     <SimilarProductItem key={product.id} product={product} />
                   ))}
+                  {currentProduct.categories &&
+                    currentProduct.categories.length > 0 &&
+                    currentProduct.categories[0] > 0 && (
+                      <Button asChild className="mt-4 w-full">
+                        <Link
+                          to={`/categories/${currentProduct.categories[0]}`}
+                        >
+                          View All
+                        </Link>
+                      </Button>
+                    )}
                 </div>
               )}
             </CardContent>

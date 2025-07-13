@@ -261,27 +261,15 @@ const useProductStore = create<ProductState>((set, get) => ({
     }
   },
 
-  loadSimilarProducts: async (categoryIds: number[], excludeId: number) => {
+  loadSimilarProducts: async (_categoryIds: number[], excludeId: number) => {
     set({ loadingSimilarProducts: true, error: null });
     try {
-      const response = await productService.getProducts(
-        1,
-        4,
-        '',
-        'updatedAt',
-        'desc'
-      );
-      const similarProducts = response.items
-        .filter(
-          (item) =>
-            item.id !== excludeId &&
-            item.categories.some((cat) => categoryIds.includes(cat.id))
-        )
-        .map(transformApiResponseToProduct);
-      set({ similarProducts });
+      const response = await productService.getSimilarProducts(excludeId, 6);
+      set({ similarProducts: response.map(transformApiResponseToProduct) });
     } catch (error) {
       console.error('Error loading similar products:', error);
       toast.error('Failed to load similar products');
+      set({ similarProducts: [] });
     } finally {
       set({ loadingSimilarProducts: false });
     }
