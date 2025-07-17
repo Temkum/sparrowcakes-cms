@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Star, User } from 'lucide-react';
+import { ReviewResponseProps } from '@/types/review';
 import './reviews.css';
+import { useReviewsStore } from '@/store/reviews-store';
 
 // Types
 interface Review {
@@ -18,87 +20,16 @@ interface ReviewCardProps {
   className?: string;
 }
 
-// Mock API function - replace with your actual API call
-const fetchReviews = async (): Promise<Review[]> => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Mock data - replace with actual API call
-  return [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      title: 'Marketing Director',
-      text: 'Absolutely exceptional service! The team went above and beyond to deliver exactly what we needed. The attention to detail and professionalism was outstanding.',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '2',
-      name: 'Michael Chen',
-      title: 'Product Manager',
-      text: 'Great experience working with this team. They delivered on time and exceeded our expectations.',
-      rating: 4,
-      avatar:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '3',
-      name: 'Emily Rodriguez',
-      title: 'CEO',
-      text: 'Outstanding results! The project was completed flawlessly and the communication throughout was excellent. Highly recommend their services to anyone looking for quality work.',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '4',
-      name: 'David Kim',
-      title: 'CTO',
-      text: 'Professional, reliable, and delivered exactly what was promised. The technical expertise was impressive.',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '5',
-      name: 'Lisa Thompson',
-      title: 'Operations Manager',
-      text: 'Fantastic work ethic and attention to detail. The final product exceeded all our expectations and was delivered ahead of schedule.',
-      rating: 4,
-      avatar:
-        'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '6',
-      name: 'James Wilson',
-      title: 'Creative Director',
-      text: 'Incredible creativity and technical skill. They brought our vision to life in ways we never imagined possible.',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '7',
-      name: 'Anna Martinez',
-      title: 'Brand Manager',
-      text: 'Top-notch service with excellent communication. The team was responsive and delivered quality work.',
-      rating: 4,
-      avatar:
-        'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '8',
-      name: 'Robert Davis',
-      title: 'VP of Sales',
-      text: 'Exceptional attention to detail and customer service. The results speak for themselves - highly recommended!',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=150&h=150&fit=crop&crop=face',
-    },
-  ];
-};
+// Transform store review to component review format
+const transformReview = (storeReview: ReviewResponseProps): Review => ({
+  id: storeReview.id?.toString() || '',
+  name: storeReview.customerName || storeReview.customer?.name || 'Anonymous',
+  title: storeReview.customer?.title || '',
+  text: storeReview.comment || '',
+  rating: storeReview.rating || 5,
+  avatar: storeReview.customer?.avatar || storeReview.customerAvatar,
+  date: storeReview.createdAt || '',
+});
 
 // Review Card Component
 const ReviewCard: React.FC<ReviewCardProps> = ({ review, className = '' }) => {
@@ -153,7 +84,8 @@ const SlidingRow: React.FC<{
   direction: 'left' | 'right';
   speed: number;
 }> = ({ reviews, direction, speed }) => {
-  const duplicatedReviews = [...reviews, ...reviews, ...reviews];
+  // Create seamless infinite scroll by duplicating reviews
+  const duplicatedReviews = [...reviews, ...reviews];
 
   return (
     <div className="relative overflow-hidden">
@@ -180,27 +112,22 @@ const SlidingRow: React.FC<{
 
 // Main Component
 const AnimatedReviews: React.FC = () => {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { uiReviews, loading, fetchReviewsForUI } = useReviewsStore();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadReviews = async () => {
       try {
-        const data = await fetchReviews();
-        // Filter for 4-5 star reviews only
-        const highRatedReviews = data.filter((review) => review.rating >= 4);
-        setReviews(highRatedReviews);
+        setError(null);
+        await fetchReviewsForUI();
       } catch (err) {
         setError('Failed to load reviews');
         console.error('Error fetching reviews:', err);
-      } finally {
-        setLoading(false);
       }
     };
 
     loadReviews();
-  }, []);
+  }, [fetchReviewsForUI]);
 
   if (loading) {
     return (
@@ -247,7 +174,12 @@ const AnimatedReviews: React.FC = () => {
     );
   }
 
-  if (reviews.length === 0) {
+  // Transform store reviews to component format and filter for high ratings
+  const transformedReviews = uiReviews
+    .map(transformReview)
+    .filter((review) => review.rating >= 4);
+
+  if (transformedReviews.length === 0) {
     return (
       <section
         className="py-16 bg-gradient-to-br from-gray-50 to-gray-100"
@@ -267,11 +199,29 @@ const AnimatedReviews: React.FC = () => {
     );
   }
 
-  // Split reviews into rows
-  const reviewsPerRow = Math.ceil(reviews.length / 3);
-  const row1 = reviews.slice(0, reviewsPerRow);
-  const row2 = reviews.slice(reviewsPerRow, reviewsPerRow * 2);
-  const row3 = reviews.slice(reviewsPerRow * 2);
+  // Split reviews into rows of 10 each
+  const reviewsPerRow = 10;
+  const totalRows = Math.ceil(transformedReviews.length / reviewsPerRow);
+
+  const rows = [];
+  for (let i = 0; i < totalRows; i++) {
+    const startIndex = i * reviewsPerRow;
+    const endIndex = startIndex + reviewsPerRow;
+    rows.push(transformedReviews.slice(startIndex, endIndex));
+  }
+
+  // Ensure we have at least 3 rows for better visual effect
+  // If we have fewer reviews, we'll cycle through them
+  const displayRows = [];
+  if (rows.length >= 3) {
+    displayRows.push(...rows.slice(0, 3));
+  } else {
+    // Cycle through available rows to create 3 display rows
+    for (let i = 0; i < 3; i++) {
+      const rowIndex = i % rows.length;
+      displayRows.push(rows[rowIndex] || []);
+    }
+  }
 
   return (
     <section
@@ -295,21 +245,27 @@ const AnimatedReviews: React.FC = () => {
         {/* Sliding Reviews */}
         <div className="space-y-6">
           {/* Row 1 - Left to Right */}
-          <SlidingRow reviews={row1} direction="left" speed={25} />
+          {displayRows[0] && displayRows[0].length > 0 && (
+            <SlidingRow reviews={displayRows[0]} direction="left" speed={25} />
+          )}
 
           {/* Row 2 - Right to Left */}
-          {row2.length > 0 && (
-            <SlidingRow reviews={row2} direction="right" speed={30} />
+          {displayRows[1] && displayRows[1].length > 0 && (
+            <SlidingRow reviews={displayRows[1]} direction="right" speed={30} />
           )}
 
           {/* Row 3 - Left to Right (only on larger screens) */}
-          {row3.length > 0 && (
+          {displayRows[2] && displayRows[2].length > 0 && (
             <div className="hidden lg:block">
-              <SlidingRow reviews={row3} direction="left" speed={35} />
+              <SlidingRow
+                reviews={displayRows[2]}
+                direction="left"
+                speed={35}
+              />
             </div>
           )}
         </div>
-      </div>{' '}
+      </div>
     </section>
   );
 };

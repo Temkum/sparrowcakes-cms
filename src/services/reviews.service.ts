@@ -117,3 +117,18 @@ export const toggleReviewDisplay = async (
     throw error;
   }
 };
+
+export const getReviewsForUI = async (): Promise<ReviewResponseProps[]> => {
+  try {
+    const response = await axiosInstance.get('/reviews/animated-reviews', {
+      params: { limit: 30 },
+    });
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error('Invalid response format for reviews');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching reviews for UI:', error);
+    throw error;
+  }
+};

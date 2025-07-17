@@ -9,6 +9,7 @@ interface ReviewsState {
   totalCount: number;
   currentPage: number;
   pageSize: number;
+  uiReviews: ReviewResponseProps[];
 
   fetchReviews: (params?: {
     page?: number;
@@ -25,6 +26,7 @@ interface ReviewsState {
   ) => Promise<void>;
   deleteReview: (id: number) => Promise<void>;
   toggleReviewDisplay: (id: number, display: boolean) => Promise<void>;
+  fetchReviewsForUI: () => Promise<void>;
 }
 
 export const useReviewsStore = create<ReviewsState>((set) => ({
@@ -33,12 +35,25 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
   totalCount: 0,
   currentPage: 1,
   pageSize: 10,
+  uiReviews: [],
+
+  fetchReviewsForUI: async () => {
+    set({ loading: true });
+    try {
+      const reviews = await reviewService.getReviewsForUI();
+      console.log('Fetched reviews for UI - store:', reviews);
+      set({ uiReviews: reviews, loading: false });
+    } catch (error) {
+      console.error('Error fetching reviews for UI:', error);
+      set({ uiReviews: [], loading: false });
+      toast.error('Failed to load reviews');
+    }
+  },
 
   fetchReviews: async (params = {}) => {
     set({ loading: true });
     try {
       const response = await reviewService.getReviews(params);
-
       set({
         reviews: response.items,
         totalCount: response.meta.total,
@@ -58,7 +73,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
     try {
       await reviewService.createReview(review);
       toast.success('Review created successfully');
-      // Refresh the reviews list
       const response = await reviewService.getReviews();
       set({
         reviews: response.items,
@@ -78,7 +92,7 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
     set({ loading: true });
     try {
       await reviewService.updateReview(id, review);
-      // Refresh the reviews list
+      toast.success('Review updated successfully');
       const response = await reviewService.getReviews();
       set({
         reviews: response.items,
@@ -87,7 +101,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
         pageSize: response.meta.limit,
         loading: false,
       });
-      toast.success('Review updated successfully');
     } catch (error) {
       console.error('Error updating review:', error);
       toast.error('Failed to update review');
@@ -100,7 +113,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
     try {
       await reviewService.deleteReview(id);
       toast.success('Review deleted successfully');
-      // Refresh the reviews list
       const response = await reviewService.getReviews();
       set({
         reviews: response.items,
@@ -121,7 +133,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
     try {
       await reviewService.toggleReviewDisplay(id, display);
       toast.success(`Review ${display ? 'shown' : 'hidden'} successfully`);
-      // Refresh the reviews list
       const response = await reviewService.getReviews();
       set({
         reviews: response.items,

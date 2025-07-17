@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Star, User } from 'lucide-react';
 
 // Types
@@ -16,88 +16,6 @@ interface ReviewCardProps {
   review: Review;
   className?: string;
 }
-
-// Mock API function - replace with your actual API call
-const fetchReviews = async (): Promise<Review[]> => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // Mock data - replace with actual API call
-  return [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      title: 'Marketing Director',
-      text: 'Absolutely exceptional service! The team went above and beyond to deliver exactly what we needed. The attention to detail and professionalism was outstanding.',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '2',
-      name: 'Michael Chen',
-      title: 'Product Manager',
-      text: 'Great experience working with this team. They delivered on time and exceeded our expectations.',
-      rating: 4,
-      avatar:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '3',
-      name: 'Emily Rodriguez',
-      title: 'CEO',
-      text: 'Outstanding results! The project was completed flawlessly and the communication throughout was excellent. Highly recommend their services to anyone looking for quality work.',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '4',
-      name: 'David Kim',
-      title: 'CTO',
-      text: 'Professional, reliable, and delivered exactly what was promised. The technical expertise was impressive.',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '5',
-      name: 'Lisa Thompson',
-      title: 'Operations Manager',
-      text: 'Fantastic work ethic and attention to detail. The final product exceeded all our expectations and was delivered ahead of schedule.',
-      rating: 4,
-      avatar:
-        'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '6',
-      name: 'James Wilson',
-      title: 'Creative Director',
-      text: 'Incredible creativity and technical skill. They brought our vision to life in ways we never imagined possible.',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '7',
-      name: 'Anna Martinez',
-      title: 'Brand Manager',
-      text: 'Top-notch service with excellent communication. The team was responsive and delivered quality work.',
-      rating: 4,
-      avatar:
-        'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face',
-    },
-    {
-      id: '8',
-      name: 'Robert Davis',
-      title: 'VP of Sales',
-      text: 'Exceptional attention to detail and customer service. The results speak for themselves - highly recommended!',
-      rating: 5,
-      avatar:
-        'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?w=150&h=150&fit=crop&crop=face',
-    },
-  ];
-};
 
 // Review Card Component
 const ReviewCard: React.FC<ReviewCardProps> = ({ review, className = '' }) => {
@@ -178,29 +96,17 @@ const SlidingRow: React.FC<{
 };
 
 // Main Component
-const AnimatedReviewSection: React.FC = () => {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface AnimatedReviewSectionProps {
+  reviews: ReadonlyArray<Review>;
+  loading: boolean;
+  error: string | null;
+}
 
-  useEffect(() => {
-    const loadReviews = async () => {
-      try {
-        const data = await fetchReviews();
-        // Filter for 4-5 star reviews only
-        const highRatedReviews = data.filter((review) => review.rating >= 4);
-        setReviews(highRatedReviews);
-      } catch (err) {
-        setError('Failed to load reviews');
-        console.error('Error fetching reviews:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadReviews();
-  }, []);
-
+const AnimatedReviewSection: React.FC<AnimatedReviewSectionProps> = ({
+  reviews,
+  loading,
+  error,
+}) => {
   if (loading) {
     return (
       <section
