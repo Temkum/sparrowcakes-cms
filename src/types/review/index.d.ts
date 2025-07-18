@@ -49,6 +49,7 @@ export interface ReviewResponseProps {
 
 export interface Customer {
   id: number;
+  occupation: string;
   name: string;
   phone: string;
   email: string;

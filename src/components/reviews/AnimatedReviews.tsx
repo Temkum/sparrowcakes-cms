@@ -23,21 +23,20 @@ interface ReviewCardProps {
 // Transform store review to component review format
 const transformReview = (storeReview: ReviewResponseProps): Review => ({
   id: storeReview.id?.toString() || '',
-  name: storeReview.customerName || storeReview.customer?.name || 'Anonymous',
-  title: storeReview.customer?.title || '',
-  text: storeReview.comment || '',
-  rating: storeReview.rating || 5,
-  avatar: storeReview.customer?.avatar || storeReview.customerAvatar,
-  date: storeReview.createdAt || '',
+  name: storeReview.customer.name || 'Anonymous',
+  title: storeReview.customer?.occupation || '',
+  text: storeReview.comment,
+  rating: storeReview.rating,
+  avatar: storeReview.customer?.image_url || '',
+  date: storeReview.created_at || '',
 });
 
-// Review Card Component
 const ReviewCard: React.FC<ReviewCardProps> = ({ review, className = '' }) => {
   const [imageError, setImageError] = useState(false);
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-lg border border-gray-100 p-6 min-h-[200px] flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 ${className}`}
+      className={`bg-white rounded-xl shadow-lg border border-gray-100 p-6 min-h-[160px] h-20 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 ${className}`}
     >
       {/* Header */}
       <div className="flex items-start gap-4 mb-4">
@@ -46,12 +45,12 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review, className = '' }) => {
             <img
               src={review.avatar}
               alt={`${review.name}'s avatar`}
-              className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+              className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
               onError={() => setImageError(true)}
             />
           ) : (
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <User className="w-6 h-6 text-white" />
+              <User className="w-6 h-6 text-white" size={12} />
             </div>
           )}
         </div>
@@ -65,15 +64,15 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review, className = '' }) => {
         </div>
         <div className="flex items-center gap-1">
           {[...Array(review.rating)].map((_, i) => (
-            <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <Star key={i} className="w-4 h-3 fill-yellow-400 text-yellow-400" />
           ))}
         </div>
       </div>
 
       {/* Review Text */}
-      <p className="text-gray-700 text-sm leading-relaxed flex-1">
+      <div className="text-gray-700 text-xs leading-relaxed flex-1 overflow-y-auto max-h-20">
         {review.text}
-      </p>
+      </div>
     </div>
   );
 };
