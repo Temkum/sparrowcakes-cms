@@ -1,5 +1,9 @@
 import axiosInstance from '@/services/axiosInstance';
-import { CategoryResponse, CategoryListResponse } from '@/types/category';
+import {
+  CategoryResponse,
+  CategoryListResponse,
+  DynamicCategories,
+} from '@/types/category';
 import { ReviewResponseProps } from '@/types/review';
 
 const CATEGORIES_ENDPOINT = '/categories';
@@ -11,6 +15,18 @@ const categoryService = {
         `${CATEGORIES_ENDPOINT}/all`
       );
 
+      return response.data;
+    } catch (error) {
+      console.error('Service error:', error);
+      throw new Error('Error fetching categories');
+    }
+  },
+
+  async getUICategories(): Promise<DynamicCategories[]> {
+    try {
+      const response = await axiosInstance.get<DynamicCategories[]>(
+        `${CATEGORIES_ENDPOINT}/ui`
+      );
       return response.data;
     } catch (error) {
       console.error('Service error:', error);

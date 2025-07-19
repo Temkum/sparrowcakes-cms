@@ -1,106 +1,43 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Star, MessageCircle } from 'lucide-react';
 import '@/styles/dynamic-categories.css';
-// Mock data structure matching your backend format
-const mockCategories = [
-  {
-    id: 141,
-    name: 'Fondant Cakes',
-    slug: 'fondant-cakes',
-    description: '<p>Beautiful custom fondant cakes for special occasions</p>',
-    imageUrl:
-      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&h=400&fit=crop',
-    productCount: 5,
-    products: [],
-  },
-  {
-    id: 142,
-    name: 'Wedding Cakes',
-    slug: 'wedding-cakes',
-    description: '<p>Elegant multi-tier wedding cakes</p>',
-    imageUrl:
-      'https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=500&h=400&fit=crop',
-    productCount: 8,
-    products: [],
-  },
-  {
-    id: 143,
-    name: 'Birthday Cakes',
-    slug: 'birthday-cakes',
-    description: '<p>Fun and colorful birthday celebration cakes</p>',
-    imageUrl:
-      'https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=500&h=400&fit=crop',
-    productCount: 12,
-    products: [],
-  },
-  {
-    id: 144,
-    name: 'Cupcakes',
-    slug: 'cupcakes',
-    description: '<p>Individual portion cupcakes with various flavors</p>',
-    imageUrl:
-      'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=500&h=400&fit=crop',
-    productCount: 15,
-    products: [],
-  },
-  {
-    id: 145,
-    name: 'Chocolate Cakes',
-    slug: 'chocolate-cakes',
-    description: '<p>Rich and decadent chocolate cakes</p>',
-    imageUrl:
-      'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&h=400&fit=crop',
-    productCount: 7,
-    products: [],
-  },
-  {
-    id: 146,
-    name: 'Fruit Cakes',
-    slug: 'fruit-cakes',
-    description: '<p>Fresh fruit-topped seasonal cakes</p>',
-    imageUrl:
-      'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=500&h=400&fit=crop',
-    productCount: 6,
-    products: [],
-  },
-  {
-    id: 147,
-    name: 'Custom Designs',
-    slug: 'custom-designs',
-    description: '<p>Unique custom cake designs for any occasion</p>',
-    imageUrl:
-      'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=500&h=400&fit=crop',
-    productCount: 3,
-    products: [],
-  },
-];
+import useCategoriesStore from '@/store/categories-store';
+import { CategoryResponse, DynamicCategories } from '@/types/category';
 
+// Mock data structure matching your backend format
 const Categories = () => {
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const { categories, loading, error, loadUICategories } = useCategoriesStore();
+  const [selectedCategory, setSelectedCategory] =
+    useState<DynamicCategories | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
-  const [loading, setLoading] = useState(true);
   const [imageLoading, setImageLoading] = useState(false);
 
-  // Simulate fetching data from Zustand store
+  // Fetch categories from Zustand store
   useEffect(() => {
     const fetchCategories = async () => {
-      setLoading(true);
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setCategories(mockCategories);
-      setSelectedCategory(mockCategories[0]); // Select first category by default
-      setLoading(false);
+      try {
+        const result = await loadUICategories();
+        if (result.length > 0) {
+          setSelectedCategory(result[0] as DynamicCategories); // Select first category by default
+        }
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
     };
 
-    fetchCategories();
-  }, []);
+    // Only fetch if categories array is empty
+    if (categories.length === 0) {
+      fetchCategories();
+    } else if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0] as DynamicCategories); // Set first category if categories exist but none selected
+    }
+  }, [categories, selectedCategory, loadUICategories]);
 
-  const handleCategorySelect = (category) => {
+  const handleCategorySelect = (category: CategoryResponse) => {
     if (selectedCategory?.id === category.id) return;
 
     setImageLoading(true);
-    setSelectedCategory(category);
+    setSelectedCategory(category as DynamicCategories);
 
     // Simulate image loading delay
     setTimeout(() => setImageLoading(false), 300);
@@ -119,6 +56,42 @@ const Categories = () => {
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
           <p className="text-gray-600 font-medium">Loading categories...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+        <div className="text-center space-y-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 max-w-md">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Oops! Something went wrong
+          </h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => loadUICategories()}
+            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02]"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && categories.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+        <div className="text-center space-y-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 max-w-md">
+          <div className="text-gray-400 text-6xl mb-4">📋</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            No Categories Found
+          </h2>
+          <p className="text-gray-600">
+            There are no categories available at the moment.
+          </p>
         </div>
       </div>
     );
@@ -147,49 +120,53 @@ const Categories = () => {
               </h2>
 
               <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
-                {visibleCategories.map((category, index) => (
-                  <div
-                    key={category.id}
-                    onClick={() => handleCategorySelect(category)}
-                    className={`group p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg ${
-                      selectedCategory?.id === category.id
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                        : 'bg-white/60 hover:bg-white/80 text-gray-700'
-                    }`}
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                      animation: 'fadeInUp 0.5s ease-out forwards',
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-lg mb-1 group-hover:text-purple-600 transition-colors">
-                          {selectedCategory?.id === category.id ? (
-                            <span className="text-white">{category.name}</span>
-                          ) : (
-                            category.name
-                          )}
-                        </h3>
-                        <p
-                          className={`text-sm ${
+                {visibleCategories.map(
+                  (category: CategoryResponse, index: number) => (
+                    <div
+                      key={category.id}
+                      onClick={() => handleCategorySelect(category)}
+                      className={`group p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg ${
+                        selectedCategory?.id === category.id
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                          : 'bg-white/60 hover:bg-white/80 text-gray-700'
+                      }`}
+                      style={{
+                        animationDelay: `${index * 50}ms`,
+                        animation: 'fadeInUp 0.5s ease-out forwards',
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-lg mb-1 group-hover:text-purple-600 transition-colors">
+                            {selectedCategory?.id === category.id ? (
+                              <span className="text-white">
+                                {category.name}
+                              </span>
+                            ) : (
+                              category.name
+                            )}
+                          </h3>
+                          <p
+                            className={`text-sm ${
+                              selectedCategory?.id === category.id
+                                ? 'text-purple-100'
+                                : 'text-gray-500'
+                            }`}
+                          >
+                            {category.productCount || 0} products
+                          </p>
+                        </div>
+                        <ChevronRight
+                          className={`w-5 h-5 transition-all duration-300 ${
                             selectedCategory?.id === category.id
-                              ? 'text-purple-100'
-                              : 'text-gray-500'
+                              ? 'rotate-90 text-white'
+                              : 'group-hover:translate-x-1 text-purple-500'
                           }`}
-                        >
-                          {category.productCount} products
-                        </p>
+                        />
                       </div>
-                      <ChevronRight
-                        className={`w-5 h-5 transition-all duration-300 ${
-                          selectedCategory?.id === category.id
-                            ? 'rotate-90 text-white'
-                            : 'group-hover:translate-x-1 text-purple-500'
-                        }`}
-                      />
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
 
               {hasMore && (

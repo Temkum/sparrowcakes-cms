@@ -1,10 +1,14 @@
 export interface DynamicCategories {
   id: number;
   name: string;
-  label: string;
-  value: number[];
-  onChange: (value: number[]) => void;
-  isRequired?: boolean;
+  slug: string;
+  description: string;
+  imageUrl: string;
+  isActive: boolean;
+  created_at: string;
+  products: ProductResponse[];
+  updated_at: string;
+  productCount?: number;
 }
 
 export interface Category {
@@ -48,7 +52,7 @@ export interface CategoryState {
     sortOrder?: 'ASC' | 'DESC';
     isActive?: boolean;
   }) => Promise<CategoryListResponse>;
-  loadUICategories: () => Promise<CategoryResponse[]>;
+  loadUICategories: () => Promise<DynamicCategories[]>;
 }
 
 export interface CategoryRequest {
