@@ -4,7 +4,6 @@ import '@/styles/dynamic-categories.css';
 import useCategoriesStore from '@/store/categories-store';
 import { DynamicCategories } from '@/types/category';
 
-// Mock data structure matching your backend format
 const Categories = () => {
   const { dynamicCategories, loading, error, loadUICategories } =
     useCategoriesStore();
@@ -12,27 +11,40 @@ const Categories = () => {
     useState<DynamicCategories | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
   const [imageLoading, setImageLoading] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Fetch categories from Zustand store
   useEffect(() => {
-    const fetchCategories = async () => {
+    const initializeCategories = async () => {
       try {
+        // Always attempt to load categories on component mount
+        console.log('Initializing categories...');
         const result = await loadUICategories();
-        if (result.length > 0) {
+        console.log('Categories loaded:', result);
+
+        if (result && result.length > 0) {
           setSelectedCategory(result[0]); // Select first category by default
         }
+        setHasInitialized(true);
       } catch (error) {
         console.error('Failed to load Categories:', error);
+        setHasInitialized(true);
       }
     };
 
-    // Only fetch if dynamicCategories array is empty
-    if (dynamicCategories.length === 0) {
-      fetchCategories();
-    } else if (dynamicCategories.length > 0 && !selectedCategory) {
-      setSelectedCategory(dynamicCategories[0]); // Set first category if categories exist but none selected
+    // Only initialize once when component mounts
+    if (!hasInitialized) {
+      initializeCategories();
     }
-  }, [dynamicCategories, selectedCategory, loadUICategories]);
+  }, [hasInitialized, loadUICategories]);
+
+  // Separate effect to handle category selection when data changes
+  useEffect(() => {
+    if (dynamicCategories.length > 0 && !selectedCategory && hasInitialized) {
+      console.log('Setting first category as selected');
+      setSelectedCategory(dynamicCategories[0]);
+    }
+  }, [dynamicCategories, selectedCategory, hasInitialized]);
 
   const handleCategorySelect = (category: DynamicCategories) => {
     if (selectedCategory?.id === category.id) return;
@@ -48,10 +60,16 @@ const Categories = () => {
     setVisibleCount((prev) => Math.min(prev + 5, dynamicCategories.length));
   };
 
+  const handleRetry = async () => {
+    setHasInitialized(false);
+    setSelectedCategory(null);
+  };
+
   const hasMore = visibleCount < dynamicCategories.length;
   const visibleCategories = dynamicCategories.slice(0, visibleCount);
 
-  if (loading) {
+  // Show loading state while initializing or while store is loading
+  if (!hasInitialized || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -72,7 +90,7 @@ const Categories = () => {
           </h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
-            onClick={() => loadUICategories()}
+            onClick={handleRetry}
             className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02]"
           >
             Try Again
@@ -82,17 +100,23 @@ const Categories = () => {
     );
   }
 
-  if (!loading && dynamicCategories.length === 0) {
+  if (hasInitialized && dynamicCategories.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
         <div className="text-center space-y-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 max-w-md">
-          <div className="text-gray-400 text-6xl mb-4">📋</div>
+          <div className="text-gray-400 text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             No Categories Found
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-4">
             There are no Categories available at the moment.
           </p>
+          <button
+            onClick={handleRetry}
+            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02]"
+          >
+            Refresh
+          </button>
         </div>
       </div>
     );
@@ -120,7 +144,7 @@ const Categories = () => {
                 Browse Categories
               </h2>
 
-              <div className="space-y-3 max-h-100 overflow-y-auto custom-scrollbar">
+              <div className="space-y-3 max-h-82 overflow-y-auto custom-scrollbar">
                 {visibleCategories.map(
                   (category: DynamicCategories, index: number) => (
                     <div
@@ -138,7 +162,7 @@ const Categories = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-semibold text-lg mb-1 group-hover:text-purple-600 transition-colors">
+                          <h3 className="font-semibold text-sm mb-1 group-hover:text-purple-600 transition-colors">
                             {selectedCategory?.id === category.id ? (
                               <span className="text-white">
                                 {category.name}
@@ -202,6 +226,7 @@ const Categories = () => {
                         alt={selectedCategory.name}
                         className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                         onLoad={() => setImageLoading(false)}
+                        onError={() => setImageLoading(false)}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                       <div className="absolute bottom-6 left-6 text-white">
