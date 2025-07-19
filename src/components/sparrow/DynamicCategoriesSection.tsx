@@ -1,388 +1,281 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, ArrowUp } from 'lucide-react';
-import '../../styles/dynamic-categories.css';
-import { Link } from 'react-router-dom';
-// Types
-interface Category {
-  id: string;
-  name: string;
-  image: string;
-  description: string;
-  productCount: number;
-  color: string;
-}
+import { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Star, MessageCircle } from 'lucide-react';
+import '@/styles/dynamic-categories.css';
+// Mock data structure matching your backend format
+const mockCategories = [
+  {
+    id: 141,
+    name: 'Fondant Cakes',
+    slug: 'fondant-cakes',
+    description: '<p>Beautiful custom fondant cakes for special occasions</p>',
+    imageUrl:
+      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&h=400&fit=crop',
+    productCount: 5,
+    products: [],
+  },
+  {
+    id: 142,
+    name: 'Wedding Cakes',
+    slug: 'wedding-cakes',
+    description: '<p>Elegant multi-tier wedding cakes</p>',
+    imageUrl:
+      'https://images.unsplash.com/photo-1606890737304-57a1ca8a5b62?w=500&h=400&fit=crop',
+    productCount: 8,
+    products: [],
+  },
+  {
+    id: 143,
+    name: 'Birthday Cakes',
+    slug: 'birthday-cakes',
+    description: '<p>Fun and colorful birthday celebration cakes</p>',
+    imageUrl:
+      'https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=500&h=400&fit=crop',
+    productCount: 12,
+    products: [],
+  },
+  {
+    id: 144,
+    name: 'Cupcakes',
+    slug: 'cupcakes',
+    description: '<p>Individual portion cupcakes with various flavors</p>',
+    imageUrl:
+      'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=500&h=400&fit=crop',
+    productCount: 15,
+    products: [],
+  },
+  {
+    id: 145,
+    name: 'Chocolate Cakes',
+    slug: 'chocolate-cakes',
+    description: '<p>Rich and decadent chocolate cakes</p>',
+    imageUrl:
+      'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&h=400&fit=crop',
+    productCount: 7,
+    products: [],
+  },
+  {
+    id: 146,
+    name: 'Fruit Cakes',
+    slug: 'fruit-cakes',
+    description: '<p>Fresh fruit-topped seasonal cakes</p>',
+    imageUrl:
+      'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=500&h=400&fit=crop',
+    productCount: 6,
+    products: [],
+  },
+  {
+    id: 147,
+    name: 'Custom Designs',
+    slug: 'custom-designs',
+    description: '<p>Unique custom cake designs for any occasion</p>',
+    imageUrl:
+      'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=500&h=400&fit=crop',
+    productCount: 3,
+    products: [],
+  },
+];
 
-// Mock API function - replace with your actual API call
-const fetchCategories = async (
-  page: number = 1,
-  limit: number = 8
-): Promise<{ categories: Category[]; hasMore: boolean }> => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  const allCategories: Category[] = [
-    {
-      id: '1',
-      name: 'Wedding Cakes',
-      image:
-        'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=800&h=600&fit=crop',
-      description: 'Elegant multi-tiered cakes for your special day',
-      productCount: 45,
-      color: 'from-pink-500 to-rose-600',
-    },
-    {
-      id: '2',
-      name: 'Birthday Cakes',
-      image:
-        'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop',
-      description: 'Colorful and fun cakes to celebrate another year',
-      productCount: 78,
-      color: 'from-purple-500 to-pink-600',
-    },
-    {
-      id: '3',
-      name: 'Cupcakes',
-      image:
-        'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=800&h=600&fit=crop',
-      description: 'Individual treats perfect for any occasion',
-      productCount: 125,
-      color: 'from-yellow-500 to-orange-600',
-    },
-    {
-      id: '4',
-      name: 'Croissants',
-      image:
-        'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&h=600&fit=crop',
-      description: 'Buttery, flaky pastries baked fresh daily',
-      productCount: 32,
-      color: 'from-amber-500 to-yellow-600',
-    },
-    {
-      id: '5',
-      name: 'Macarons',
-      image:
-        'https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800&h=600&fit=crop',
-      description: 'Delicate French cookies in vibrant colors',
-      productCount: 89,
-      color: 'from-teal-500 to-cyan-600',
-    },
-    {
-      id: '6',
-      name: 'Donuts',
-      image:
-        'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800&h=600&fit=crop',
-      description: 'Glazed, filled, and decorated donuts for every taste',
-      productCount: 67,
-      color: 'from-orange-500 to-red-600',
-    },
-    {
-      id: '7',
-      name: 'Cheesecakes',
-      image:
-        'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=800&h=600&fit=crop',
-      description: 'Rich and creamy cheesecakes in various flavors',
-      productCount: 23,
-      color: 'from-indigo-500 to-purple-600',
-    },
-    {
-      id: '8',
-      name: 'Muffins',
-      image:
-        'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=800&h=600&fit=crop',
-      description: 'Moist breakfast treats with seasonal ingredients',
-      productCount: 54,
-      color: 'from-green-500 to-emerald-600',
-    },
-    {
-      id: '9',
-      name: 'Chocolate Cakes',
-      image:
-        'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=600&fit=crop',
-      description: 'Decadent chocolate creations for chocolate lovers',
-      productCount: 41,
-      color: 'from-amber-800 to-yellow-600',
-    },
-    {
-      id: '10',
-      name: 'Fruit Tarts',
-      image:
-        'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800&h=600&fit=crop',
-      description: 'Fresh seasonal fruit atop buttery pastry shells',
-      productCount: 36,
-      color: 'from-green-500 to-lime-600',
-    },
-    {
-      id: '11',
-      name: 'Cookies',
-      image:
-        'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800&h=600&fit=crop',
-      description: 'Classic cookies baked with love and tradition',
-      productCount: 92,
-      color: 'from-amber-500 to-orange-600',
-    },
-    {
-      id: '12',
-      name: 'Bread & Rolls',
-      image:
-        'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&h=600&fit=crop',
-      description: 'Artisanal breads and rolls baked fresh daily',
-      productCount: 28,
-      color: 'from-yellow-600 to-amber-700',
-    },
-  ];
-
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const categories = allCategories.slice(startIndex, endIndex);
-  const hasMore = endIndex < allCategories.length;
-
-  return { categories, hasMore };
-};
-
-// Modern Banner Component
-const BannerCard: React.FC<{ category: Category; onNavigate: () => void }> = ({
-  category,
-  onNavigate,
-}) => {
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 to-black shadow-2xl">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0">
-        <img
-          src={category.image}
-          alt={category.name}
-          className="w-full h-full object-cover opacity-60"
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-r ${category.color} opacity-75 mix-blend-multiply`}
-        />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 p-8 h-full flex flex-col justify-between min-h-[400px]">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-white/80 text-sm font-medium">
-              Featured Treats
-            </span>
-          </div>
-          <div className="text-white/60 text-sm">
-            {category.productCount.toLocaleString()} items
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col justify-center">
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-            {category.name}
-          </h2>
-          <p className="text-white/90 text-lg mb-8 max-w-md leading-relaxed">
-            {category.description}
-          </p>
-        </div>
-
-        {/* CTA Section */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onNavigate}
-            className="group bg-emerald-500 text-white px-8 py-3 rounded-md font-semibold hover:bg-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center space-x-2"
-          >
-            <Link to="/products">
-              <span>Order Now</span>
-            </Link>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Category List Item Component
-const CategoryItem: React.FC<{
-  category: Category;
-  isActive: boolean;
-  onClick: () => void;
-}> = ({ category, isActive, onClick }) => {
-  return (
-    <div
-      onClick={onClick}
-      className={`group relative overflow-hidden rounded-md cursor-pointer transition-all duration-300 transform hover:scale-105 hover:shadow-lg h-16 ${
-        isActive ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'
-      }`}
-    >
-      {/* Background Image */}
-      <div className="relative h-full w-full">
-        <img
-          src={category.image}
-          alt={category.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <div
-          className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-60`}
-        />
-
-        {/* Content Overlay */}
-        <div className="absolute inset-0 p-2 flex flex-col justify-end">
-          <h3 className="text-white font-semibold text-base mb-0 group-hover:text-white transition-colors truncate">
-            {category.name}
-          </h3>
-          <p className="text-white/80 text-xs truncate">
-            {category.productCount.toLocaleString()} items
-          </p>
-        </div>
-
-        {/* Active Indicator */}
-        {isActive && (
-          <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full shadow-lg animate-pulse" />
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Main Categories Component
-const DynamicCategoriesSection: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
+const Categories = () => {
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(5);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const [imageLoading, setImageLoading] = useState(false);
 
-  // Load initial categories
+  // Simulate fetching data from Zustand store
   useEffect(() => {
-    const loadInitialCategories = async () => {
-      try {
-        const { categories: initialCategories, hasMore: moreAvailable } =
-          await fetchCategories(1, 8);
-        setCategories(initialCategories);
-        setSelectedCategory(initialCategories[0] || null);
-        setHasMore(moreAvailable);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-      } finally {
-        setLoading(false);
-      }
+    const fetchCategories = async () => {
+      setLoading(true);
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setCategories(mockCategories);
+      setSelectedCategory(mockCategories[0]); // Select first category by default
+      setLoading(false);
     };
 
-    loadInitialCategories();
+    fetchCategories();
   }, []);
 
-  // Load more categories
-  const loadMoreCategories = async () => {
-    if (loadingMore || !hasMore) return;
+  const handleCategorySelect = (category) => {
+    if (selectedCategory?.id === category.id) return;
 
-    setLoadingMore(true);
-    try {
-      const nextPage = page + 1;
-      const { categories: newCategories, hasMore: moreAvailable } =
-        await fetchCategories(nextPage, 4);
-      setCategories((prev) => [...prev, ...newCategories]);
-      setHasMore(moreAvailable);
-      setPage(nextPage);
-    } catch (error) {
-      console.error('Error loading more categories:', error);
-    } finally {
-      setLoadingMore(false);
-    }
+    setImageLoading(true);
+    setSelectedCategory(category);
+
+    // Simulate image loading delay
+    setTimeout(() => setImageLoading(false), 300);
   };
 
-  // Navigate to category products
-  const handleNavigateToProducts = () => {
-    if (selectedCategory) {
-      console.log(
-        `Navigating to products for category: ${selectedCategory.name}`
-      );
-      // Replace with your actual navigation logic
-      // e.g., navigate(`/products?category=${selectedCategory.id}`);
-    }
+  const handleViewMore = () => {
+    setVisibleCount((prev) => Math.min(prev + 5, categories.length));
   };
+
+  const hasMore = visibleCount < categories.length;
+  const visibleCategories = categories.slice(0, visibleCount);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-md h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading categories...</p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="text-gray-600 font-medium">Loading categories...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-8 text-center">
-            Browse Our Bakery
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent mb-4">
+            Our Categories
           </h1>
-          <p className="text-gray-600 text-lg">
-            Discover freshly baked goods and sweet treats for every occasion
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Discover our delicious range of cakes and treats, crafted with love
+            for every occasion
           </p>
         </div>
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-12 gap-8">
-          {/* Left Side - Categories List */}
-          <div className="lg:col-span-5 xl:col-span-4">
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                Categories
+        <div className="grid lg:grid-cols-5 gap-8">
+          {/* Categories List - Left Side */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
+                Browse Categories
               </h2>
 
-              {/* Categories Grid */}
-              <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 pr-2">
-                  {categories.map((category) => (
-                    <CategoryItem
-                      key={category.id}
-                      category={category}
-                      isActive={selectedCategory?.id === category.id}
-                      onClick={() => setSelectedCategory(category)}
-                    />
-                  ))}
-                </div>
+              <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                {visibleCategories.map((category, index) => (
+                  <div
+                    key={category.id}
+                    onClick={() => handleCategorySelect(category)}
+                    className={`group p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg ${
+                      selectedCategory?.id === category.id
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                        : 'bg-white/60 hover:bg-white/80 text-gray-700'
+                    }`}
+                    style={{
+                      animationDelay: `${index * 50}ms`,
+                      animation: 'fadeInUp 0.5s ease-out forwards',
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg mb-1 group-hover:text-purple-600 transition-colors">
+                          {selectedCategory?.id === category.id ? (
+                            <span className="text-white">{category.name}</span>
+                          ) : (
+                            category.name
+                          )}
+                        </h3>
+                        <p
+                          className={`text-sm ${
+                            selectedCategory?.id === category.id
+                              ? 'text-purple-100'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {category.productCount} products
+                        </p>
+                      </div>
+                      <ChevronRight
+                        className={`w-5 h-5 transition-all duration-300 ${
+                          selectedCategory?.id === category.id
+                            ? 'rotate-90 text-white'
+                            : 'group-hover:translate-x-1 text-purple-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Load More Button */}
               {hasMore && (
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={loadMoreCategories}
-                    disabled={loadingMore}
-                    className="group bg-emerald-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-md flex items-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loadingMore ? (
-                      <>
-                        <div className="animate-spin rounded-md h-5 w-5 border-b-2 border-white"></div>
-                        <span>Loading...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-5 h-5" width={2} />
-                        <span>View More Categories</span>
-                        <ArrowUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  onClick={handleViewMore}
+                  className="w-full mt-6 py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-2"
+                >
+                  <span>View More</span>
+                  <ChevronDown className="w-5 h-5" />
+                </button>
               )}
             </div>
           </div>
 
-          {/* Right Side - Selected Category Banner */}
-          <div className="lg:col-span-7 xl:col-span-8">
+          {/* Category Details - Right Side */}
+          <div className="lg:col-span-3">
             {selectedCategory && (
-              <div className="animate-fade-in">
-                <BannerCard
-                  category={selectedCategory}
-                  onNavigate={handleNavigateToProducts}
-                />
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+                {/* Category Image */}
+                <div className="relative h-64 md:h-80 lg:h-96 overflow-hidden">
+                  {imageLoading ? (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                      <div className="animate-pulse text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                        <p className="text-gray-500">Loading image...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        src={selectedCategory.imageUrl}
+                        alt={selectedCategory.name}
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                        onLoad={() => setImageLoading(false)}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-6 left-6 text-white">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-2">
+                          {selectedCategory.name}
+                        </h2>
+                        <p className="text-purple-200 text-lg">
+                          {selectedCategory.productCount} available products
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Category Description */}
+                <div className="p-6 md:p-8">
+                  <div
+                    className="text-gray-700 text-lg leading-relaxed mb-8"
+                    dangerouslySetInnerHTML={{
+                      __html: selectedCategory.description,
+                    }}
+                  />
+
+                  {/* Reviews Section Placeholder */}
+                  <div className="border-t border-gray-200 pt-8">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                      <MessageCircle className="w-7 h-7 text-purple-500" />
+                      Customer Reviews
+                    </h3>
+
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-8 text-center border-2 border-dashed border-purple-200">
+                      <Star className="w-12 h-12 text-purple-300 mx-auto mb-4" />
+                      <h4 className="text-xl font-semibold text-gray-700 mb-2">
+                        Reviews Coming Soon
+                      </h4>
+                      <p className="text-gray-600 max-w-md mx-auto">
+                        We're working on bringing you authentic customer reviews
+                        for this category. Check back soon to see what others
+                        are saying about our{' '}
+                        {selectedCategory.name.toLowerCase()}!
+                      </p>
+                      <div className="mt-6 flex justify-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className="w-6 h-6 text-yellow-300 fill-current"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -392,4 +285,4 @@ const DynamicCategoriesSection: React.FC = () => {
   );
 };
 
-export default DynamicCategoriesSection;
+export default Categories;

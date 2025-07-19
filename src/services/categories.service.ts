@@ -1,5 +1,6 @@
 import axiosInstance from '@/services/axiosInstance';
 import { CategoryResponse, CategoryListResponse } from '@/types/category';
+import { ReviewResponseProps } from '@/types/review';
 
 const CATEGORIES_ENDPOINT = '/categories';
 
@@ -125,6 +126,16 @@ const categoryService = {
     } catch (error) {
       console.error('Service error:', error);
       throw new Error('Error fetching categories');
+    }
+  },
+
+  async getReviewsByCategoryId(id: number): Promise<ReviewResponseProps[]> {
+    try {
+      const response = await axiosInstance.get(`reviews/category/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Service error:', error);
+      throw new Error('Error fetching reviews');
     }
   },
 };

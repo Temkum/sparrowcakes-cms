@@ -48,6 +48,7 @@ export interface CategoryState {
     sortOrder?: 'ASC' | 'DESC';
     isActive?: boolean;
   }) => Promise<CategoryListResponse>;
+  loadUICategories: () => Promise<CategoryResponse[]>;
 }
 
 export interface CategoryRequest {

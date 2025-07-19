@@ -32,6 +32,28 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     }
   },
 
+  loadUICategories: async () => {
+    set({ loading: true });
+    try {
+      const res: CategoryResponse[] = await categoryService.getCategories();
+
+      // transform response to CategoryResponse[]
+      const transformedData = res.map((item) => ({
+        ...item,
+      }));
+      set({ categories: transformedData, loading: false });
+      console.log('transformedData', transformedData);
+
+      return transformedData;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to load categories';
+      console.error('Error loading categories:', error);
+      set({ loading: false, error: errorMessage });
+      return [];
+    }
+  },
+
   createCategory: async (categoryData: FormData) => {
     set({ loading: true });
 
