@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Star, MessageCircle } from 'lucide-react';
 import '@/styles/dynamic-categories.css';
 import useCategoriesStore from '@/store/categories-store';
-import { CategoryResponse, DynamicCategories } from '@/types/category';
+import { DynamicCategories } from '@/types/category';
 
 // Mock data structure matching your backend format
 const Categories = () => {
-  const { categories, loading, error, loadUICategories } = useCategoriesStore();
+  const { dynamicCategories, loading, error, loadUICategories } =
+    useCategoriesStore();
   const [selectedCategory, setSelectedCategory] =
     useState<DynamicCategories | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
@@ -18,37 +19,37 @@ const Categories = () => {
       try {
         const result = await loadUICategories();
         if (result.length > 0) {
-          setSelectedCategory(result[0] as DynamicCategories); // Select first category by default
+          setSelectedCategory(result[0]); // Select first category by default
         }
       } catch (error) {
-        console.error('Failed to load categories:', error);
+        console.error('Failed to load Categories:', error);
       }
     };
 
-    // Only fetch if categories array is empty
-    if (categories.length === 0) {
+    // Only fetch if dynamicCategories array is empty
+    if (dynamicCategories.length === 0) {
       fetchCategories();
-    } else if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0] as DynamicCategories); // Set first category if categories exist but none selected
+    } else if (dynamicCategories.length > 0 && !selectedCategory) {
+      setSelectedCategory(dynamicCategories[0]); // Set first category if categories exist but none selected
     }
-  }, [categories, selectedCategory, loadUICategories]);
+  }, [dynamicCategories, selectedCategory, loadUICategories]);
 
-  const handleCategorySelect = (category: CategoryResponse) => {
+  const handleCategorySelect = (category: DynamicCategories) => {
     if (selectedCategory?.id === category.id) return;
 
     setImageLoading(true);
-    setSelectedCategory(category as DynamicCategories);
+    setSelectedCategory(category);
 
     // Simulate image loading delay
     setTimeout(() => setImageLoading(false), 300);
   };
 
   const handleViewMore = () => {
-    setVisibleCount((prev) => Math.min(prev + 5, categories.length));
+    setVisibleCount((prev) => Math.min(prev + 5, dynamicCategories.length));
   };
 
-  const hasMore = visibleCount < categories.length;
-  const visibleCategories = categories.slice(0, visibleCount);
+  const hasMore = visibleCount < dynamicCategories.length;
+  const visibleCategories = dynamicCategories.slice(0, visibleCount);
 
   if (loading) {
     return (
@@ -81,7 +82,7 @@ const Categories = () => {
     );
   }
 
-  if (!loading && categories.length === 0) {
+  if (!loading && dynamicCategories.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
         <div className="text-center space-y-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 max-w-md">
@@ -90,7 +91,7 @@ const Categories = () => {
             No Categories Found
           </h2>
           <p className="text-gray-600">
-            There are no categories available at the moment.
+            There are no Categories available at the moment.
           </p>
         </div>
       </div>
@@ -101,9 +102,9 @@ const Categories = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent mb-4">
+          <h4 className="text-2xl md:text-3xl font-bold bg-gradient-to-r mt-2 mb-4">
             Our Categories
-          </h1>
+          </h4>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
             Discover our delicious range of cakes and treats, crafted with love
             for every occasion
@@ -114,14 +115,14 @@ const Categories = () => {
           {/* Categories List - Left Side */}
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
                 Browse Categories
               </h2>
 
-              <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+              <div className="space-y-3 max-h-100 overflow-y-auto custom-scrollbar">
                 {visibleCategories.map(
-                  (category: CategoryResponse, index: number) => (
+                  (category: DynamicCategories, index: number) => (
                     <div
                       key={category.id}
                       onClick={() => handleCategorySelect(category)}
@@ -153,7 +154,7 @@ const Categories = () => {
                                 : 'text-gray-500'
                             }`}
                           >
-                            {category.productCount || 0} products
+                            {category.products.length || 0} products
                           </p>
                         </div>
                         <ChevronRight
@@ -208,7 +209,7 @@ const Categories = () => {
                           {selectedCategory.name}
                         </h2>
                         <p className="text-purple-200 text-lg">
-                          {selectedCategory.productCount} available products
+                          {selectedCategory.products.length} available products
                         </p>
                       </div>
                     </>

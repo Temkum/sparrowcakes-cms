@@ -11,9 +11,7 @@ const CATEGORIES_ENDPOINT = '/categories';
 const categoryService = {
   async getCategories(): Promise<CategoryResponse[]> {
     try {
-      const response = await axiosInstance.get<CategoryResponse[]>(
-        `${CATEGORIES_ENDPOINT}/all`
-      );
+      const response = await axiosInstance.get(`${CATEGORIES_ENDPOINT}/all`);
 
       return response.data;
     } catch (error) {
@@ -24,9 +22,7 @@ const categoryService = {
 
   async getUICategories(): Promise<DynamicCategories[]> {
     try {
-      const response = await axiosInstance.get<DynamicCategories[]>(
-        `${CATEGORIES_ENDPOINT}/ui`
-      );
+      const response = await axiosInstance.get(`${CATEGORIES_ENDPOINT}/ui`);
       return response.data;
     } catch (error) {
       console.error('Service error:', error);

@@ -15,6 +15,7 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
   loading: false,
   error: null,
   cache: new Map<string, CacheEntry>(),
+  dynamicCategories: [],
   retryAttempts: 3,
 
   loadCategories: async () => {
@@ -37,7 +38,7 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     set({ loading: true });
     try {
       const res: DynamicCategories[] = await categoryService.getUICategories();
-      set({ categories: res, loading: false });
+      set({ dynamicCategories: res, loading: false });
 
       return res;
     } catch (error) {

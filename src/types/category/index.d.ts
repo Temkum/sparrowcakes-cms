@@ -1,3 +1,13 @@
+type Product = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  imageUrl: string;
+  isActive: boolean;
+  created_at: string;
+  updated_at: string;
+};
 export interface DynamicCategories {
   id: number;
   name: string;
@@ -6,9 +16,8 @@ export interface DynamicCategories {
   imageUrl: string;
   isActive: boolean;
   created_at: string;
-  products: ProductResponse[];
+  products: Product[];
   updated_at: string;
-  productCount?: number;
 }
 
 export interface Category {
@@ -33,6 +42,7 @@ export interface CategoryState {
   error: string | null;
   cache: Map<string, CacheEntry>;
   retryAttempts: number;
+  dynamicCategories: DynamicCategories[];
 
   // Actions
   loadCategories: () => Promise<CategoryResponse[]>;
