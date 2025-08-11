@@ -188,14 +188,15 @@ const AddOfferForm = ({
         // Convert to the expected format
         const offerData = {
           name: validatedData.name,
-          productId: validatedData.productId,
-          discountType: validatedData.discountType as 'percentage' | 'fixed',
-          discountValue: validatedData.discountValue,
-          startTime: validatedData.startTime,
-          endTime: validatedData.endTime,
-          isActive: true,
+          product_id: validatedData.productId,
+          discount_type: validatedData.discountType as 'percentage' | 'fixed',
+          discount_value: validatedData.discountValue,
+          start_time: validatedData.startTime,
+          end_time: validatedData.endTime,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
-        console.log('data for submit', offerData);
 
         await onSubmit(offerData);
         onOpenChange(false);

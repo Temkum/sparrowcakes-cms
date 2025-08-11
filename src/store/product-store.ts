@@ -133,11 +133,36 @@ const useProductStore = create<ProductState>((set, get) => ({
     await get().loadProducts();
   },
 
+  loadAllProducts: async () => {
+    set({ loadingProducts: true, error: null });
+    try {
+      const response = await productService.getAllProducts();
+      const transformedProducts: Product[] = response.map(
+        transformApiResponseToProduct
+      );
+      set({
+        products: transformedProducts,
+        totalCount: response.length,
+        currentPage: 1,
+        pageSize: response.length,
+        totalPages: 1,
+      });
+      return response;
+    } catch (error) {
+      console.error('Error loading products:', error);
+      toast.error('Failed to load products');
+      return [];
+    } finally {
+      set({ loadingProducts: false });
+    }
+  },
+
   loadStats: async () => {
     set({ loadingStats: true, error: null });
     try {
       const stats = await productService.getProductStats();
-      set({ stats });
+      console.log('stats', stats);
+      set({ stats: stats, loadingStats: false });
     } catch (error) {
       console.error('Error loading product stats:', error);
       toast.error('Failed to load product stats');

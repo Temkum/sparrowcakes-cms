@@ -74,9 +74,9 @@ const ProductsTable = ({
     deleteProduct,
     bulkDeleteProducts,
     loadProducts,
+    stats,
     loadStats,
     setError,
-    stats,
   } = useProductStore();
 
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
@@ -101,7 +101,7 @@ const ProductsTable = ({
     if (!skipInitialLoad && !isInitialized) {
       const initializeData = async () => {
         try {
-          await Promise.all([loadProducts(), loadStats()]);
+          await Promise.all([loadProducts()]);
         } catch (err) {
           console.error('Failed to initialize data:', err);
         } finally {
@@ -112,7 +112,11 @@ const ProductsTable = ({
     } else if (skipInitialLoad) {
       setIsInitialized(true);
     }
-  }, [skipInitialLoad, loadProducts, loadStats, isInitialized]);
+  }, [skipInitialLoad, loadProducts, isInitialized]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   // Reload products when filter changes (except search term which is handled separately)
   useEffect(() => {

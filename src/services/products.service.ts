@@ -54,6 +54,21 @@ export const productService = {
     }
   },
 
+  async getAllProducts(): Promise<ProductAPIResponse[]> {
+    try {
+      const response = await axiosInstance.get('/products/all');
+      console.log('all products', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as { message?: string };
+        throw new Error(errorData?.message || 'Failed to fetch products');
+      }
+      throw new Error('Failed to fetch products. Please try again.');
+    }
+  },
+
   async getProductStats(): Promise<ProductStats> {
     try {
       const response = await axiosInstance.get('/products/stats');
