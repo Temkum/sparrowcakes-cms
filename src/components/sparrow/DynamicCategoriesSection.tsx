@@ -71,9 +71,9 @@ const Categories = () => {
   // Show loading state while initializing or while store is loading
   if (!hasInitialized || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-50 to-green-50 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
           <p className="text-gray-600 font-medium">Loading categories...</p>
         </div>
       </div>
@@ -82,7 +82,7 @@ const Categories = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-50 to-green-50 flex items-center justify-center">
         <div className="text-center space-y-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 max-w-md">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -102,7 +102,7 @@ const Categories = () => {
 
   if (hasInitialized && dynamicCategories.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-50 to-green-50 flex items-center justify-center">
         <div className="text-center space-y-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 max-w-md">
           <div className="text-gray-400 text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -113,7 +113,7 @@ const Categories = () => {
           </p>
           <button
             onClick={handleRetry}
-            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02]"
+            className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-500 text-white font-semibold rounded-xl hover:from-green-600 hover:to-green-600 transition-all duration-300 transform hover:scale-[1.02]"
           >
             Refresh
           </button>
@@ -123,7 +123,7 @@ const Categories = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-50 to-green-50">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 text-center">
           <h4 className="text-2xl md:text-3xl font-bold bg-gradient-to-r mt-2 mb-4">
@@ -140,7 +140,7 @@ const Categories = () => {
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
+                <div className="w-2 h-8 bg-gradient-to-b from-green-500 to-green-500 rounded-full"></div>
                 Browse Categories
               </h2>
 
@@ -152,7 +152,7 @@ const Categories = () => {
                       onClick={() => handleCategorySelect(category)}
                       className={`group p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg ${
                         selectedCategory?.id === category.id
-                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                          ? 'bg-gradient-to-r from-green-500 to-green-500 text-white shadow-lg'
                           : 'bg-white/60 hover:bg-white/80 text-gray-700'
                       }`}
                       style={{
@@ -162,7 +162,7 @@ const Categories = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-semibold text-sm mb-1 group-hover:text-purple-600 transition-colors">
+                          <h3 className="font-semibold text-sm mb-1 group-hover:text-green-600 transition-colors">
                             {selectedCategory?.id === category.id ? (
                               <span className="text-white">
                                 {category.name}
@@ -174,7 +174,7 @@ const Categories = () => {
                           <p
                             className={`text-sm ${
                               selectedCategory?.id === category.id
-                                ? 'text-purple-100'
+                                ? 'text-green-100'
                                 : 'text-gray-500'
                             }`}
                           >
@@ -185,7 +185,7 @@ const Categories = () => {
                           className={`w-5 h-5 transition-all duration-300 ${
                             selectedCategory?.id === category.id
                               ? 'rotate-90 text-white'
-                              : 'group-hover:translate-x-1 text-purple-500'
+                              : 'group-hover:translate-x-1 text-green-500'
                           }`}
                         />
                       </div>
@@ -197,7 +197,7 @@ const Categories = () => {
               {hasMore && (
                 <button
                   onClick={handleViewMore}
-                  className="w-full mt-6 py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-2"
+                  className="w-full mt-6 py-3 px-4 bg-gradient-to-r from-green-500 to-green-500 text-white font-semibold rounded-xl hover:from-green-600 hover:to-green-600 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-2"
                 >
                   <span>View More</span>
                   <ChevronDown className="w-5 h-5" />
@@ -213,9 +213,9 @@ const Categories = () => {
                 {/* Category Image */}
                 <div className="relative h-64 md:h-80 lg:h-96 overflow-hidden">
                   {imageLoading ? (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-to-br from-green-100 to-green-100 flex items-center justify-center">
                       <div className="animate-pulse text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
                         <p className="text-gray-500">Loading image...</p>
                       </div>
                     </div>
@@ -233,7 +233,7 @@ const Categories = () => {
                         <h2 className="text-3xl md:text-4xl font-bold mb-2">
                           {selectedCategory.name}
                         </h2>
-                        <p className="text-purple-200 text-lg">
+                        <p className="text-green-200 text-lg">
                           {selectedCategory.products.length} available products
                         </p>
                       </div>
@@ -253,12 +253,12 @@ const Categories = () => {
                   {/* Reviews Section Placeholder */}
                   <div className="border-t border-gray-200 pt-8">
                     <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-                      <MessageCircle className="w-7 h-7 text-purple-500" />
+                      <MessageCircle className="w-7 h-7 text-green-500" />
                       Customer Reviews
                     </h3>
 
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-8 text-center border-2 border-dashed border-purple-200">
-                      <Star className="w-12 h-12 text-purple-300 mx-auto mb-4" />
+                    <div className="bg-gradient-to-br from-green-50 to-green-50 rounded-xl p-8 text-center border-2 border-dashed border-green-200">
+                      <Star className="w-12 h-12 text-green-300 mx-auto mb-4" />
                       <h4 className="text-xl font-semibold text-gray-700 mb-2">
                         Reviews Coming Soon
                       </h4>

@@ -24,6 +24,8 @@ import NotFound from '@/pages/NotFound';
 import TestError from '@/pages/TestError';
 import Products from '@/pages/Products';
 import ProductDetailsUI from '@/pages/ProductDetailsUI';
+import Offers from '@/pages/admin/offers/Offers';
+import OffersUI from '@/pages/OffersUI';
 
 const router = createBrowserRouter([
   {
@@ -41,6 +43,10 @@ const router = createBrowserRouter([
       {
         path: '/products/details/:id',
         element: <ProductDetailsUI />,
+      },
+      {
+        path: '/offers',
+        element: <OffersUI />,
       },
     ],
   },
@@ -123,6 +129,14 @@ const router = createBrowserRouter([
       {
         path: '/admin/reviews',
         element: <ReviewsPage />,
+      },
+      {
+        path: '/admin/offers',
+        element: <Offers />,
+      },
+      {
+        path: '/admin/offers/new',
+        element: <Offers />,
       },
     ],
   },
