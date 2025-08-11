@@ -74,6 +74,23 @@ const offerService = {
     }
   },
 
+  async getAllActiveOffers(): Promise<Offer[]> {
+    try {
+      const response = await axiosInstance.get('/offers/active');
+      if (!response) {
+        throw new Error('No data received from server');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message || error.message;
+        throw new Error(`Failed to fetch offers: ${message}`);
+      }
+      throw error;
+    }
+  },
+
   async createOffer(offer: Partial<Offer>): Promise<Offer> {
     try {
       // Transform frontend format to backend format
