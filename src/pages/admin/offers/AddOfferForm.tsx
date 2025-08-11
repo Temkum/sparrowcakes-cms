@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { z } from 'zod';
 import { Offer } from '@/types/offer';
 import {
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import useProductStore from '@/store/product-store';
 
 // Zod schema for offer validation
 const offerSchema = z
@@ -40,27 +41,15 @@ const offerSchema = z
     startTime: z
       .string()
       .min(1, 'Start time is required')
-      .refine((val) => new Date(val) > new Date(), {
+      .refine((val) => new Date(val) >= new Date(), {
         message: 'Start time must be in the future',
       }),
     endTime: z.string().min(1, 'End time is required'),
   })
-  .refine((data) => new Date(data.endTime) > new Date(data.startTime), {
+  .refine((data) => new Date(data.endTime) >= new Date(data.startTime), {
     message: 'End time must be after start time',
     path: ['endTime'],
   });
-
-// Mock products data
-const mockProducts = [
-  { id: 1, name: 'Chocolate Fudge Cake', price: 45.0, category: 'cakes' },
-  { id: 2, name: 'French Croissant Box', price: 18.0, category: 'pastries' },
-  { id: 3, name: 'Red Velvet Cupcakes', price: 24.0, category: 'cupcakes' },
-  { id: 4, name: 'Seasonal Fruit Tarts', price: 32.0, category: 'tarts' },
-  { id: 5, name: 'Tiramisu Cake', price: 38.0, category: 'cakes' },
-  { id: 6, name: 'Chocolate Chip Cookies', price: 15.0, category: 'cookies' },
-  { id: 7, name: 'Strawberry Cheesecake', price: 42.0, category: 'cakes' },
-  { id: 8, name: 'Blueberry Muffins', price: 20.0, category: 'muffins' },
-];
 
 interface AddOfferFormProps {
   open: boolean;
@@ -81,6 +70,8 @@ const AddOfferForm = ({
   offer,
   onSubmit,
 }: AddOfferFormProps) => {
+  // Get products from the store
+  const { products, loadProducts } = useProductStore();
   const [formData, setFormData] = useState({
     name: '',
     productId: '',
@@ -92,6 +83,13 @@ const AddOfferForm = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load products when the dialog opens
+  useEffect(() => {
+    if (open) {
+      loadProducts();
+    }
+  }, [open, loadProducts]);
 
   // Initialize form data when offer changes (for edit mode)
   useEffect(() => {
@@ -197,15 +195,9 @@ const AddOfferForm = ({
           endTime: validatedData.endTime,
           isActive: true,
         };
-        const offerDataWithDate = {
-          ...offerData,
-          startTime: new Date(offerData.startTime),
-          endTime: new Date(offerData.endTime),
-        };
+        console.log('data for submit', offerData);
 
-        console.log('offerDataWithDate', offerDataWithDate);
-
-        await onSubmit(offerDataWithDate);
+        await onSubmit(offerData);
         onOpenChange(false);
         if (onSuccess) {
           onSuccess();
@@ -226,7 +218,7 @@ const AddOfferForm = ({
     }
   };
 
-  const selectedProduct = mockProducts.find(
+  const selectedProduct = products.find(
     (p) => p.id === parseInt(formData.productId)
   );
 
@@ -277,10 +269,9 @@ const AddOfferForm = ({
                 <SelectValue placeholder="Choose a product..." />
               </SelectTrigger>
               <SelectContent>
-                {mockProducts.map((product) => (
+                {products.map((product) => (
                   <SelectItem key={product.id} value={product.id.toString()}>
-                    {product.name} - ${product.price.toFixed(2)} (
-                    {product.category})
+                    {product.name} - ${product.price.toFixed(2)}
                   </SelectItem>
                 ))}
               </SelectContent>

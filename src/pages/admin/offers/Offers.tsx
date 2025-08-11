@@ -249,10 +249,21 @@ const Offers = () => {
               onChange={(e) => setSearchValue(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon" className="shrink-0">
-            <Filter className="h-4 w-4" />
-            <span className="sr-only">Filter</span>
-          </Button>
+          {filter.searchTerm && (
+            <Button
+              onClick={() =>
+                setFilter({
+                  searchTerm: '',
+                  page: 1,
+                  limit: 10,
+                  sortBy: 'created_at',
+                  sortDirection: 'DESC',
+                })
+              }
+            >
+              Clear filter
+            </Button>
+          )}
           {selectedOffers.length > 0 && (
             <>
               <Button

@@ -15,7 +15,6 @@ const offerService = {
     sortDirection = 'DESC',
   }: OfferFilterProps): Promise<PaginatedOffersResponse> {
     try {
-      // Clean and normalize search parameters
       const cleanParams = {
         page: Number(page),
         limit: Number(limit),
@@ -24,7 +23,6 @@ const offerService = {
         sortDirection: sortDirection.toUpperCase(),
       };
 
-      // Fetch customers with pagination
       const response = await axiosInstance.get<PaginatedOffersResponse>(
         '/offers',
         {
@@ -47,10 +45,27 @@ const offerService = {
         throw new Error('No data received from server');
       }
 
-      return response.data;
+      // Transform data to add backwards compatibility fields
+      const transformedItems = response.data.items.map((offer) => ({
+        ...offer,
+        // Add compatibility fields for frontend
+        productId: offer.product_id,
+        discountType: offer.discount_type,
+        discountValue: offer.discount_value,
+        startTime: offer.start_time,
+        endTime: offer.end_time,
+        isActive: offer.is_active,
+        createdAt: offer.created_at,
+        updatedAt: offer.updated_at,
+        image_url: offer.product?.image_url,
+      }));
+
+      return {
+        ...response.data,
+        items: transformedItems,
+      };
     } catch (error) {
       console.error('Error fetching offers:', error);
-      // Add more specific error handling
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.message || error.message;
         throw new Error(`Failed to fetch offers: ${message}`);
@@ -58,26 +73,87 @@ const offerService = {
       throw error;
     }
   },
-  async createOffer(offer: Offer): Promise<Offer> {
+
+  async createOffer(offer: Partial<Offer>): Promise<Offer> {
     try {
-      const response = await axiosInstance.post('/offers', offer);
-      console.log('create response', response.data);
-      return response.data;
+      // Transform frontend format to backend format
+      const backendOffer = {
+        name: offer.name,
+        product_id: offer.productId || offer.product_id,
+        discount_type: offer.discountType || offer.discount_type,
+        discount_value: offer.discountValue || offer.discount_value,
+        start_time: offer.startTime || offer.start_time,
+        end_time: offer.endTime || offer.end_time,
+        is_active: offer.isActive ?? offer.is_active ?? true,
+      };
+
+      console.log('Sending to backend:', backendOffer);
+
+      const response = await axiosInstance.post('/offers', backendOffer);
+
+      // Transform response to include compatibility fields
+      const transformedOffer = {
+        ...response.data,
+        productId: response.data.product_id,
+        discountType: response.data.discount_type,
+        discountValue: response.data.discount_value,
+        startTime: response.data.start_time,
+        endTime: response.data.end_time,
+        isActive: response.data.is_active,
+        createdAt: response.data.created_at,
+        updatedAt: response.data.updated_at,
+        image_url: response.data.product?.image_url,
+      };
+
+      console.log('Create response transformed:', transformedOffer);
+      return transformedOffer;
     } catch (error) {
       console.error('Error creating offer:', error);
       throw error;
     }
   },
+
   async updateOffer(offer: Offer): Promise<Offer> {
     try {
-      const response = await axiosInstance.put(`/offers/${offer.id}`, offer);
-      console.log('update response', response.data);
-      return response.data;
+      // Transform frontend format to backend format
+      const backendOffer = {
+        name: offer.name,
+        product_id: offer.productId || offer.product_id,
+        discount_type: offer.discountType || offer.discount_type,
+        discount_value: offer.discountValue || offer.discount_value,
+        start_time: offer.startTime || offer.start_time,
+        end_time: offer.endTime || offer.end_time,
+        is_active: offer.isActive ?? offer.is_active,
+      };
+
+      console.log('Updating offer with backend format:', backendOffer);
+
+      const response = await axiosInstance.put(
+        `/offers/${offer.id}`,
+        backendOffer
+      );
+
+      // Transform response to include compatibility fields
+      const transformedOffer = {
+        ...response.data,
+        productId: response.data.product_id,
+        discountType: response.data.discount_type,
+        discountValue: response.data.discount_value,
+        startTime: response.data.start_time,
+        endTime: response.data.end_time,
+        isActive: response.data.is_active,
+        updatedAt: response.data.updated_at,
+        image_url: response.data.product?.image_url,
+      };
+
+      console.log('Update response transformed:', transformedOffer);
+      return transformedOffer;
     } catch (error) {
       console.error('Error updating offer:', error);
       throw error;
     }
   },
+
   async deleteOffer(id: number): Promise<void> {
     try {
       await axiosInstance.delete(`/offers/${id}`);

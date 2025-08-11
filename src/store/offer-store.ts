@@ -2,19 +2,6 @@ import { create } from 'zustand';
 import { Offer, OfferFilterProps } from '@/types/offer';
 import offerService from '@/services/offer-service';
 
-// interface Offer {
-//   id: number;
-//   product: {
-//     name: string;
-//     description: string;
-//     price: number;
-//     image_url: string;
-//   };
-//   discount_type: 'percentage' | 'fixed';
-//   discount_value: number;
-//   end_time: string;
-// }
-
 interface OffersState {
   offers: Offer[];
   currentOffer: Offer | null;
@@ -26,7 +13,8 @@ interface OffersState {
   setFilter: (filter: OfferFilterProps) => void;
   loadOffers: () => Promise<void>;
   updateOffer: (offer: Offer) => Promise<void>;
-  createOffer: (offer: Offer) => Promise<void>;
+  createOffer: (offer: Partial<Offer>) => Promise<void>;
+  clearError: () => void;
 }
 
 const useOffersStore = create<OffersState>((set, get) => ({
@@ -44,38 +32,85 @@ const useOffersStore = create<OffersState>((set, get) => ({
     sortDirection: 'DESC',
   },
 
-  setFilter: (filter) => set({ filter }),
+  setFilter: (filter) => set({ filter, error: undefined }),
+
+  clearError: () => set({ error: undefined }),
 
   loadOffers: async () => {
-    set({ loading: true });
-    const { filter } = get();
-    const res = await offerService.getOffers({
-      page: filter.page,
-      limit: filter.limit,
-      searchTerm: filter.searchTerm,
-      sortBy: filter.sortBy,
-      sortDirection: filter.sortDirection,
-    });
-    if (res) {
-      set({ loading: false, offers: res.items, totalCount: res.total });
+    set({ loading: true, error: undefined });
+    try {
+      const { filter } = get();
+      const res = await offerService.getOffers(filter);
+
+      if (res) {
+        set({
+          loading: false,
+          offers: res.items,
+          totalCount: res.total,
+          error: undefined,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading offers:', error);
+      set({
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to load offers',
+      });
     }
   },
+
   updateOffer: async (offer) => {
-    set({ loading: true });
-    const res = await offerService.updateOffer(offer);
-    console.log('update offer state', res);
-    if (res) {
-      set({ loading: false, currentOffer: res });
+    set({ submitting: true, error: undefined });
+    try {
+      const updatedOffer = await offerService.updateOffer(offer);
+      console.log('Update offer state:', updatedOffer);
+
+      if (updatedOffer) {
+        // Update the offer in the list
+        set((state) => ({
+          submitting: false,
+          currentOffer: updatedOffer,
+          offers: state.offers.map((o) =>
+            o.id === updatedOffer.id ? updatedOffer : o
+          ),
+          error: undefined,
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating offer:', error);
+      set({
+        submitting: false,
+        error:
+          error instanceof Error ? error.message : 'Failed to update offer',
+      });
+      throw error; // Re-throw to allow component to handle
     }
   },
+
   createOffer: async (offer) => {
-    set({ loading: true });
-    const res = await offerService.createOffer(offer);
-    console.log('create offer state', res);
-    if (res) {
-      set({ loading: false, currentOffer: res });
+    set({ submitting: true, error: undefined });
+    try {
+      const createdOffer = await offerService.createOffer(offer);
+      console.log('Create offer state:', createdOffer);
+
+      if (createdOffer) {
+        set((state) => ({
+          submitting: false,
+          currentOffer: createdOffer,
+          offers: [createdOffer, ...state.offers],
+          totalCount: state.totalCount + 1,
+          error: undefined,
+        }));
+      }
+    } catch (error) {
+      console.error('Error creating offer:', error);
+      set({
+        submitting: false,
+        error:
+          error instanceof Error ? error.message : 'Failed to create offer',
+      });
+      throw error; // Re-throw to allow component to handle
     }
-    set({ loading: false });
   },
 }));
 

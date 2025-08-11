@@ -1,14 +1,32 @@
 export interface Offer {
   id: number;
   name: string;
-  productId: number;
-  discountType: 'percentage' | 'fixed';
-  discountValue: number;
-  startTime: Date;
-  endTime: Date;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  product_id: number; // Match backend field name
+  product?: {
+    id: number;
+    name: string;
+    description?: string;
+    price: number;
+    image_url?: string;
+  };
+  discount_type: 'percentage' | 'fixed'; // Match backend enum values
+  discount_value: number;
+  start_time: Date | string;
+  end_time: Date | string;
+  is_active: boolean; // Match backend field name
+  created_at: Date | string; // Match backend field name
+  updated_at: Date | string; // Match backend field name
+
+  // For backwards compatibility with frontend display logic
+  productId?: number;
+  discountType?: 'percentage' | 'fixed';
+  discountValue?: number;
+  startTime?: Date | string;
+  endTime?: Date | string;
+  isActive?: boolean;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  image_url?: string;
 }
 
 export interface OfferUi {
