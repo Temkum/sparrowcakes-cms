@@ -18,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Filter,
   Search,
   Loader2,
   Download,
@@ -104,9 +103,9 @@ const Offers = () => {
       product_id: o.productId,
       discount_type: o.discountType,
       discount_value: o.discountValue,
-      start_time: format(new Date(o.startTime), 'PP'),
-      end_time: format(new Date(o.endTime), 'PP'),
-      created_at: format(new Date(o.createdAt), 'PP'),
+      start_time: o.startTime ? format(new Date(o.startTime), 'PP') : '',
+      end_time: o.endTime ? format(new Date(o.endTime), 'PP') : '',
+      created_at: o.createdAt ? format(new Date(o.createdAt), 'PP') : '',
     }));
 
     const csvString = [
@@ -217,15 +216,17 @@ const Offers = () => {
   // Check if offer is currently active
   const isOfferActive = (offer: Offer) => {
     const now = new Date();
-    const startTime = new Date(offer.startTime);
-    const endTime = new Date(offer.endTime);
+    const startTime = offer.startTime ? new Date(offer.startTime) : null;
+    const endTime = offer.endTime ? new Date(offer.endTime) : null;
+    if (!startTime || !endTime) return false;
     return now >= startTime && now <= endTime && offer.isActive;
   };
 
   // Check if offer is expired
   const isOfferExpired = (offer: Offer) => {
     const now = new Date();
-    const endTime = new Date(offer.endTime);
+    const endTime = offer.endTime ? new Date(offer.endTime) : null;
+    if (!endTime) return false;
     return now > endTime;
   };
 
@@ -367,10 +368,14 @@ const Offers = () => {
                         : `$${offer.discountValue}`}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(offer.startTime), 'PP p')}
+                      {offer.startTime
+                        ? format(new Date(offer.startTime), 'PP p')
+                        : ''}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(offer.endTime), 'PP p')}
+                      {offer.endTime
+                        ? format(new Date(offer.endTime), 'PP p')
+                        : ''}
                     </TableCell>
                     <TableCell>
                       {isOfferExpired(offer) ? (
@@ -409,9 +414,9 @@ const Offers = () => {
           <div className="mt-4 flex items-center justify-between px-2">
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-500">
-                Showing {(filter.page - 1) * pageSize + 1} to{' '}
-                {Math.min(filter.page * pageSize, totalCount)} of {totalCount}{' '}
-                results
+                Showing {((filter.page || 1) - 1) * pageSize + 1} to{' '}
+                {Math.min((filter.page || 1) * pageSize, totalCount)} of{' '}
+                {totalCount} results
               </p>
             </div>
 
@@ -454,7 +459,7 @@ const Offers = () => {
                 <Button
                   variant="outline"
                   className="h-8 w-8 p-0"
-                  onClick={() => handlePageChange(filter.page - 1)}
+                  onClick={() => handlePageChange((filter.page || 1) - 1)}
                   disabled={filter.page === 1}
                 >
                   <span className="sr-only">Go to previous page</span>
@@ -463,8 +468,8 @@ const Offers = () => {
                 <Button
                   variant="outline"
                   className="h-8 w-8 p-0"
-                  onClick={() => handlePageChange(filter.page + 1)}
-                  disabled={filter.page >= totalPages}
+                  onClick={() => handlePageChange((filter.page || 1) + 1)}
+                  disabled={(filter.page || 1) >= totalPages}
                 >
                   <span className="sr-only">Go to next page</span>
                   <ChevronRight className="h-4 w-4" />
@@ -473,7 +478,7 @@ const Offers = () => {
                   variant="outline"
                   className="hidden h-8 w-8 p-0 lg:flex"
                   onClick={() => handlePageChange(totalPages)}
-                  disabled={filter.page >= totalPages}
+                  disabled={(filter.page || 1) >= totalPages}
                 >
                   <span className="sr-only">Go to last page</span>
                   <ChevronsRight className="h-4 w-4" />
