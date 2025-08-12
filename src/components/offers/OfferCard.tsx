@@ -1,6 +1,8 @@
 import { ShoppingCart, Tag } from 'lucide-react';
 import { Offer } from '@/types/offer';
 import CountdownTimer from './CountdownTimer';
+import { useFormatCurrency } from '@/hooks/format-currency';
+import { Link } from 'react-router-dom';
 
 const OfferCard = ({
   offer,
@@ -9,6 +11,8 @@ const OfferCard = ({
   offer: Offer;
   onExpire: (offerId: number) => void;
 }) => {
+  const formatCurrency = useFormatCurrency();
+
   if (!offer.product) return null;
 
   const calculateDiscountedPrice = () => {
@@ -28,17 +32,19 @@ const OfferCard = ({
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
       <div className="relative">
-        <img
-          src={offer.product.image_url || '/placeholder-cake.jpg'}
-          alt={offer.product.name}
-          className="w-full h-48 object-cover"
-        />
+        <Link to={`/products/details/${offer.product.id}`}>
+          <img
+            src={offer.product.image_url || '/placeholder-cake.jpg'}
+            alt={offer.product.name}
+            className="w-full h-48 object-cover"
+          />
+        </Link>
         <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full flex items-center gap-1">
           <Tag className="w-3 h-3" />
           <span className="text-sm font-semibold">
             {offer.discount_type === 'percentage'
               ? `${offer.discount_value}% OFF`
-              : `$${offer.discount_value} OFF`}
+              : `${formatCurrency(offer.discount_value, 'XAF')} OFF`}
           </span>
         </div>
       </div>
@@ -55,13 +61,13 @@ const OfferCard = ({
 
         <div className="flex items-center gap-3 mb-3">
           <span className="text-2xl font-bold text-green-600">
-            ${discountedPrice}
+            {formatCurrency(discountedPrice, 'XAF')}
           </span>
           <span className="text-lg text-gray-400 line-through">
-            ${offer.product.price}
+            {formatCurrency(offer.product.price, 'XAF')}
           </span>
           <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full">
-            Save ${savings}
+            Save {formatCurrency(savings, 'XAF')}
           </span>
         </div>
 
@@ -72,16 +78,18 @@ const OfferCard = ({
           />
         </div>
 
-        <a
-          href={`https://wa.me/+237653761531?text=${contactText}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <button className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200">
-            <ShoppingCart className="w-4 h-4" />
-            Order now
-          </button>
-        </a>
+        {offer.end_time && new Date(offer.end_time) < new Date() ? null : (
+          <a
+            href={`https://wa.me/+237653761531?text=${contactText}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <button className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors duration-200">
+              <ShoppingCart className="w-4 h-4" />
+              Order now
+            </button>
+          </a>
+        )}
       </div>
     </div>
   );

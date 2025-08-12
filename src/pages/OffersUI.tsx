@@ -37,10 +37,17 @@ const OffersUI = () => {
     const filtered = allOffers.filter((offer) => offer.is_active);
 
     // Apply sorting
-    const calculateDiscountedPrice = (offer: { product?: { price: number }, discount_type?: string, discount_value: number }) => {
+    const calculateDiscountedPrice = (offer: {
+      product?: { price: number };
+      discount_type?: string;
+      discount_value: number;
+    }) => {
       if (!offer.product) return 0;
       if (offer.discount_type === 'percentage') {
-        return offer.product.price - (offer.product.price * offer.discount_value) / 100;
+        return (
+          offer.product.price -
+          (offer.product.price * offer.discount_value) / 100
+        );
       }
       return offer.product.price - offer.discount_value;
     };
@@ -57,9 +64,13 @@ const OffersUI = () => {
         case 'discount_asc':
           return aSavings - bSavings;
         case 'time_asc':
-          return new Date(a.end_time).getTime() - new Date(b.end_time).getTime();
+          return (
+            new Date(a.end_time).getTime() - new Date(b.end_time).getTime()
+          );
         case 'time_desc':
-          return new Date(b.end_time).getTime() - new Date(a.end_time).getTime();
+          return (
+            new Date(b.end_time).getTime() - new Date(a.end_time).getTime()
+          );
         case 'price_asc':
           return aPrice - bPrice;
         case 'price_desc':
@@ -87,16 +98,14 @@ const OffersUI = () => {
             Sweet Deals & Offers
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Don't miss out on our delicious discounts! Fresh baked goods at
-            unbeatable prices, but hurry - these offers won't last long!
+            Don't miss out on our delicious discounts! <br />
+            Fresh baked goods at unbeatable prices, but hurry some of these
+            offers won't last long!
           </p>
         </div>
 
         {/* Filter Bar */}
-        <FilterBar
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-        />
+        <FilterBar sortBy={sortBy} onSortChange={setSortBy} />
 
         {/* Active Offers Count */}
         <div className="mb-6">

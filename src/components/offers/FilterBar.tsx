@@ -14,7 +14,7 @@ const FilterBar = ({ sortBy, onSortChange }: FilterBarProps) => {
         <select
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value)}
-          className="border border-gray-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 cursor-pointer"
+          className="border border-gray-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 cursor-pointer w-100 bg-white"
         >
           <option value="discount_desc">Highest Discount</option>
           <option value="discount_asc">Lowest Discount</option>
