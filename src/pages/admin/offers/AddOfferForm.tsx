@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import useProductStore from '@/store/product-store';
-
+import { useFormatCurrency } from '@/hooks/format-currency';
 // Zod schema for offer validation
 const offerSchema = z
   .object({
@@ -70,6 +70,8 @@ const AddOfferForm = ({
   offer,
   onSubmit,
 }: AddOfferFormProps) => {
+  const formatCurrency = useFormatCurrency();
+
   // Get products from the store
   const { products, loadProducts } = useProductStore();
   const [formData, setFormData] = useState({
@@ -259,7 +261,9 @@ const AddOfferForm = ({
 
           {/* Product Selection */}
           <div className="space-y-2">
-            <Label htmlFor="productId">Select Product *</Label>
+            <Label htmlFor="productId">
+              Select Product <span className="text-red-600">*</span>
+            </Label>
             <Select
               value={formData.productId}
               onValueChange={(value) => handleInputChange('productId', value)}
@@ -272,7 +276,7 @@ const AddOfferForm = ({
               <SelectContent>
                 {products.map((product) => (
                   <SelectItem key={product.id} value={product.id.toString()}>
-                    {product.name} - ${product.price.toFixed(2)}
+                    {product.name} - {formatCurrency(product.price)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -299,7 +303,7 @@ const AddOfferForm = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percentage">Percentage (%)</SelectItem>
-                  <SelectItem value="fixed">Fixed Amount ($)</SelectItem>
+                  <SelectItem value="fixed">Fixed Amount (FCFA)</SelectItem>
                 </SelectContent>
               </Select>
               {errors.discountType && (
@@ -354,15 +358,15 @@ const AddOfferForm = ({
                 </h4>
                 <div className="flex items-center gap-3">
                   <span className="text-lg text-gray-500 line-through">
-                    ${selectedProduct.price.toFixed(2)}
+                    {formatCurrency(selectedProduct.price)}
                   </span>
                   <span className="text-xl font-bold text-green-600">
-                    ${previewDiscountedPrice.toFixed(2)}
+                    {formatCurrency(previewDiscountedPrice)}
                   </span>
-                  <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                    Save $
-                    {(selectedProduct.price - previewDiscountedPrice).toFixed(
-                      2
+                  <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded-md">
+                    Save{' '}
+                    {formatCurrency(
+                      selectedProduct.price - previewDiscountedPrice
                     )}
                   </span>
                 </div>

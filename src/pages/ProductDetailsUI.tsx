@@ -8,6 +8,7 @@ import useProductStore from '@/store/product-store';
 import DOMPurify from 'dompurify';
 import { format, parseISO } from 'date-fns';
 import { Review } from '@/types/review';
+import { useFormatCurrency } from '@/hooks/format-currency';
 
 // Custom styles for scrollbar hiding
 const scrollbarHideStyles = `
@@ -57,8 +58,10 @@ const ReviewItem = memo(({ review }: { review: Review }) => {
 const SimilarProductItem = memo(
   ({
     product,
+    formatCurrency,
   }: {
     product: { id: number; name: string; price: number; imageUrls: string[] };
+    formatCurrency: (amount: number) => string;
   }) => (
     <Link
       to={`/products/details/${product.id}`}
@@ -71,12 +74,13 @@ const SimilarProductItem = memo(
         loading="lazy"
       />
       <h3 className="text-sm font-semibold">{product.name}</h3>
-      <p className="text-sm text-gray-600">{product.price.toFixed(2)}Fcfa</p>
+      <p className="text-sm text-gray-600">{formatCurrency(product.price)}</p>
     </Link>
   )
 );
 
 const ProductDetailsUI = () => {
+  const formatCurrency = useFormatCurrency();
   const { id } = useParams<{ id: string }>();
   const {
     currentProduct,
@@ -337,7 +341,7 @@ const ProductDetailsUI = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-semibold mb-2">
-                    {Number(currentProduct.price).toFixed(2)}Fcfa
+                    {formatCurrency(currentProduct.price)}
                   </p>
                   {currentProduct.discount > 0 && (
                     <p className="text-sm text-green-600 mb-2">
@@ -444,7 +448,16 @@ const ProductDetailsUI = () => {
               ) : (
                 <div className="grid grid-cols-1 gap-4">
                   {similarProducts.slice(0, 6).map((product) => (
-                    <SimilarProductItem key={product.id} product={product} />
+                    <SimilarProductItem
+                      key={product.id}
+                      product={{
+                        id: product.id,
+                        name: product.name,
+                        price: product.price,
+                        imageUrls: product.imageUrls,
+                      }}
+                      formatCurrency={formatCurrency}
+                    />
                   ))}
                   {currentProduct.categories &&
                     currentProduct.categories.length > 0 &&

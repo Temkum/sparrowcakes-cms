@@ -26,6 +26,7 @@ import Products from '@/pages/Products';
 import ProductDetailsUI from '@/pages/ProductDetailsUI';
 import Offers from '@/pages/admin/offers/Offers';
 import OffersUI from '@/pages/OffersUI';
+import ReviewsPageUI from '@/pages/ReviewsPageUI';
 
 const router = createBrowserRouter([
   {
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
       {
         path: '/offers',
         element: <OffersUI />,
+      },
+      {
+        path: '/reviews',
+        element: <ReviewsPageUI />,
       },
     ],
   },

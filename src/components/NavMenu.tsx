@@ -1,5 +1,4 @@
 import * as React from 'react';
-
 import { cn } from '@/lib/utils';
 import {
   NavigationMenu,
@@ -8,7 +7,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 export function NavMenu() {
   return (
@@ -20,32 +19,73 @@ export function NavMenu() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <Link to="/">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Home
+                <NavLink
+                  to="/"
+                  end
+                  className={({ isActive }) =>
+                    cn(
+                      navigationMenuTriggerStyle(),
+                      isActive
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : ''
+                    )
+                  }
+                >
+                  <NavigationMenuLink>
+                    <span>Home</span>
                   </NavigationMenuLink>
-                </Link>
+                </NavLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/categories">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Categories
+                <NavLink
+                  to="/reviews"
+                  className={({ isActive }) =>
+                    cn(
+                      navigationMenuTriggerStyle(),
+                      isActive
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : ''
+                    )
+                  }
+                >
+                  <NavigationMenuLink>
+                    <span>Reviews</span>
                   </NavigationMenuLink>
-                </Link>
+                </NavLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/products">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Products
+                <NavLink
+                  to="/products"
+                  className={({ isActive }) =>
+                    cn(
+                      navigationMenuTriggerStyle(),
+                      isActive
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : ''
+                    )
+                  }
+                >
+                  <NavigationMenuLink>
+                    <span>Products</span>
                   </NavigationMenuLink>
-                </Link>
+                </NavLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/offers">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Offers
+                <NavLink
+                  to="/offers"
+                  className={({ isActive }) =>
+                    cn(
+                      navigationMenuTriggerStyle(),
+                      isActive
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : ''
+                    )
+                  }
+                >
+                  <NavigationMenuLink>
+                    <span>Offers</span>
                   </NavigationMenuLink>
-                </Link>
+                </NavLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
@@ -72,7 +112,9 @@ const ListItem = React.forwardRef<
           )}
           {...props}
         >
-          <div className="text-sm font-medium leading-none">{title}</div>
+          <div className="text-sm font-medium leading-none">
+            <span>{title}</span>
+          </div>
           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}
           </p>

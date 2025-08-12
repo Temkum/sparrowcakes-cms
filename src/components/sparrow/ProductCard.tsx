@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Star } from 'lucide-react';
 import { ProductCardProps } from '@/types';
 import { Link } from 'react-router-dom';
+import { useFormatCurrency } from '@/hooks/format-currency';
 
 export default function ProductCard({
   id,
@@ -16,6 +17,7 @@ export default function ProductCard({
   onAddToWishlist,
   onQuickView,
 }: ProductCardProps) {
+  const formatCurrency = useFormatCurrency();
   return (
     <Card className="group relative max-w-sm overflow-hidden p-4">
       {/* Product Image with Hover Icons */}
@@ -75,11 +77,11 @@ export default function ProductCard({
         {/* Price */}
         <div className="flex justify-center items-center gap-2">
           <span className="text-emerald-600 font-semibold">
-            ${price.toFixed(2)}
+            {formatCurrency(price)}
           </span>
           {originalPrice > price && (
             <span className="text-sm text-muted-foreground line-through">
-              ${originalPrice.toFixed(2)}
+              {formatCurrency(originalPrice)}
             </span>
           )}
         </div>

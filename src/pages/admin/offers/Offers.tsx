@@ -37,8 +37,10 @@ import { format } from 'date-fns';
 import { useAuthStore } from '@/store/auth';
 import offerService from '@/services/offer-service';
 import { Badge } from '@/components/ui/badge';
+import { useFormatCurrency } from '@/hooks/format-currency';
 
 const Offers = () => {
+  const formatCurrency = useFormatCurrency();
   const {
     offers,
     loading,
@@ -365,7 +367,7 @@ const Offers = () => {
                     <TableCell>
                       {offer.discountType === 'percentage'
                         ? `${offer.discountValue}%`
-                        : `$${offer.discountValue}`}
+                        : formatCurrency(offer.discountValue || 0)}
                     </TableCell>
                     <TableCell>
                       {offer.startTime
