@@ -67,162 +67,21 @@ export interface ReviewsPageProps {
   reviews: ReviewWithDetails[];
   totalReviews: number;
   averageRating: number;
-  ratingBreakdown: Record<number, number>; // { 5: 120, 4: 80, 3: 20, 2: 10, 1: 5 }
+  ratingBreakdown: Record<number, number>;
 
-  // State
   loading?: boolean;
   hasMore?: boolean;
 
-  // Callbacks
   onLoadMore?: () => void;
   onSubmitReview?: (review: ReviewSubmission) => Promise<void>;
   onVoteHelpful?: (reviewId: number) => Promise<void>;
   onSortChange?: (sort: SortOption) => void;
   onFilterChange?: (filters: ReviewFilters) => void;
 
-  // Config
   allowSubmit?: boolean;
   showProductTags?: boolean;
   featuredReviewIds?: number[];
 }
-
-export const mockCustomers: Customer[] = [
-  {
-    id: 1,
-    name: 'Sarah Chen',
-    email: 'sarah@example.com',
-    phone: '+1234567890',
-    occupation: 'Software Engineer',
-    image_url: null,
-  },
-  {
-    id: 2,
-    name: 'Michael Johnson',
-    email: 'michael@example.com',
-    phone: '+1234567891',
-    occupation: 'Designer',
-    image_url: null,
-  },
-  {
-    id: 3,
-    name: 'Emma Wilson',
-    email: 'emma@example.com',
-    phone: '+1234567892',
-    occupation: 'Marketing Manager',
-    image_url: null,
-  },
-  {
-    id: 4,
-    name: 'David Kim',
-    email: 'david@example.com',
-    phone: '+1234567893',
-    occupation: 'Data Analyst',
-    image_url: null,
-  },
-];
-
-export const mockProducts: Product[] = [
-  {
-    id: 1,
-    name: 'Premium Wireless Headphones',
-    slug: 'premium-wireless-headphones',
-    description: 'High-quality wireless headphones',
-    price: 199,
-    cost_per_unit: 100,
-    discount: 0,
-    quantity: 50,
-    image_urls: [],
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-    reviews: [],
-  },
-  {
-    id: 2,
-    name: 'Smart Fitness Tracker',
-    slug: 'smart-fitness-tracker',
-    description: 'Advanced fitness tracking device',
-    price: 149,
-    cost_per_unit: 75,
-    discount: 10,
-    quantity: 30,
-    image_urls: [],
-    is_active: true,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
-    reviews: [],
-  },
-];
-
-export const mockReviews: ReviewWithDetails[] = [
-  {
-    id: 1,
-    productId: 1,
-    customerId: 1,
-    rating: 5,
-    comment:
-      'Absolutely amazing headphones! The sound quality is incredible and the battery life exceeds expectations. Highly recommend for anyone looking for premium audio experience.',
-    isActive: true,
-    createdAt: '2024-08-10T14:30:00Z',
-    updatedAt: '2024-08-10T14:30:00Z',
-    customer: mockCustomers[0],
-    product: mockProducts[0],
-    helpfulCount: 24,
-    isFeatured: true,
-  },
-  {
-    id: 2,
-    productId: 2,
-    customerId: 1,
-    rating: 4,
-    comment:
-      'Great fitness tracker with accurate readings. The app integration works seamlessly. Only minor complaint is the band could be more comfortable for all-day wear.',
-    isActive: true,
-    createdAt: '2024-08-09T16:45:00Z',
-    updatedAt: '2024-08-09T16:45:00Z',
-    customer: mockCustomers[1],
-    product: mockProducts[1],
-    helpfulCount: 18,
-    isFeatured: false,
-  },
-  {
-    id: 3,
-    productId: 1,
-    customerId: 2,
-    rating: 5,
-    comment:
-      "Perfect for my daily commute. Noise cancellation is top-notch and they're incredibly comfortable even after hours of use.",
-    isActive: true,
-    createdAt: '2024-08-08T09:15:00Z',
-    updatedAt: '2024-08-08T09:15:00Z',
-    customer: mockCustomers[2],
-    product: mockProducts[0],
-    helpfulCount: 15,
-    isFeatured: true,
-  },
-  {
-    id: 4,
-    productId: 2,
-    customerId: 3,
-    rating: 3,
-    comment:
-      'Decent tracker for the price. Battery life is good but the interface could be more intuitive. Does the job but nothing spectacular.',
-    isActive: true,
-    createdAt: '2024-08-07T11:22:00Z',
-    updatedAt: '2024-08-07T11:22:00Z',
-    customer: mockCustomers[3],
-    product: mockProducts[1],
-    helpfulCount: 8,
-    isFeatured: false,
-  },
-];
-
-export const mockData = {
-  reviews: mockReviews,
-  totalReviews: 235,
-  averageRating: 4.3,
-  ratingBreakdown: { 5: 120, 4: 80, 3: 20, 2: 10, 1: 5 },
-};
 
 const StarRating: React.FC<{
   rating: number;
@@ -330,7 +189,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
   showProductTags = true,
   featuredReviewIds = [],
 }) => {
-  // State
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [filterRating, setFilterRating] = useState<number | undefined>();
   const [showFilters, setShowFilters] = useState(false);
@@ -347,7 +205,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
     type: 'success' | 'error';
   } | null>(null);
 
-  // Featured reviews
   const featuredReviews = reviews.filter(
     (r) => featuredReviewIds.includes(r.id) || r.isFeatured
   );
@@ -355,7 +212,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
     (r) => !featuredReviewIds.includes(r.id) && !r.isFeatured
   );
 
-  // Handlers
   const handleSortChange = (newSort: SortOption) => {
     setSortBy(newSort);
     onSortChange?.(newSort);
@@ -413,7 +269,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
     });
   };
 
-  // Auto-hide toast
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 5000);
@@ -423,10 +278,9 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-8">
-      {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg animate-in slide-in-from-right ${
+          className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg animate-in slide-REDACTED-from-right ${
             toast.type === 'success'
               ? 'bg-green-500 text-white'
               : 'bg-red-500 text-white'
@@ -443,8 +297,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
           </div>
         </div>
       )}
-
-      {/* Header & Summary */}
       <div className="text-center space-y-6">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
@@ -454,8 +306,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
             See what our customers are saying about our products
           </p>
         </div>
-
-        {/* Rating Summary */}
         <div className="bg-white rounded-xl border p-8 max-w-2xl mx-auto">
           <div className="text-center mb-6">
             <div className="text-5xl font-bold text-gray-900 mb-2">
@@ -466,9 +316,7 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
               Based on {totalReviews.toLocaleString()} reviews
             </p>
           </div>
-
-          {/* Rating Breakdown */}
-          <div className="space-y-2">
+          <div className="space onderhoud-y-2">
             {[5, 4, 3, 2, 1].map((rating) => {
               const count = ratingBreakdown[rating] || 0;
               const percentage =
@@ -492,8 +340,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Featured Reviews Carousel */}
       {featuredReviews.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold text-gray-900">Featured Reviews</h2>
@@ -521,11 +367,9 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                     <StarRating rating={review.rating} size="sm" />
                   </div>
                 </div>
-
                 <p className="text-gray-700 mb-4 leading-relaxed">
                   {review.comment}
                 </p>
-
                 {showProductTags && review.product && (
                   <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                     {review.product.name}
@@ -536,11 +380,8 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
           </div>
         </div>
       )}
-
-      {/* Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-lg border p-4">
         <div className="flex flex-wrap items-center gap-4">
-          {/* Sort */}
           <div className="relative">
             <select
               value={sortBy}
@@ -553,8 +394,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
             </select>
             <ChevronDown className="absolute right-2 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
-
-          {/* Filter */}
           <div className="relative">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -572,7 +411,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                 </span>
               )}
             </button>
-
             {showFilters && (
               <div className="absolute top-full left-0 mt-2 bg-white border rounded-lg shadow-lg p-4 min-w-48 z-10">
                 <h5 className="font-medium text-gray-900 mb-3">
@@ -608,8 +446,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
             )}
           </div>
         </div>
-
-        {/* Submit Review Button */}
         {allowSubmit && (
           <button
             onClick={() => setShowSubmitForm(true)}
@@ -620,8 +456,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
           </button>
         )}
       </div>
-
-      {/* Submit Review Form */}
       {showSubmitForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-40">
           <div className="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
@@ -634,7 +468,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -647,7 +480,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                   onRate={(rating) => setSubmitForm({ ...submitForm, rating })}
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Your Review
@@ -662,7 +494,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                   rows={4}
                 />
               </div>
-
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowSubmitForm(false)}
@@ -687,8 +518,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
           </div>
         </div>
       )}
-
-      {/* Reviews List */}
       <div className="space-y-6">
         {loading ? (
           <LoadingSkeleton />
@@ -704,7 +533,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                     name={review.customer.name}
                     imageUrl={review.customer.image_url}
                   />
-
                   <div className="flex-1 space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
@@ -719,18 +547,15 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                         </div>
                         <StarRating rating={review.rating} size="sm" />
                       </div>
-
                       {showProductTags && review.product && (
                         <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
                           {review.product.name}
                         </span>
                       )}
                     </div>
-
                     <p className="text-gray-700 leading-relaxed">
                       {review.comment}
                     </p>
-
                     <div className="flex items-center gap-4 pt-2">
                       <button
                         onClick={() => handleVoteHelpful(review.id)}
@@ -752,8 +577,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                 </div>
               </div>
             ))}
-
-            {/* Load More */}
             {hasMore && (
               <div className="text-center pt-6">
                 <button
@@ -765,8 +588,6 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
                 </button>
               </div>
             )}
-
-            {/* Empty State */}
             {reviews.length === 0 && !loading && (
               <div className="text-center py-12">
                 <Star className="w-12 h-12 text-gray-300 mx-auto mb-4" />

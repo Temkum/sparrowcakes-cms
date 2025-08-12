@@ -1,53 +1,139 @@
 import ReviewsList, {
-  mockCustomers,
-  mockData,
-  mockProducts,
   ReviewFilters,
   ReviewSubmission,
   ReviewWithDetails,
   SortOption,
 } from '@/components/sparrow/ReviewsList';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useReviewsStore } from '@/store/reviews-store';
 
 const ReviewsPageUI: React.FC = () => {
-  const [reviews, setReviews] = useState(mockData.reviews);
-  const [loading, setLoading] = useState(false);
+  const {
+    uiReviews,
+    loading: storeLoading,
+    fetchReviewsForUI,
+  } = useReviewsStore();
+
+  const [sort, setSort] = useState<SortOption>('recent');
+  const [filters, setFilters] = useState<ReviewFilters>({});
+  const [localReviews, setLocalReviews] = useState<ReviewWithDetails[]>([]);
+  const [localLoading, setLocalLoading] = useState(false);
+
+  useEffect(() => {
+    fetchReviewsForUI();
+  }, [fetchReviewsForUI]);
+
+  useEffect(() => {
+    const enhancedReviews: ReviewWithDetails[] = uiReviews.map((r: any) => ({
+      ...r,
+      productId: r.product?.id,
+      customerId: r.customer?.id,
+      isActive: r.display ?? true,
+      createdAt: r.created_at ?? r.createdAt,
+      updatedAt: r.updated_at ?? r.updatedAt,
+      customer: {
+        ...r.customer,
+        occupation: r.customer?.occupation ?? '',
+      },
+      helpfulCount: r.helpfulCount ?? 0,
+      isHelpful: r.isHelpful ?? false,
+      isFeatured: r.isFeatured ?? false,
+    }));
+    setLocalReviews(enhancedReviews);
+  }, [uiReviews]);
+
+  // Apply filters
+  const filteredReviews = localReviews.filter((r) => {
+    if (filters.rating) {
+      return r.rating >= filters.rating;
+    }
+    return true;
+  });
+
+  // Apply sorting
+  const sortedReviews = [...filteredReviews].sort((a, b) => {
+    if (sort === 'recent') {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    } else if (sort === 'rating') {
+      return b.rating - a.rating;
+    } else if (sort === 'helpful') {
+      return b.helpfulCount - a.helpfulCount;
+    }
+    return 0;
+  });
+
+  // Compute aggregates from all reviews
+  const totalReviews = uiReviews.length;
+  const averageRating =
+    totalReviews > 0
+      ? uiReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+      : 0;
+  const ratingBreakdown = [1, 2, 3, 4, 5].reduce((acc, star) => {
+    acc[star] = uiReviews.filter((r) => r.rating === star).length;
+    return acc;
+  }, {} as Record<number, number>);
 
   const handleLoadMore = async () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    setLocalLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate
+    setLocalLoading(false);
   };
 
-  const handleSubmitReview = async (review: ReviewSubmission) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Add optimistic update
+  const handleSubmitReview = async (submission: ReviewSubmission) => {
+    const tempId = Date.now();
     const newReview: ReviewWithDetails = {
-      id: Date.now(),
-      productId: review.productId || 1,
+      id: tempId,
+      productId: submission.productId ?? 136,
       customerId: 1,
-      rating: review.rating,
-      comment: review.comment,
+      rating: submission.rating,
+      comment: submission.comment,
       isActive: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      customer: mockCustomers[0],
-      product: mockProducts[0],
+      customer: {
+        id: 1,
+        occupation: '',
+        name: 'New Customer',
+        phone: '',
+        email: '',
+        image_url: null,
+      },
+      product: {
+        id: submission.productId ?? 136,
+        name: 'Cake 1',
+        slug: 'cake-1',
+        description: '',
+        price: 0,
+        cost_per_unit: 0,
+        discount: 0,
+        quantity: 0,
+        image_urls: [],
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        reviews: [],
+      },
       helpfulCount: 0,
       isHelpful: false,
       isFeatured: false,
     };
 
-    setReviews((prev) => [newReview, ...prev]);
+    setLocalReviews((prev) => [newReview, ...prev]);
+
+    try {
+      await useReviewsStore.getState().createReview({
+        rating: submission.rating,
+        comment: submission.comment,
+        product_id: newReview.productId,
+      });
+    } catch (error) {
+      setLocalReviews((prev) => prev.filter((r) => r.id !== tempId));
+      console.error('Failed to submit review:', error);
+    }
   };
 
   const handleVoteHelpful = async (reviewId: number) => {
-    // Optimistic update
-    setReviews((prev) =>
+    setLocalReviews((prev) =>
       prev.map((review) =>
         review.id === reviewId
           ? {
@@ -60,24 +146,22 @@ const ReviewsPageUI: React.FC = () => {
     );
   };
 
-  const handleSortChange = (sort: SortOption) => {
-    console.log('Sort changed to:', sort);
-    // Implement sorting logic
+  const handleSortChange = (newSort: SortOption) => {
+    setSort(newSort);
   };
 
-  const handleFilterChange = (filters: ReviewFilters) => {
-    console.log('Filters changed:', filters);
-    // Implement filtering logic
+  const handleFilterChange = (newFilters: ReviewFilters) => {
+    setFilters(newFilters);
   };
 
   return (
     <ReviewsList
-      reviews={reviews}
-      totalReviews={mockData.totalReviews}
-      averageRating={mockData.averageRating}
-      ratingBreakdown={mockData.ratingBreakdown}
-      loading={loading}
-      hasMore={true}
+      reviews={sortedReviews}
+      totalReviews={totalReviews}
+      averageRating={averageRating}
+      ratingBreakdown={ratingBreakdown}
+      loading={storeLoading || localLoading}
+      hasMore={false}
       onLoadMore={handleLoadMore}
       onSubmitReview={handleSubmitReview}
       onVoteHelpful={handleVoteHelpful}
@@ -85,7 +169,7 @@ const ReviewsPageUI: React.FC = () => {
       onFilterChange={handleFilterChange}
       allowSubmit={true}
       showProductTags={true}
-      featuredReviewIds={[1, 3]}
+      featuredReviewIds={[37]}
     />
   );
 };
