@@ -3,12 +3,33 @@ import { ChevronDown, ChevronRight, Star, MessageCircle } from 'lucide-react';
 import '@/styles/dynamic-categories.css';
 import useCategoriesStore from '@/store/categories-store';
 import { DynamicCategories } from '@/types/category';
+import { useReviewsStore } from '@/store/reviews-store';
+import { ReviewWithDetails } from '@/components/sparrow/ReviewsList';
+
+// Define the Product type locally to match what's in the category types
+type CategoryProduct = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  imageUrl: string;
+  isActive: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 const Categories = () => {
   const { dynamicCategories, loading, error, loadUICategories } =
     useCategoriesStore();
+  const {
+    uiReviews,
+    fetchReviewsForUI,
+    loading: reviewsLoading,
+  } = useReviewsStore();
   const [selectedCategory, setSelectedCategory] =
     useState<DynamicCategories | null>(null);
+  const [selectedReview, setSelectedReview] =
+    useState<ReviewWithDetails | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
   const [imageLoading, setImageLoading] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -17,13 +38,12 @@ const Categories = () => {
   useEffect(() => {
     const initializeCategories = async () => {
       try {
-        // Always attempt to load categories on component mount
         console.log('Initializing categories...');
         const result = await loadUICategories();
         console.log('Categories loaded:', result);
 
         if (result && result.length > 0) {
-          setSelectedCategory(result[0]); // Select first category by default
+          setSelectedCategory(result[0]);
         }
         setHasInitialized(true);
       } catch (error) {
@@ -32,13 +52,17 @@ const Categories = () => {
       }
     };
 
-    // Only initialize once when component mounts
     if (!hasInitialized) {
       initializeCategories();
     }
   }, [hasInitialized, loadUICategories]);
 
-  // Separate effect to handle category selection when data changes
+  // Fetch reviews
+  useEffect(() => {
+    fetchReviewsForUI();
+  }, [fetchReviewsForUI]);
+
+  // Set default category when data changes
   useEffect(() => {
     if (dynamicCategories.length > 0 && !selectedCategory && hasInitialized) {
       console.log('Setting first category as selected');
@@ -46,13 +70,47 @@ const Categories = () => {
     }
   }, [dynamicCategories, selectedCategory, hasInitialized]);
 
+  // Select a random 5-star review when category changes
+  useEffect(() => {
+    if (selectedCategory && uiReviews.length > 0) {
+      const productIds = selectedCategory.products.map(
+        (p: CategoryProduct) => p.id
+      );
+      const fiveStarReviews = uiReviews.filter(
+        (r) => r.rating === 5 && productIds.includes(r.product?.id || 0)
+      );
+
+      if (fiveStarReviews.length > 0) {
+        const randomIndex = Math.floor(Math.random() * fiveStarReviews.length);
+        const selectedReviewData = fiveStarReviews[randomIndex];
+        // Convert ReviewResponseProps to ReviewWithDetails format
+        const convertedReview: ReviewWithDetails = {
+          ...selectedReviewData,
+          productId: selectedReviewData.product?.id,
+          customerId: selectedReviewData.customer?.id,
+          isActive: selectedReviewData.display ?? true,
+          createdAt: selectedReviewData.created_at,
+          updatedAt: selectedReviewData.updated_at,
+          customer: {
+            ...selectedReviewData.customer,
+            occupation: selectedReviewData.customer?.occupation ?? '',
+          },
+          helpfulCount: 0,
+          isHelpful: false,
+          isFeatured: false,
+        };
+        setSelectedReview(convertedReview);
+      } else {
+        setSelectedReview(null);
+      }
+    }
+  }, [selectedCategory, uiReviews]);
+
   const handleCategorySelect = (category: DynamicCategories) => {
     if (selectedCategory?.id === category.id) return;
 
     setImageLoading(true);
     setSelectedCategory(category);
-
-    // Simulate image loading delay
     setTimeout(() => setImageLoading(false), 300);
   };
 
@@ -68,7 +126,6 @@ const Categories = () => {
   const hasMore = visibleCount < dynamicCategories.length;
   const visibleCategories = dynamicCategories.slice(0, visibleCount);
 
-  // Show loading state while initializing or while store is loading
   if (!hasInitialized || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-green-50 to-green-50 flex items-center justify-center">
@@ -136,7 +193,6 @@ const Categories = () => {
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8">
-          {/* Categories List - Left Side */}
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -206,11 +262,9 @@ const Categories = () => {
             </div>
           </div>
 
-          {/* Category Details - Right Side */}
           <div className="lg:col-span-3">
             {selectedCategory && (
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-                {/* Category Image */}
                 <div className="relative h-64 md:h-80 lg:h-96 overflow-hidden">
                   {imageLoading ? (
                     <div className="w-full h-full bg-gradient-to-br from-green-100 to-green-100 flex items-center justify-center">
@@ -241,7 +295,6 @@ const Categories = () => {
                   )}
                 </div>
 
-                {/* Category Description */}
                 <div className="p-6 md:p-8">
                   <div
                     className="text-gray-700 text-lg leading-relaxed mb-8"
@@ -250,33 +303,82 @@ const Categories = () => {
                     }}
                   />
 
-                  {/* Reviews Section Placeholder */}
                   <div className="border-t border-gray-200 pt-8">
                     <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
                       <MessageCircle className="w-7 h-7 text-green-500" />
                       Customer Reviews
                     </h3>
 
-                    <div className="bg-gradient-to-br from-green-50 to-green-50 rounded-xl p-8 text-center border-2 border-dashed border-green-200">
-                      <Star className="w-12 h-12 text-green-300 mx-auto mb-4" />
-                      <h4 className="text-xl font-semibold text-gray-700 mb-2">
-                        Reviews Coming Soon
-                      </h4>
-                      <p className="text-gray-600 max-w-md mx-auto">
-                        We're working on bringing you authentic customer reviews
-                        for this category. Check back soon to see what others
-                        are saying about our{' '}
-                        {selectedCategory.name.toLowerCase()}!
-                      </p>
-                      <div className="mt-6 flex justify-center gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className="w-6 h-6 text-yellow-300 fill-current"
-                          />
-                        ))}
+                    {reviewsLoading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+                        <p className="text-gray-600">Loading review...</p>
                       </div>
-                    </div>
+                    ) : selectedReview ? (
+                      <div className="bg-white rounded-xl p-6 shadow-md">
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium">
+                            {selectedReview.customer.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-gray-900">
+                                {selectedReview.customer.name}
+                              </h4>
+                              <span className="text-sm text-gray-500">•</span>
+                              <span className="text-sm text-gray-500">
+                                {new Date(
+                                  selectedReview.createdAt
+                                ).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </span>
+                            </div>
+                            <div className="flex mb-2">
+                              {[1, 2, 3, 4, 5].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                                />
+                              ))}
+                            </div>
+                            <p className="text-gray-700 leading-relaxed">
+                              {selectedReview.comment}
+                            </p>
+                            {selectedReview.product && (
+                              <span className="inline-block mt-2 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                                {selectedReview.product.name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gradient-to-br from-green-50 to-green-50 rounded-xl p-8 text-center border-2 border-dashed border-green-200">
+                        <Star className="w-12 h-12 text-green-300 mx-auto mb-4" />
+                        <h4 className="text-xl font-semibold text-gray-700 mb-2">
+                          No reviews yet
+                        </h4>
+                        <p className="text-gray-600 max-w-md mx-auto">
+                          Be the first to leave a review for our{' '}
+                          {selectedCategory.name.toLowerCase()}!
+                        </p>
+                        <div className="mt-6 flex justify-center gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className="w-6 h-6 text-yellow-300 fill-current"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

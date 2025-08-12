@@ -6,6 +6,23 @@ import ReviewsList, {
 } from '@/components/sparrow/ReviewsList';
 import { useEffect, useState } from 'react';
 import { useReviewsStore } from '@/store/reviews-store';
+import { ReviewResponseProps } from '@/types/review';
+
+// Interface for creating reviews that matches the backend DTO
+interface CreateReviewData {
+  rating: number;
+  comment: string;
+  product_id: number;
+  customer_id?: number;
+  display?: boolean;
+}
+
+// Extended interface for UI reviews with additional properties
+interface UIReviewWithExtras extends ReviewResponseProps {
+  helpfulCount?: number;
+  isHelpful?: boolean;
+  isFeatured?: boolean;
+}
 
 const ReviewsPageUI: React.FC = () => {
   const {
@@ -24,21 +41,23 @@ const ReviewsPageUI: React.FC = () => {
   }, [fetchReviewsForUI]);
 
   useEffect(() => {
-    const enhancedReviews: ReviewWithDetails[] = uiReviews.map((r: any) => ({
-      ...r,
-      productId: r.product?.id,
-      customerId: r.customer?.id,
-      isActive: r.display ?? true,
-      createdAt: r.created_at ?? r.createdAt,
-      updatedAt: r.updated_at ?? r.updatedAt,
-      customer: {
-        ...r.customer,
-        occupation: r.customer?.occupation ?? '',
-      },
-      helpfulCount: r.helpfulCount ?? 0,
-      isHelpful: r.isHelpful ?? false,
-      isFeatured: r.isFeatured ?? false,
-    }));
+    const enhancedReviews: ReviewWithDetails[] = uiReviews.map(
+      (r: ReviewResponseProps) => ({
+        ...r,
+        productId: r.product?.id,
+        customerId: r.customer?.id,
+        isActive: r.display ?? true,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        customer: {
+          ...r.customer,
+          occupation: r.customer?.occupation ?? '',
+        },
+        helpfulCount: (r as UIReviewWithExtras).helpfulCount ?? 0,
+        isHelpful: (r as UIReviewWithExtras).isHelpful ?? false,
+        isFeatured: (r as UIReviewWithExtras).isFeatured ?? false,
+      })
+    );
     setLocalReviews(enhancedReviews);
   }, [uiReviews]);
 
@@ -125,7 +144,7 @@ const ReviewsPageUI: React.FC = () => {
         rating: submission.rating,
         comment: submission.comment,
         product_id: newReview.productId,
-      });
+      } as CreateReviewData);
     } catch (error) {
       setLocalReviews((prev) => prev.filter((r) => r.id !== tempId));
       console.error('Failed to submit review:', error);

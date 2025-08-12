@@ -185,7 +185,7 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
   onVoteHelpful,
   onSortChange,
   onFilterChange,
-  allowSubmit = true,
+  // allowSubmit = true,
   showProductTags = true,
   featuredReviewIds = [],
 }) => {
@@ -446,15 +446,15 @@ const ReviewsList: React.FC<ReviewsPageProps> = ({
             )}
           </div>
         </div>
-        {allowSubmit && (
+        {/* {allowSubmit && (
           <button
             onClick={() => setShowSubmitForm(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 cursor-pointer"
           >
             <Star className="w-4 h-4" />
             Write a Review
           </button>
-        )}
+        )} */}
       </div>
       {showSubmitForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-40">

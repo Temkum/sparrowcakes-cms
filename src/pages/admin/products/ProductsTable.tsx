@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Toaster } from 'react-hot-toast';
 import { Card } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/format-currency';
 
 interface ProductTableProps {
   onEdit: (productId: number) => void;
@@ -90,6 +91,7 @@ const ProductsTable = ({
     null
   );
   const [isInitialized, setIsInitialized] = useState(false);
+  const formatCurrency = useFormatCurrency();
 
   // Initialize searchInput when filter changes from external source
   useEffect(() => {
@@ -288,7 +290,7 @@ const ProductsTable = ({
             </div>
           ) : (
             <p className="text-2xl font-bold">
-              ${stats?.averagePrice?.toFixed(2) || '0.00'}
+              {formatCurrency(stats?.averagePrice || 0)}
             </p>
           )}
         </Card>
@@ -498,7 +500,7 @@ const ProductsTable = ({
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {product.price ? `$${product.price.toFixed(2)}` : '-'}
+                        {product.price ? formatCurrency(product.price) : '-'}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

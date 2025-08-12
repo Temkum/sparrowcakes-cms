@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import useProductStore from '@/store/product-store';
+import { useReviewsStore } from '@/store/reviews-store';
 import DOMPurify from 'dompurify';
 import { format, parseISO } from 'date-fns';
-import { Review } from '@/types/review';
+import { ReviewWithDetails } from '@/components/sparrow/ReviewsList';
 import { useFormatCurrency } from '@/hooks/format-currency';
 
 // Custom styles for scrollbar hiding
@@ -22,7 +23,7 @@ const scrollbarHideStyles = `
 `;
 
 // Memoized Review Item
-const ReviewItem = memo(({ review }: { review: Review }) => {
+const ReviewItem = memo(({ review }: { review: ReviewWithDetails }) => {
   let formattedDate = 'Unknown Date';
   try {
     formattedDate = format(parseISO(review.createdAt), 'MMM dd, yyyy');
@@ -49,7 +50,9 @@ const ReviewItem = memo(({ review }: { review: Review }) => {
         <span className="ml-2 text-sm text-gray-500">{formattedDate}</span>
       </div>
       <p className="text-gray-700">{review.comment}</p>
-      <p className="text-sm text-gray-500 mt-1">— Anonymous</p>
+      <p className="text-sm text-gray-500 mt-1">
+        — {review.customer?.name || 'Anonymous'}
+      </p>
     </div>
   );
 });
@@ -91,6 +94,11 @@ const ProductDetailsUI = () => {
     loadSimilarProducts,
     loadingSimilarProducts,
   } = useProductStore();
+  const {
+    uiReviews,
+    fetchReviewsForUI,
+    loading: reviewsLoading,
+  } = useReviewsStore();
   const [imageIndex, setImageIndex] = useState(0);
   const [reviewPage, setReviewPage] = useState(1);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -104,12 +112,12 @@ const ProductDetailsUI = () => {
           loadSimilarProducts(product.categories, product.id);
         }
       });
+      fetchReviewsForUI(); // Fetch reviews for UI
     }
-    // Reset image index and loading state when product changes
     setImageIndex(0);
     setImageLoading(true);
     setIsZoomed(false);
-  }, [id, loadProductDetails, loadSimilarProducts]);
+  }, [id, loadProductDetails, loadSimilarProducts, fetchReviewsForUI]);
 
   const handleImageChange = (direction: 'next' | 'prev') => {
     if (!currentProduct?.imageUrls) return;
@@ -119,7 +127,6 @@ const ProductDetailsUI = () => {
         direction === 'next'
           ? Math.min(prev + 1, maxIndex)
           : Math.max(prev - 1, 0);
-      // Reset loading state when changing images
       setImageLoading(true);
       return newIndex;
     });
@@ -157,8 +164,42 @@ const ProductDetailsUI = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentProduct?.imageUrls]);
 
+  // Filter reviews for the current product
+  const productReviews = uiReviews
+    .filter((review) => review.product?.id === Number(id))
+    .map((review) => ({
+      ...review,
+      productId: review.product?.id,
+      customerId: review.customer?.id,
+      isActive: review.display ?? true,
+      createdAt: review.created_at,
+      updatedAt: review.updated_at,
+      customer: {
+        ...review.customer,
+        occupation: review.customer?.occupation ?? '',
+      },
+      helpfulCount: 0,
+      isHelpful: false,
+      isFeatured: false,
+    })) as ReviewWithDetails[];
+
+  // Calculate average rating
+  const averageRating = productReviews.length
+    ? Math.round(
+        productReviews.reduce((sum, r) => sum + r.rating, 0) /
+          productReviews.length
+      )
+    : 0;
+
+  // Paginated reviews
+  const paginatedReviews = productReviews.slice(
+    (reviewPage - 1) * reviewsPerPage,
+    reviewPage * reviewsPerPage
+  );
+  const totalReviewPages = Math.ceil(productReviews.length / reviewsPerPage);
+
   // Show loading state
-  if (loadingProductDetails) {
+  if (loadingProductDetails || reviewsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -216,25 +257,6 @@ const ProductDetailsUI = () => {
       </div>
     );
   }
-
-  // Calculate average rating
-  const averageRating = currentProduct.reviews?.length
-    ? Math.round(
-        currentProduct.reviews.reduce((sum, r) => sum + r.rating, 0) /
-          currentProduct.reviews.length
-      )
-    : 0;
-
-  // Paginated reviews
-  const paginatedReviews = currentProduct.reviews
-    ? currentProduct.reviews.slice(
-        (reviewPage - 1) * reviewsPerPage,
-        reviewPage * reviewsPerPage
-      )
-    : [];
-  const totalReviewPages = currentProduct.reviews
-    ? Math.ceil(currentProduct.reviews.length / reviewsPerPage)
-    : 1;
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -377,8 +399,8 @@ const ProductDetailsUI = () => {
                       />
                     ))}
                     <span className="ml-2 text-sm text-gray-500">
-                      {currentProduct.reviews.length} review
-                      {currentProduct.reviews.length !== 1 ? 's' : ''}
+                      {productReviews.length} review
+                      {productReviews.length !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </CardContent>
