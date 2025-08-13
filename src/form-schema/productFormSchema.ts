@@ -1,67 +1,68 @@
 import { z } from 'zod';
 
-// 1. Define valid image types - commented out as not currently used
-/*
-const validImageTypes = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/bmp',
-  'image/svg+xml',
-  'image/tiff',
-  'image/jpg',
-] as const;
-*/
-
-// 2. File validator (for new uploads)
-// Commented out as it's not currently used
-/*
-const imageFileValidator = z.custom<File>((file) => {
-  if (!(file instanceof File)) return false;
-  return validImageTypes.includes(
-    file.type as (typeof validImageTypes)[number]
-  );
-}, 'Please upload a valid image file (JPEG, PNG, GIF, WEBP, BMP, SVG, TIFF, or JPG)');
-*/
-
-// Base schema without images
+// Base schema for common fields
 const baseProductSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  slug: z.string(),
+  name: z
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(255, 'Name must be less than 255 characters'),
+  slug: z.string().max(255, 'Slug must be less than 255 characters').optional(),
   description: z.string().optional(),
-  isActive: z.boolean(),
-  availability: z.date(),
+  isActive: z.boolean().default(true),
+  availableFrom: z
+    .date()
+    .refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), {
+      message: 'Available from date must be today or in the future',
+    }),
+  availableTo: z
+    .date()
+    .nullable()
+    .optional()
+    .refine(
+      (date) => !date || date > new Date(new Date().setHours(0, 0, 0, 0)),
+      {
+        message: 'Available to date must be in the future',
+      }
+    ),
   categories: z
     .array(z.number())
     .min(1, { message: 'At least one category is required' }),
-  price: z.number().min(1, { message: 'Price is required' }),
-  discount: z.number().min(1, { message: 'Compare at price is required' }),
-  costPerUnit: z.number().min(1, { message: 'Cost per item is required' }),
+  price: z
+    .number()
+    .min(0, { message: 'Price must be non-negative' })
+    .max(1000000, { message: 'Price is too high' }),
+  discount: z
+    .number()
+    .min(0, { message: 'Discount must be non-negative' })
+    .max(1000000, { message: 'Discount is too high' })
+    .default(0),
+  costPerUnit: z
+    .number()
+    .min(0, { message: 'Cost per unit must be non-negative' })
+    .max(1000000, { message: 'Cost per unit is too high' })
+    .default(0),
   quantity: z.coerce
     .number()
-    .min(1, { message: 'Quantity is required' })
-    .default(1),
+    .int()
+    .min(0, { message: 'Quantity must be non-negative' })
+    .max(1000000, { message: 'Quantity is too high' })
+    .default(0),
 });
 
-// CREATE schema - only accepts Files
+// CREATE schema - only accepts Files for images
 const createProductSchema = baseProductSchema.extend({
-  images: z.array(z.instanceof(File)).min(1, 'At least one image is required'),
+  images: z
+    .array(z.instanceof(File))
+    .min(1, 'At least one image is required')
+    .max(10, 'Maximum 10 images allowed'),
 });
 
 // EDIT schema - accepts both Files (new uploads) and URLs (existing images)
 const editProductSchema = baseProductSchema.extend({
   images: z
-    .union([
-      z.array(z.instanceof(File)).min(1),
-      z.array(z.string().url()).min(1),
-      z.array(z.union([z.instanceof(File), z.string().url()])).min(1),
-    ])
-    .refine((val) => val.length > 0, 'At least one image is required'),
-  slug: z.string().optional(),
-  availability: z
-    .date()
-    .refine((date) => date > new Date(), 'Availability must be in the future'),
+    .array(z.union([z.instanceof(File), z.string().url()]))
+    .min(1, 'At least one image is required')
+    .max(10, 'Maximum 10 images allowed'),
 });
 
 // Use the appropriate schema based on mode

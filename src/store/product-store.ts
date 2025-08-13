@@ -24,7 +24,8 @@ const transformApiResponseToProduct = (
   quantity: Number(response.quantity || 0),
   imageUrls: response.image_urls || [],
   isActive: response.is_active,
-  availability: response.availability,
+  availableFrom: response.available_from,
+  availableTo: response.available_to,
   categories: response.categories?.map((cat) => cat.id) || [],
   reviews:
     response.reviews?.map((review) => ({
@@ -161,7 +162,6 @@ const useProductStore = create<ProductState>((set, get) => ({
     set({ loadingStats: true, error: null });
     try {
       const stats = await productService.getProductStats();
-      console.log('stats', stats);
       set({ stats: stats, loadingStats: false });
     } catch (error) {
       console.error('Error loading product stats:', error);
@@ -251,7 +251,6 @@ const useProductStore = create<ProductState>((set, get) => ({
           const transformedProduct: Product =
             transformApiResponseToProduct(response);
           set({ currentProduct: transformedProduct, error: null });
-          console.log('currentProduct', transformedProduct);
           return transformedProduct;
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));

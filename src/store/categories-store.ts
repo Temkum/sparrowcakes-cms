@@ -23,6 +23,7 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     try {
       const res: CategoryResponse[] = await categoryService.getCategories();
       set({ categories: res, loading: false });
+      console.log('CAT', res);
 
       return res;
     } catch (error) {

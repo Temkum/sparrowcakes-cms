@@ -57,7 +57,6 @@ export const productService = {
   async getAllProducts(): Promise<ProductAPIResponse[]> {
     try {
       const response = await axiosInstance.get('/products/all');
-      console.log('all products', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -72,7 +71,7 @@ export const productService = {
   async getProductStats(): Promise<ProductStats> {
     try {
       const response = await axiosInstance.get('/products/stats');
-      console.log('product stats', response.data);
+
       return response.data;
     } catch (error) {
       console.error('Error fetching product stats:', error);
@@ -88,7 +87,7 @@ export const productService = {
   async getProductById(id: number): Promise<ProductAPIResponse> {
     try {
       const response = await axiosInstance.get(`/products/${id}`);
-      console.log('product', response.data);
+
       return response.data;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
@@ -282,7 +281,6 @@ export const productService = {
       const response = await axiosInstance.get('/products/similar', {
         params: { productId: parsedId, limit },
       });
-      console.log('similar products', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching similar products:', error);
@@ -312,7 +310,6 @@ export const productService = {
     try {
       // Use route parameter instead of query parameter
       const response = await axiosInstance.get(`/products/details/${parsedId}`);
-      console.log('product with reviews', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching product with reviews:', error);
@@ -334,7 +331,6 @@ export const productService = {
           params: { limit },
         }
       );
-      console.log('similar products by category', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching similar products by category:', error);

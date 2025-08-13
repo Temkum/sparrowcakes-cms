@@ -82,18 +82,19 @@ export function DynamicCategories({
             </label>
             <Select
               isMulti
-              options={categories.map((category) => ({
-                value: category.id,
-                label: category.name,
-              }))}
+              options={getSelectOptions(categories)}
               isLoading={isLoading}
               placeholder="Select categories..."
               onChange={(selectedOptions) =>
                 handleChange(selectedOptions, field)
               }
-              value={getSelectOptions(categories).find(
-                (option) => option.value === field.value
-              )}
+              value={
+                field.value
+                  ? getSelectOptions(categories).filter((option) =>
+                      field.value.includes(option.value)
+                    )
+                  : []
+              }
               className="react-select-container"
               classNamePrefix="react-select"
               isSearchable
