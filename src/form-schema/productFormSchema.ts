@@ -10,20 +10,29 @@ const baseProductSchema = z.object({
   description: z.string().optional(),
   isActive: z.boolean().default(true),
   availableFrom: z
-    .date()
-    .refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), {
-      message: 'Available from date must be today or in the future',
-    }),
+    .date({
+      required_error: 'Please select a date',
+      invalid_type_error: 'Invalid date format',
+    })
+    .refine((date: Date) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date >= today;
+    }, 'Available from date must be today or in the future'),
   availableTo: z
-    .date()
+    .date({
+      invalid_type_error: 'Invalid date format',
+    })
     .nullable()
     .optional()
-    .refine(
-      (date) => !date || date >= new Date(new Date().setHours(0, 0, 0, 0)),
-      {
-        message: 'Available to date must be in the future',
-      }
-    ),
+    .refine((date: Date | null | undefined) => {
+      if (!date) return true;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date >= today;
+    }, 'Available to date must be today or in the future'),
+  // Add a custom validation for the date range
+  // This will be handled in the form component
   categories: z
     .array(z.number())
     .min(1, { message: 'At least one category is required' }),

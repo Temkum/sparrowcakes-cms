@@ -24,8 +24,8 @@ const transformApiResponseToProduct = (
   quantity: Number(response.quantity || 0),
   imageUrls: response.image_urls || [],
   isActive: response.is_active,
-  availableFrom: response.available_from,
-  availableTo: response.available_to,
+  availableFrom: response.available_from ? new Date(response.available_from) : null,
+  availableTo: response.available_to ? new Date(response.available_to) : null,
   categories: response.categories?.map((cat) => cat.id) || [],
   reviews:
     response.reviews?.map((review) => ({

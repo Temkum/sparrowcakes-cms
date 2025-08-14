@@ -78,8 +78,8 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       discount: product?.discount || 0,
       costPerUnit: product?.costPerUnit || 0,
       isActive: product?.isActive ?? true,
-      availableFrom: product?.availableFrom || new Date(),
-      availableTo: product?.availableTo || null,
+      availableFrom: product?.availableFrom ? new Date(product.availableFrom) : new Date(),
+      availableTo: product?.availableTo ? new Date(product.availableTo) : null,
       categories: product?.categories || [],
       images: product?.images || [],
       quantity: product?.quantity || 0,
@@ -94,10 +94,40 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       .replace(/(^-|-$)+/g, '');
   };
 
+  const formatDateForServer = (date: Date | null | undefined): string => {
+    if (!date) return '';
+    // Create a new date to avoid mutating the original
+    const d = new Date(date);
+    // Get current form values
+    const formValues = form.getValues();
+    // Set to start of day for from date, end of day for to date
+    if (date === formValues.availableFrom) {
+      d.setHours(0, 0, 0, 0);
+    } else if (date === formValues.availableTo) {
+      d.setHours(23, 59, 59, 999);
+    }
+    return d.toISOString();
+  };
+
+  const validateDateRange = (from: Date | null | undefined, to: Date | null | undefined): boolean => {
+    if (!from || !to) return true;
+    return to >= from;
+  };
+
   const onSubmit = async (
     values: z.infer<ReturnType<typeof productFormSchema>>
   ) => {
     clearValidationErrors();
+    
+    // Validate date range
+    if (!validateDateRange(values.availableFrom, values.availableTo)) {
+      form.setError('availableTo', {
+        type: 'manual',
+        message: 'Available to date must be after available from date',
+      });
+      return;
+    }
+    
     const formData = new FormData();
 
     // Format form data
@@ -108,14 +138,16 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     formData.append('costPerUnit', String(values.costPerUnit));
     formData.append('quantity', String(values.quantity));
     formData.append('isActive', String(values.isActive));
-    formData.append(
-      'availableFrom',
-      values.availableFrom ? values.availableFrom.toISOString() : ''
-    );
-    formData.append(
-      'availableTo',
-      values.availableTo ? values.availableTo.toISOString() : ''
-    );
+    
+    // Handle dates
+    if (values.availableFrom) {
+      formData.append('availableFrom', formatDateForServer(values.availableFrom));
+    }
+    
+    if (values.availableTo) {
+      formData.append('availableTo', formatDateForServer(values.availableTo));
+    }
+    
     formData.append('categories', JSON.stringify(values.categories));
 
     try {
@@ -195,7 +227,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       }
     } catch (error: unknown) {
       console.error('Submission error:', error);
-      toast('Oops, something went wrong. Try again later!');
+      toast.error('Oops, something went wrong. Try again later!');
     }
   };
 
@@ -363,10 +395,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
                               name="discount"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>
-                                    Compare at price
-                                    <span className="text-red-500">*</span>
-                                  </FormLabel>
+                                  <FormLabel>Compare at price</FormLabel>
                                   <FormControl>
                                     <Input
                                       {...field}
