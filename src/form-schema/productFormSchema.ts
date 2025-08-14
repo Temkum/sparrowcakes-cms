@@ -19,7 +19,7 @@ const baseProductSchema = z.object({
     .nullable()
     .optional()
     .refine(
-      (date) => !date || date > new Date(new Date().setHours(0, 0, 0, 0)),
+      (date) => !date || date >= new Date(new Date().setHours(0, 0, 0, 0)),
       {
         message: 'Available to date must be in the future',
       }

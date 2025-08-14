@@ -74,7 +74,7 @@ const ProductsTable = ({
     setFilter,
     deleteProduct,
     bulkDeleteProducts,
-    loadProducts,
+    loadAllProductsForAdmin,
     stats,
     loadStats,
     setError,
@@ -103,7 +103,7 @@ const ProductsTable = ({
     if (!skipInitialLoad && !isInitialized) {
       const initializeData = async () => {
         try {
-          await Promise.all([loadProducts()]);
+          await Promise.all([loadAllProductsForAdmin()]);
         } catch (err) {
           console.error('Failed to initialize data:', err);
         } finally {
@@ -114,7 +114,7 @@ const ProductsTable = ({
     } else if (skipInitialLoad) {
       setIsInitialized(true);
     }
-  }, [skipInitialLoad, loadProducts, isInitialized]);
+  }, [skipInitialLoad, loadAllProductsForAdmin, isInitialized]);
 
   useEffect(() => {
     loadStats();
@@ -123,9 +123,9 @@ const ProductsTable = ({
   // Reload products when filter changes (except search term which is handled separately)
   useEffect(() => {
     if (isInitialized) {
-      loadProducts();
+      loadAllProductsForAdmin();
     }
-  }, [filter.page, filter.pageSize, loadProducts, isInitialized]);
+  }, [filter.page, filter.pageSize, loadAllProductsForAdmin, isInitialized]);
 
   // Search debouncing
   useEffect(() => {
@@ -247,11 +247,11 @@ const ProductsTable = ({
   const handleRetryLoad = useCallback(async () => {
     setError(null);
     try {
-      await Promise.all([loadProducts(), loadStats()]);
+      await Promise.all([loadAllProductsForAdmin(), loadStats()]);
     } catch (err) {
       console.error('Retry failed:', err);
     }
-  }, [setError, loadProducts, loadStats]);
+  }, [setError, loadAllProductsForAdmin, loadStats]);
 
   const isOperationInProgress =
     loadingProducts || deleting || deletingProductId !== null;

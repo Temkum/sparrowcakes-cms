@@ -6,8 +6,8 @@ export interface Product {
   slug: string;
   description: string;
   isActive: boolean;
-  availableFrom: string | null;
-  availableTo: string | null;
+  availableFrom: Date | null;
+  availableTo: Date | null;
   categories: number[];
   images: (File | string)[];
   imageUrls: string[];
@@ -35,8 +35,8 @@ export interface ProductAPIResponse {
   reviews: ReviewResponseProps[];
   created_at: string;
   updated_at: string;
-  available_from: string | null;
-  available_to: string | null;
+  available_from: Date | null;
+  available_to: Date | null;
   categories: Category[];
   totalReviews: number;
 }
@@ -73,8 +73,8 @@ export interface CreateProductRequest {
   slug?: string;
   description: string;
   isActive: boolean;
-  availableFrom: string; // ISO date string
-  availableTo: string | null; // ISO date string or null
+  availableFrom: Date; // ISO date string
+  availableTo: Date | null; // ISO date string or null
   categories: number[];
   images: File[]; // For create, we require actual File objects
   price: number;
@@ -87,8 +87,8 @@ export interface UpdateProductRequest {
   slug?: string;
   description?: string;
   isActive?: boolean;
-  availableFrom?: string; // ISO date string
-  availableTo?: string | null; // ISO date string or null
+  availableFrom?: Date; // ISO date string
+  availableTo?: Date | null; // ISO date string or null
   categories?: number[];
   images?: (File | string)[]; // Can be File objects or URLs
   price?: number;

@@ -68,6 +68,39 @@ export const productService = {
     }
   },
 
+  async getAllProductsForAdmin(): Promise<ProductAPIResponse[]> {
+    console.log('Frontend getAllProductsForAdmin called');
+    try {
+      console.log('Making API call to /products/admin/all...');
+      const response = await axiosInstance.get('/products/admin/all');
+      console.log('Admin products API response received:', {
+        status: response.status,
+        dataLength: response.data?.length || 0,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+      });
+
+      if (response.data && Array.isArray(response.data)) {
+        console.log(
+          'Admin products data is valid array, returning:',
+          response.data.length,
+          'products'
+        );
+        return response.data;
+      } else {
+        console.error('Invalid admin products response format:', response.data);
+        throw new Error('Invalid response format from admin products endpoint');
+      }
+    } catch (error) {
+      console.error('Error fetching admin products:', error);
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as { message?: string };
+        throw new Error(errorData?.message || 'Failed to fetch admin products');
+      }
+      throw new Error('Failed to fetch admin products. Please try again.');
+    }
+  },
+
   async getProductStats(): Promise<ProductStats> {
     try {
       const response = await axiosInstance.get('/products/stats');
@@ -273,14 +306,53 @@ export const productService = {
   },
 
   async getSimilarProducts(productId: number, limit: number = 6) {
+    console.log('Frontend getSimilarProducts called with:', {
+      productId,
+      limit,
+    });
+
     const parsedId = Number(productId);
+    console.log(
+      'parsedId:',
+      parsedId,
+      'isNaN:',
+      isNaN(parsedId),
+      'isInteger:',
+      Number.isInteger(parsedId)
+    );
+
     if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      console.error('Invalid productId in frontend service:', {
+        productId,
+        parsedId,
+      });
       throw new Error('Invalid productId');
     }
+
+    const parsedLimit = Number(limit);
+    if (
+      isNaN(parsedLimit) ||
+      !Number.isInteger(parsedLimit) ||
+      parsedLimit <= 0
+    ) {
+      console.error('Invalid limit in frontend service:', {
+        limit,
+        parsedLimit,
+      });
+      throw new Error('Invalid limit');
+    }
+
+    console.log('Making API call with:', { parsedId, parsedLimit });
+
     try {
       const response = await axiosInstance.get('/products/similar', {
-        params: { productId: parsedId, limit },
+        params: { productId: parsedId, limit: parsedLimit },
       });
+      console.log(
+        'API response received:',
+        response.data?.length || 0,
+        'products'
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching similar products:', error);

@@ -107,9 +107,44 @@ const ProductDetailsUI = () => {
 
   useEffect(() => {
     if (id) {
-      loadProductDetails(Number(id)).then((product) => {
-        if (product && product.categories?.length) {
+      const productId = Number(id);
+      console.log(
+        'URL id parameter:',
+        id,
+        'converted to:',
+        productId,
+        'isValid:',
+        !isNaN(productId) && productId > 0
+      );
+
+      if (isNaN(productId) || productId <= 0) {
+        console.error('Invalid product ID from URL:', id);
+        return;
+      }
+
+      loadProductDetails(productId).then((product) => {
+        console.log('Product loaded:', {
+          productId: product?.id,
+          categories: product?.categories?.length || 0,
+        });
+        if (
+          product &&
+          product.categories?.length &&
+          product.id &&
+          !isNaN(product.id) &&
+          product.id > 0
+        ) {
+          console.log('Loading similar products for product:', product.id);
           loadSimilarProducts(product.categories, product.id);
+        } else {
+          console.log(
+            'Skipping similar products load - invalid product or no categories:',
+            {
+              hasProduct: !!product,
+              productId: product?.id,
+              categoriesCount: product?.categories?.length || 0,
+            }
+          );
         }
       });
       fetchReviewsForUI(); // Fetch reviews for UI
@@ -166,7 +201,17 @@ const ProductDetailsUI = () => {
 
   // Filter reviews for the current product
   const productReviews = uiReviews
-    .filter((review) => review.product?.id === Number(id))
+    .filter((review) => {
+      const reviewProductId = review.product?.id;
+      const currentProductId = Number(id);
+      const isValidReview =
+        reviewProductId &&
+        !isNaN(reviewProductId) &&
+        currentProductId &&
+        !isNaN(currentProductId) &&
+        reviewProductId === currentProductId;
+      return isValidReview;
+    })
     .map((review) => ({
       ...review,
       productId: review.product?.id,
@@ -366,18 +411,24 @@ const ProductDetailsUI = () => {
                     {formatCurrency(currentProduct.price)}
                   </p>
                   {currentProduct.discount > 0 && (
-                    <p className="text-sm text-green-600 mb-2">
+                    <p className="text-lg font-semibold text-green-600">
                       Discount: {currentProduct.discount}%
                     </p>
                   )}
                   <Badge
                     variant={
-                      new Date(currentProduct.availability) > new Date()
+                      (currentProduct.availableFrom === null ||
+                        new Date(currentProduct.availableFrom) <= new Date()) &&
+                      (currentProduct.availableTo === null ||
+                        new Date(currentProduct.availableTo) >= new Date())
                         ? 'default'
                         : 'destructive'
                     }
                   >
-                    {new Date(currentProduct.availability) > new Date()
+                    {(currentProduct.availableFrom === null ||
+                      new Date(currentProduct.availableFrom) <= new Date()) &&
+                    (currentProduct.availableTo === null ||
+                      new Date(currentProduct.availableTo) >= new Date())
                       ? 'In Stock'
                       : 'Out of Stock'}
                   </Badge>
@@ -483,6 +534,8 @@ const ProductDetailsUI = () => {
                   ))}
                   {currentProduct.categories &&
                     currentProduct.categories.length > 0 &&
+                    currentProduct.categories[0] &&
+                    !isNaN(currentProduct.categories[0]) &&
                     currentProduct.categories[0] > 0 && (
                       <Button asChild className="mt-4 w-full">
                         <Link
