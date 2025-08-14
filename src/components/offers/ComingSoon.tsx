@@ -19,8 +19,8 @@ const ComingSoon = () => {
     // Transform upcoming products (those with future availability dates) into offers
     const now = new Date();
     const upcomingProducts = products.filter((product) => {
-      if (!product.availability) return false;
-      const availabilityDate = new Date(product.availability);
+      if (!product.availableTo) return false;
+      const availabilityDate = new Date(product.availableTo);
       return availabilityDate > now;
     });
 
@@ -30,11 +30,11 @@ const ComingSoon = () => {
       description: product.description
         ? product.description.replace(/<[^>]*>/g, '').substring(0, 100) + '...'
         : 'Special limited-time offer',
-      startDate: new Date(product.availability).toLocaleDateString('en-US', {
+      startDate: product.availableTo ? new Date(product.availableTo).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
-      }),
+      }) : 'Coming Soon',
       discount:
         product.discount > 0
           ? `Up to ${Math.floor((product.discount / product.price) * 100)}% OFF`

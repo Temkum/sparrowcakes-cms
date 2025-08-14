@@ -78,7 +78,9 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       discount: product?.discount || 0,
       costPerUnit: product?.costPerUnit || 0,
       isActive: product?.isActive ?? true,
-      availableFrom: product?.availableFrom ? new Date(product.availableFrom) : new Date(),
+      availableFrom: product?.availableFrom
+        ? new Date(product.availableFrom)
+        : new Date(),
       availableTo: product?.availableTo ? new Date(product.availableTo) : null,
       categories: product?.categories || [],
       images: product?.images || [],
@@ -109,7 +111,10 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     return d.toISOString();
   };
 
-  const validateDateRange = (from: Date | null | undefined, to: Date | null | undefined): boolean => {
+  const validateDateRange = (
+    from: Date | null | undefined,
+    to: Date | null | undefined
+  ): boolean => {
     if (!from || !to) return true;
     return to >= from;
   };
@@ -118,7 +123,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     values: z.infer<ReturnType<typeof productFormSchema>>
   ) => {
     clearValidationErrors();
-    
+
     // Validate date range
     if (!validateDateRange(values.availableFrom, values.availableTo)) {
       form.setError('availableTo', {
@@ -127,7 +132,7 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
       });
       return;
     }
-    
+
     const formData = new FormData();
 
     // Format form data
@@ -138,16 +143,19 @@ const ProductForm = ({ product, onSuccess, mode }: ProductFormProps) => {
     formData.append('costPerUnit', String(values.costPerUnit));
     formData.append('quantity', String(values.quantity));
     formData.append('isActive', String(values.isActive));
-    
+
     // Handle dates
     if (values.availableFrom) {
-      formData.append('availableFrom', formatDateForServer(values.availableFrom));
+      formData.append(
+        'availableFrom',
+        formatDateForServer(values.availableFrom)
+      );
     }
-    
+
     if (values.availableTo) {
       formData.append('availableTo', formatDateForServer(values.availableTo));
     }
-    
+
     formData.append('categories', JSON.stringify(values.categories));
 
     try {

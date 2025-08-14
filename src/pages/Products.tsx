@@ -39,11 +39,11 @@ function toUIProduct(product: Product): UIProduct {
     : [];
 
   let availability: Date | undefined = undefined;
-  if (product.availability) {
-    if (typeof product.availability === 'string') {
-      availability = new Date(product.availability);
+  if (product.availableTo) {
+    if (typeof product.availableTo === 'string') {
+      availability = new Date(product.availableTo);
     } else {
-      availability = product.availability;
+      availability = product.availableTo;
     }
   }
 

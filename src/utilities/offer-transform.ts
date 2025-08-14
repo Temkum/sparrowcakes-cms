@@ -25,9 +25,15 @@ export const transformApiResponseToOffer = (
   if (isProduct) {
     const product = response as Product;
     // Ensure price is a number
-    const price = typeof product.price === 'string' ? parseFloat(product.price) : Number(product.price) || 0;
-    const discount = typeof product.discount === 'string' ? parseFloat(product.discount) : Number(product.discount) || 0;
-    
+    const price =
+      typeof product.price === 'string'
+        ? parseFloat(product.price)
+        : Number(product.price) || 0;
+    const discount =
+      typeof product.discount === 'string'
+        ? parseFloat(product.discount)
+        : Number(product.discount) || 0;
+
     return {
       id: product.id,
       name: product.name,
@@ -46,9 +52,9 @@ export const transformApiResponseToOffer = (
       discount_value: discount,
       start_time: new Date().toISOString(),
       end_time:
-        typeof product.availability === 'string'
-          ? product.availability
-          : product.availability?.toISOString() || new Date().toISOString(),
+        typeof product.availableTo === 'string'
+          ? product.availableTo
+          : product.availableTo?.toISOString() || new Date().toISOString(),
       is_active: product.isActive,
       created_at: product.createdAt || new Date().toISOString(),
       updated_at: product.updatedAt || new Date().toISOString(),
@@ -57,9 +63,9 @@ export const transformApiResponseToOffer = (
       discountValue: discount,
       startTime: new Date().toISOString(),
       endTime:
-        typeof product.availability === 'string'
-          ? product.availability
-          : product.availability?.toISOString() || new Date().toISOString(),
+        typeof product.availableTo === 'string'
+          ? product.availableTo
+          : product.availableTo?.toISOString() || new Date().toISOString(),
       isActive: product.isActive,
       createdAt: product.createdAt || new Date().toISOString(),
       updatedAt: product.updatedAt || new Date().toISOString(),
