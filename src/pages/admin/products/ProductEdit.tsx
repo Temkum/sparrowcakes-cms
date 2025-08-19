@@ -65,7 +65,12 @@ const ProductEdit = () => {
               categories: currentProduct.categories.map((category) =>
                 Number(category)
               ),
-              availability: new Date(currentProduct.availability),
+              availableTo: currentProduct.availableTo
+                ? new Date(currentProduct.availableTo)
+                : null,
+              availableFrom: currentProduct.availableFrom
+                ? new Date(currentProduct.availableFrom)
+                : null,
               quantity: currentProduct.quantity ?? 0,
             }}
             onSuccess={handleSuccess}

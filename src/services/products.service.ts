@@ -54,10 +54,44 @@ export const productService = {
     }
   },
 
+  async getAllProducts(): Promise<ProductAPIResponse[]> {
+    try {
+      const response = await axiosInstance.get('/products/all');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as { message?: string };
+        throw new Error(errorData?.message || 'Failed to fetch products');
+      }
+      throw new Error('Failed to fetch products. Please try again.');
+    }
+  },
+
+  async getAllProductsForAdmin(): Promise<ProductAPIResponse[]> {
+    try {
+      const response = await axiosInstance.get('/products/admin/all');
+
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      } else {
+        console.error('Invalid admin products response format:', response.data);
+        throw new Error('Invalid response format from admin products endpoint');
+      }
+    } catch (error) {
+      console.error('Error fetching admin products:', error);
+      if (axios.isAxiosError(error)) {
+        const errorData = error.response?.data as { message?: string };
+        throw new Error(errorData?.message || 'Failed to fetch admin products');
+      }
+      throw new Error('Failed to fetch admin products. Please try again.');
+    }
+  },
+
   async getProductStats(): Promise<ProductStats> {
     try {
       const response = await axiosInstance.get('/products/stats');
-      console.log('product stats', response.data);
+
       return response.data;
     } catch (error) {
       console.error('Error fetching product stats:', error);
@@ -73,7 +107,7 @@ export const productService = {
   async getProductById(id: number): Promise<ProductAPIResponse> {
     try {
       const response = await axiosInstance.get(`/products/${id}`);
-      console.log('product', response.data);
+
       return response.data;
     } catch (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
@@ -260,14 +294,37 @@ export const productService = {
 
   async getSimilarProducts(productId: number, limit: number = 6) {
     const parsedId = Number(productId);
+
     if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      console.error('Invalid productId in frontend service:', {
+        productId,
+        parsedId,
+      });
       throw new Error('Invalid productId');
     }
+
+    const parsedLimit = Number(limit);
+    if (
+      isNaN(parsedLimit) ||
+      !Number.isInteger(parsedLimit) ||
+      parsedLimit <= 0
+    ) {
+      console.error('Invalid limit in frontend service:', {
+        limit,
+        parsedLimit,
+      });
+      throw new Error('Invalid limit');
+    }
+
     try {
       const response = await axiosInstance.get('/products/similar', {
-        params: { productId: parsedId, limit },
+        params: { productId: parsedId, limit: parsedLimit },
       });
-      console.log('similar products', response.data);
+      console.log(
+        'API response received:',
+        response.data?.length || 0,
+        'products'
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching similar products:', error);
@@ -297,7 +354,6 @@ export const productService = {
     try {
       // Use route parameter instead of query parameter
       const response = await axiosInstance.get(`/products/details/${parsedId}`);
-      console.log('product with reviews', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching product with reviews:', error);
@@ -319,7 +375,6 @@ export const productService = {
           params: { limit },
         }
       );
-      console.log('similar products by category', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching similar products by category:', error);

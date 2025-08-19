@@ -24,7 +24,10 @@ const transformApiResponseToProduct = (
   quantity: Number(response.quantity || 0),
   imageUrls: response.image_urls || [],
   isActive: response.is_active,
-  availability: response.availability,
+  availableFrom: response.available_from
+    ? new Date(response.available_from)
+    : null,
+  availableTo: response.available_to ? new Date(response.available_to) : null,
   categories: response.categories?.map((cat) => cat.id) || [],
   reviews:
     response.reviews?.map((review) => ({
@@ -84,6 +87,7 @@ interface ProductState {
   setError: (error: string | null) => void;
   loadPopularProducts: (limit?: number) => Promise<void>;
   loadProductDetails: (id: number) => Promise<Product | null>;
+  loadAllProductsForAdmin: () => Promise<ProductAPIResponse[] | undefined>;
 }
 
 const useProductStore = create<ProductState>((set, get) => ({
@@ -133,11 +137,80 @@ const useProductStore = create<ProductState>((set, get) => ({
     await get().loadProducts();
   },
 
+  loadAllProducts: async () => {
+    set({ loadingProducts: true, error: null });
+    try {
+      const response = await productService.getAllProducts();
+      const transformedProducts: Product[] = response.map(
+        transformApiResponseToProduct
+      );
+      set({
+        products: transformedProducts,
+        totalCount: response.length,
+        currentPage: 1,
+        pageSize: response.length,
+        totalPages: 1,
+      });
+      return response;
+    } catch (error) {
+      console.error('Error loading products:', error);
+      toast.error('Failed to load products');
+      return [];
+    } finally {
+      set({ loadingProducts: false });
+    }
+  },
+
+  loadAllProductsForAdmin: async () => {
+    set({ loadingProducts: true, error: null });
+    try {
+      const response = await productService.getAllProductsForAdmin();
+
+      if (response && Array.isArray(response)) {
+        const transformedProducts: Product[] = response.map(
+          transformApiResponseToProduct
+        );
+
+        set({
+          products: transformedProducts,
+          totalCount: response.length,
+          currentPage: 1,
+          pageSize: response.length,
+          totalPages: 1,
+        });
+        return response;
+      } else {
+        console.error('Invalid response format:', response);
+        set({
+          products: [],
+          totalCount: 0,
+          currentPage: 1,
+          pageSize: 10,
+          totalPages: 0,
+        });
+        return [];
+      }
+    } catch (error) {
+      console.error('Error loading admin products:', error);
+      toast.error('Failed to load admin products');
+      set({
+        products: [],
+        totalCount: 0,
+        currentPage: 1,
+        pageSize: 10,
+        totalPages: 0,
+      });
+      return [];
+    } finally {
+      set({ loadingProducts: false });
+    }
+  },
+
   loadStats: async () => {
     set({ loadingStats: true, error: null });
     try {
       const stats = await productService.getProductStats();
-      set({ stats });
+      set({ stats: stats, loadingStats: false });
     } catch (error) {
       console.error('Error loading product stats:', error);
       toast.error('Failed to load product stats');
@@ -226,7 +299,6 @@ const useProductStore = create<ProductState>((set, get) => ({
           const transformedProduct: Product =
             transformApiResponseToProduct(response);
           set({ currentProduct: transformedProduct, error: null });
-          console.log('currentProduct', transformedProduct);
           return transformedProduct;
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
@@ -262,9 +334,28 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   loadSimilarProducts: async (_categoryIds: number[], excludeId: number) => {
+    // Validate excludeId
+    if (
+      !excludeId ||
+      isNaN(excludeId) ||
+      !Number.isInteger(excludeId) ||
+      excludeId <= 0
+    ) {
+      console.error('Invalid excludeId in store:', {
+        excludeId,
+        type: typeof excludeId,
+      });
+      set({
+        error: 'Invalid product ID for similar products',
+        similarProducts: [],
+      });
+      return;
+    }
+
     set({ loadingSimilarProducts: true, error: null });
     try {
       const response = await productService.getSimilarProducts(excludeId, 6);
+
       set({ similarProducts: response.map(transformApiResponseToProduct) });
     } catch (error) {
       console.error('Error loading similar products:', error);
@@ -281,7 +372,8 @@ const useProductStore = create<ProductState>((set, get) => ({
       const response = await productService.createProduct(formData);
       const newProduct = transformApiResponseToProduct(response);
       set((state) => ({ products: [...state.products, newProduct] }));
-      await get().loadStats();
+      // Refresh both products list and stats
+      await Promise.all([get().loadAllProductsForAdmin(), get().loadStats()]);
       return newProduct;
     } catch (error) {
       console.error('Error creating product:', error);
@@ -302,7 +394,8 @@ const useProductStore = create<ProductState>((set, get) => ({
           p.id === updatedProduct.id ? updatedProduct : p
         ),
       }));
-      await get().loadStats();
+      // Refresh both products list and stats
+      await Promise.all([get().loadAllProductsForAdmin(), get().loadStats()]);
       return updatedProduct;
     } catch (error) {
       console.error('Error updating product:', error);
@@ -318,7 +411,7 @@ const useProductStore = create<ProductState>((set, get) => ({
     try {
       await productService.deleteProduct(id);
       toast.success('Product deleted successfully');
-      await Promise.all([get().loadProducts(), get().loadStats()]);
+      await Promise.all([get().loadAllProductsForAdmin(), get().loadStats()]);
       return true;
     } catch (error) {
       console.error('Error deleting product:', error);
@@ -333,7 +426,7 @@ const useProductStore = create<ProductState>((set, get) => ({
     try {
       await productService.bulkDeleteProducts(ids);
       toast.success(`Successfully deleted ${ids.length} product(s)`);
-      await Promise.all([get().loadProducts(), get().loadStats()]);
+      await Promise.all([get().loadAllProductsForAdmin(), get().loadStats()]);
       return true;
     } catch (error) {
       console.error('Bulk delete failed:', error);

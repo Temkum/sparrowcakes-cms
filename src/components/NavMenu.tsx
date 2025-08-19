@@ -1,17 +1,13 @@
 import * as React from 'react';
-
 import { cn } from '@/lib/utils';
-// import { Icons } from '@/components/icons';
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 export function NavMenu() {
   return (
@@ -23,62 +19,73 @@ export function NavMenu() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <Link to="/">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Home
+                <NavLink
+                  to="/"
+                  end
+                  className={({ isActive }) =>
+                    cn(
+                      navigationMenuTriggerStyle(),
+                      isActive
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : ''
+                    )
+                  }
+                >
+                  <NavigationMenuLink>
+                    <span>Home</span>
                   </NavigationMenuLink>
-                </Link>
+                </NavLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                    <li className="row-span-3">
-                      <NavigationMenuLink asChild>
-                        <a
-                          className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                          href="/"
-                        >
-                          {/* <Icons.logo className="h-6 w-6" /> */}
-                          <div className="mb-2 mt-4 text-lg font-medium">
-                            shadcn/ui
-                          </div>
-                          <p className="text-sm leading-tight text-muted-foreground">
-                            Beautifully designed components built with Radix UI
-                            and Tailwind CSS.
-                          </p>
-                        </a>
-                      </NavigationMenuLink>
-                    </li>
-                    <ListItem href="/docs" title="Introduction">
-                      Re-usable components built using Radix UI and Tailwind
-                      CSS.
-                    </ListItem>
-                    <ListItem href="/docs/installation" title="Installation">
-                      How to install dependencies and structure your app.
-                    </ListItem>
-                    <ListItem
-                      href="/docs/primitives/typography"
-                      title="Typography"
-                    >
-                      Styles for headings, paragraphs, lists...etc
-                    </ListItem>
-                  </ul>
-                </NavigationMenuContent>
+                <NavLink
+                  to="/reviews"
+                  className={({ isActive }) =>
+                    cn(
+                      navigationMenuTriggerStyle(),
+                      isActive
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : ''
+                    )
+                  }
+                >
+                  <NavigationMenuLink>
+                    <span>Reviews</span>
+                  </NavigationMenuLink>
+                </NavLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/products">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Products
+                <NavLink
+                  to="/products"
+                  className={({ isActive }) =>
+                    cn(
+                      navigationMenuTriggerStyle(),
+                      isActive
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : ''
+                    )
+                  }
+                >
+                  <NavigationMenuLink>
+                    <span>Products</span>
                   </NavigationMenuLink>
-                </Link>
+                </NavLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link to="/docs">
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Offers
+                <NavLink
+                  to="/offers"
+                  className={({ isActive }) =>
+                    cn(
+                      navigationMenuTriggerStyle(),
+                      isActive
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : ''
+                    )
+                  }
+                >
+                  <NavigationMenuLink>
+                    <span>Offers</span>
                   </NavigationMenuLink>
-                </Link>
+                </NavLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
@@ -105,7 +112,9 @@ const ListItem = React.forwardRef<
           )}
           {...props}
         >
-          <div className="text-sm font-medium leading-none">{title}</div>
+          <div className="text-sm font-medium leading-none">
+            <span>{title}</span>
+          </div>
           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}
           </p>

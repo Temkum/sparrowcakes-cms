@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Toaster } from 'react-hot-toast';
 import { Card } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/format-currency';
 
 interface ProductTableProps {
   onEdit: (productId: number) => void;
@@ -73,10 +74,10 @@ const ProductsTable = ({
     setFilter,
     deleteProduct,
     bulkDeleteProducts,
-    loadProducts,
+    loadAllProductsForAdmin,
+    stats,
     loadStats,
     setError,
-    stats,
   } = useProductStore();
 
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
@@ -90,6 +91,7 @@ const ProductsTable = ({
     null
   );
   const [isInitialized, setIsInitialized] = useState(false);
+  const formatCurrency = useFormatCurrency();
 
   // Initialize searchInput when filter changes from external source
   useEffect(() => {
@@ -101,7 +103,7 @@ const ProductsTable = ({
     if (!skipInitialLoad && !isInitialized) {
       const initializeData = async () => {
         try {
-          await Promise.all([loadProducts(), loadStats()]);
+          await Promise.all([loadAllProductsForAdmin()]);
         } catch (err) {
           console.error('Failed to initialize data:', err);
         } finally {
@@ -112,14 +114,18 @@ const ProductsTable = ({
     } else if (skipInitialLoad) {
       setIsInitialized(true);
     }
-  }, [skipInitialLoad, loadProducts, loadStats, isInitialized]);
+  }, [skipInitialLoad, loadAllProductsForAdmin, isInitialized]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   // Reload products when filter changes (except search term which is handled separately)
   useEffect(() => {
     if (isInitialized) {
-      loadProducts();
+      loadAllProductsForAdmin();
     }
-  }, [filter.page, filter.pageSize, loadProducts, isInitialized]);
+  }, [filter.page, filter.pageSize, loadAllProductsForAdmin, isInitialized]);
 
   // Search debouncing
   useEffect(() => {
@@ -241,11 +247,11 @@ const ProductsTable = ({
   const handleRetryLoad = useCallback(async () => {
     setError(null);
     try {
-      await Promise.all([loadProducts(), loadStats()]);
+      await Promise.all([loadAllProductsForAdmin(), loadStats()]);
     } catch (err) {
       console.error('Retry failed:', err);
     }
-  }, [setError, loadProducts, loadStats]);
+  }, [setError, loadAllProductsForAdmin, loadStats]);
 
   const isOperationInProgress =
     loadingProducts || deleting || deletingProductId !== null;
@@ -284,7 +290,7 @@ const ProductsTable = ({
             </div>
           ) : (
             <p className="text-2xl font-bold">
-              ${stats?.averagePrice?.toFixed(2) || '0.00'}
+              {formatCurrency(stats?.averagePrice || 0)}
             </p>
           )}
         </Card>
@@ -494,7 +500,7 @@ const ProductsTable = ({
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {product.price ? `$${product.price.toFixed(2)}` : '-'}
+                        {product.price ? formatCurrency(product.price) : '-'}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>

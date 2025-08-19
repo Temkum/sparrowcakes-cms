@@ -194,9 +194,9 @@ export const ProductDetails = () => {
                   Availability:
                 </span>
                 <span>
-                  {currentProduct.availability
+                  {currentProduct.availableTo
                     ? format(
-                        new Date(currentProduct.availability),
+                        new Date(currentProduct.availableTo),
                         'MMM dd, yyyy'
                       )
                     : 'Not specified'}

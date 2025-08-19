@@ -41,8 +41,13 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
     set({ loading: true });
     try {
       const reviews = await reviewService.getReviewsForUI();
-      console.log('Fetched reviews for UI - store:', reviews);
-      set({ uiReviews: reviews, loading: false });
+      const enhanced = reviews.map((r: ReviewResponseProps) => ({
+        ...r,
+        helpfulCount: 0,
+        isHelpful: false,
+        isFeatured: false,
+      }));
+      set({ uiReviews: enhanced, loading: false });
     } catch (error) {
       console.error('Error fetching reviews for UI:', error);
       set({ uiReviews: [], loading: false });
@@ -73,14 +78,8 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
     try {
       await reviewService.createReview(review);
       toast.success('Review created successfully');
-      const response = await reviewService.getReviews();
-      set({
-        reviews: response.items,
-        totalCount: response.meta.total,
-        currentPage: response.meta.page,
-        pageSize: response.meta.limit,
-        loading: false,
-      });
+      const uiReviews = await reviewService.getReviewsForUI();
+      set({ uiReviews, loading: false });
     } catch (error) {
       console.error('Error creating review:', error);
       toast.error('Failed to create review');

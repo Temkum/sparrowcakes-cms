@@ -1,13 +1,13 @@
 import { Review, ReviewResponseProps } from '../review';
 
-// Product interface for frontend use (camelCase)
 export interface Product {
   id: number;
   name: string;
   slug: string;
   description: string;
   isActive: boolean;
-  availability: Date | string;
+  availableFrom: Date | null;
+  availableTo: Date | null;
   categories: number[];
   images: (File | string)[];
   imageUrls: string[];
@@ -35,7 +35,8 @@ export interface ProductAPIResponse {
   reviews: ReviewResponseProps[];
   created_at: string;
   updated_at: string;
-  availability: string;
+  available_from: Date | null;
+  available_to: Date | null;
   categories: Category[];
   totalReviews: number;
 }
@@ -72,7 +73,8 @@ export interface CreateProductRequest {
   slug?: string;
   description: string;
   isActive: boolean;
-  availability: string; // ISO date string
+  availableFrom: Date; // ISO date string
+  availableTo: Date | null; // ISO date string or null
   categories: number[];
   images: File[]; // For create, we require actual File objects
   price: number;
@@ -85,7 +87,8 @@ export interface UpdateProductRequest {
   slug?: string;
   description?: string;
   isActive?: boolean;
-  availability?: string; // ISO date string
+  availableFrom?: Date; // ISO date string
+  availableTo?: Date | null; // ISO date string or null
   categories?: number[];
   images?: (File | string)[]; // Can be File objects or URLs
   price?: number;

@@ -41,15 +41,15 @@ export function NavMain({
     <SidebarGroup>
       <SidebarMenu className="mb-3">
         <SidebarMenuItem>
-          <SidebarMenuButton
-            tooltip={'Dashboard'}
-            isActive={location.pathname === '/admin/dashboard'}
-          >
-            <LayoutDashboardIcon />
-            <Link to={'/admin/dashboard'}>
-              <span>{'Dashboard'}</span>
-            </Link>
-          </SidebarMenuButton>
+          <Link to={'/admin/dashboard'}>
+            <SidebarMenuButton
+              tooltip="Dashboard"
+              isActive={location.pathname === '/admin/dashboard'}
+            >
+              <LayoutDashboardIcon />
+              <span>Dashboard</span>
+            </SidebarMenuButton>
+          </Link>
         </SidebarMenuItem>
       </SidebarMenu>
       <SidebarGroupLabel>Content Management</SidebarGroupLabel>

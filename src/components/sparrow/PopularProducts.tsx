@@ -73,11 +73,11 @@ function toUIProduct(product: Product): UIProduct {
     : [];
   // Handle availability as Date
   let availability: Date | undefined = undefined;
-  if (product.availability) {
-    if (typeof product.availability === 'string') {
-      availability = new Date(product.availability);
+  if (product.availableTo) {
+    if (typeof product.availableTo === 'string') {
+      availability = new Date(product.availableTo);
     } else {
-      availability = product.availability;
+      availability = product.availableTo;
     }
   }
   const reviews = Array.isArray(product.reviews) ? product.reviews : [];

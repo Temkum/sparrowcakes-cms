@@ -35,6 +35,7 @@ import { useAuthStore } from '@/store/auth';
 import useOrderStore from '@/store/order-store';
 import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useFormatCurrency } from '@/hooks/format-currency';
 
 interface ChartDataPoint {
   name: string | number;
@@ -81,6 +82,7 @@ const formatYearlyData = (data: number[]): ChartDataPoint[] => {
 const AdminDashboard = () => {
   const { orders, stats, loadStats } = useOrderStore();
   const user = useAuthStore().user;
+  const formatCurrency = useFormatCurrency();
 
   useEffect(() => {
     loadStats();
@@ -152,7 +154,7 @@ const AdminDashboard = () => {
               <div>
                 <p className="text-sm text-gray-500">Revenue</p>
                 <h3 className="text-2xl font-bold">
-                  ${(stats.totalRevenue / 1000).toFixed(2)}k
+                  {formatCurrency(stats.totalRevenue / 100)}
                 </h3>
               </div>
               <span className="text-green-500 flex items-center">

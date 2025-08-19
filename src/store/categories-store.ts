@@ -7,6 +7,7 @@ import {
   CategoryListResponse,
   CategoryListParams,
   CacheEntry,
+  DynamicCategories,
 } from '@/types/category';
 
 const useCategoriesStore = create<CategoryState>((set, get) => ({
@@ -14,6 +15,7 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
   loading: false,
   error: null,
   cache: new Map<string, CacheEntry>(),
+  dynamicCategories: [],
   retryAttempts: 3,
 
   loadCategories: async () => {
@@ -21,6 +23,22 @@ const useCategoriesStore = create<CategoryState>((set, get) => ({
     try {
       const res: CategoryResponse[] = await categoryService.getCategories();
       set({ categories: res, loading: false });
+
+      return res;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to load categories';
+      console.error('Error loading categories:', error);
+      set({ loading: false, error: errorMessage });
+      return [];
+    }
+  },
+
+  loadUICategories: async () => {
+    set({ loading: true });
+    try {
+      const res: DynamicCategories[] = await categoryService.getUICategories();
+      set({ dynamicCategories: res, loading: false });
 
       return res;
     } catch (error) {

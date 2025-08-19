@@ -146,28 +146,6 @@ axiosInstance.interceptors.request.use(
         startTime: Date.now(),
       };
 
-      // Request deduplication
-      const shouldDedupe =
-        (config.method?.toLowerCase() === 'get' &&
-          config.headers?.['x-dedupe'] !== 'false') ||
-        config.headers?.['x-dedupe'] === 'true';
-
-      if (shouldDedupe) {
-        const requestKey = generateRequestKey(config);
-        if (pendingRequests.has(requestKey)) {
-          const pendingRequest = pendingRequests.get(requestKey);
-          pendingRequest?.controller.abort('Duplicate request cancelled');
-          pendingRequests.delete(requestKey);
-        }
-
-        const controller = new AbortController();
-        config.signal = controller.signal;
-        pendingRequests.set(requestKey, {
-          controller,
-          timestamp: Date.now(),
-        });
-      }
-
       // Enhanced logging with filtering
       /* if (isDevelopment && window.__MY_APP_AXIOS_CONFIG__?.logging?.enabled) {
         const loggingConfig = window.__MY_APP_AXIOS_CONFIG__?.logging;

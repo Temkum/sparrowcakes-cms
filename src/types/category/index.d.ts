@@ -1,10 +1,23 @@
+type Product = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  imageUrl: string;
+  isActive: boolean;
+  created_at: string;
+  updated_at: string;
+};
 export interface DynamicCategories {
   id: number;
   name: string;
-  label: string;
-  value: number[];
-  onChange: (value: number[]) => void;
-  isRequired?: boolean;
+  slug: string;
+  description: string;
+  imageUrl: string;
+  isActive: boolean;
+  created_at: string;
+  products: Product[];
+  updated_at: string;
 }
 
 export interface Category {
@@ -29,6 +42,7 @@ export interface CategoryState {
   error: string | null;
   cache: Map<string, CacheEntry>;
   retryAttempts: number;
+  dynamicCategories: DynamicCategories[];
 
   // Actions
   loadCategories: () => Promise<CategoryResponse[]>;
@@ -48,6 +62,7 @@ export interface CategoryState {
     sortOrder?: 'ASC' | 'DESC';
     isActive?: boolean;
   }) => Promise<CategoryListResponse>;
+  loadUICategories: () => Promise<DynamicCategories[]>;
 }
 
 export interface CategoryRequest {

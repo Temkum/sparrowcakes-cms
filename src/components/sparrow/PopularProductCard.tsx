@@ -2,8 +2,10 @@ import { UIProduct } from '@/types';
 import { Card } from '../ui/card';
 import { Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useFormatCurrency } from '@/hooks/format-currency';
 
 const PopularProductCard = (product: UIProduct) => {
+  const formatCurrency = useFormatCurrency();
   return (
     <>
       <Card className="group overflow-hidden">
@@ -50,11 +52,11 @@ const PopularProductCard = (product: UIProduct) => {
           {/* Price */}
           <div className="flex justify-center items-center gap-2">
             <span className="text-emerald-500 font-semibold">
-              ${product.price}
+              {formatCurrency(product.price)}
             </span>
             {product.originalPrice > product.price && (
               <span className="text-sm text-muted-foreground line-through">
-                ${product.originalPrice}
+                {formatCurrency(product.originalPrice)}
               </span>
             )}
           </div>

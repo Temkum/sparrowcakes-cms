@@ -9,6 +9,7 @@ import {
   Command,
   Frame,
   GalleryVerticalEnd,
+  Gift,
   Map,
   MessageCircleCode,
   PieChart,
@@ -81,6 +82,11 @@ const data = {
       title: 'Reviews',
       url: '/admin/reviews',
       icon: MessageCircleCode,
+    },
+    {
+      title: 'Offers',
+      url: '/admin/offers',
+      icon: Gift,
     },
     {
       title: 'Site Content',

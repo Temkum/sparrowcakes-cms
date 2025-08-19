@@ -1,7 +1,24 @@
+import { useAuthStore } from '@/store/auth';
+import { LogIn, LogOut, UserPlus } from 'lucide-react';
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '../ui/dropdown-menu';
 
 const Footer: React.FC = () => {
+  const { isAuthenticated } = useAuthStore();
+  const logoutUser = useAuthStore.getState().logoutUser;
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logoutUser();
+    navigate('/login', { replace: true });
+  };
+
   return (
     <footer className="bg-white lg:grid lg:grid-cols-5">
       <div className="relative block h-32 lg:col-span-2 lg:h-full">
@@ -206,6 +223,40 @@ const Footer: React.FC = () => {
                   >
                     Reviews
                   </Link>
+                </li>
+                <li>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="text-gray-700 transition hover:opacity-75 font-medium">
+                        Account
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {isAuthenticated ? (
+                        <>
+                          <DropdownMenuItem>Profile</DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleLogout}>
+                            Logout <LogOut size={16} className="ml-2" />
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <DropdownMenuItem>
+                            <Link to="/login" className="flex items-center">
+                              Login
+                              <LogIn size={16} className="ml-2" />
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Link to="/register" className="flex items-center">
+                              Register
+                              <UserPlus size={16} className="ml-2" />
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </li>
               </ul>
             </div>
