@@ -1,50 +1,98 @@
-# React + TypeScript + Vite
+# Sparrow Cakes Buea
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern web application for managing and showcasing cakes, events, and services by Sparrow Cakes Buea. Built with React, TypeScript, and Vite for a fast, maintainable, and scalable frontend experience.
 
-Currently, two official plugins are available:
+## What Does This Project Do?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Sparrow Cakes Buea is a full-featured CMS and storefront for a cake business. It allows users to:
 
-## Expanding the ESLint configuration
+- Browse cake products and services
+- View company information and reviews
+- Register and log in to manage their profile
+- Access admin features (if authorized)
+- Contact the business and view social media links
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+The codebase is organized for maintainability, with clear separation of components, pages, services, and state management. It uses modern React patterns and best practices.
 
-- Configure the top-level `parserOptions` property like this:
+## Tech Stack & Upsides
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+- **React**: Declarative UI, component-based architecture, huge ecosystem
+- **TypeScript**: Type safety, better developer experience, fewer runtime errors
+- **Vite**: Lightning-fast dev server, instant HMR, optimized builds
+- **Zustand**: Simple and scalable state management
+- **React Router**: Client-side routing for SPA experience
+- **Tailwind CSS**: Utility-first styling, rapid UI development
+- **ESLint**: Enforced code quality and consistency
+- **Radix UI**: Accessible, unstyled UI primitives for custom design
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+**Upsides:**
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+- Fast development and build times
+- Type safety and maintainability
+- Easy to extend and refactor
+- Modern UI/UX with accessibility in mind
+- Clear separation of concerns
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## How to Run the Project
+
+1. **Install dependencies**
+
+   ```bash
+   pnpm install
+   # or
+   npm install
+   # or
+   yarn install
+   ```
+
+2. **Start the development server**
+
+   ```bash
+   pnpm dev
+   # or
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+   The app will be available at `http://localhost:5173` (or the port shown in your terminal).
+
+3. **Build for production**
+
+   ```bash
+   pnpm build
+   # or
+   npm run build
+   # or
+   yarn build
+   ```
+
+4. **Preview the production build**
+
+   ```bash
+   pnpm preview
+   # or
+   npm run preview
+   # or
+   yarn preview
+   ```
+
+## Project Structure
+
+- `src/components/` - Reusable UI components
+- `src/pages/` - Page-level components for routing
+- `src/services/` - API and business logic
+- `src/store/` - State management (Zustand)
+- `src/routes/` - Route definitions
+- `src/styles/` - Custom styles
+- `public/` - Static assets
+
+## Additional Notes
+
+- Environment variables can be set in `.env` files for API endpoints and secrets.
+- Linting and formatting are enforced via ESLint and Prettier.
+- For deployment, see `netlify.toml` or your preferred static hosting provider.
+
+---
+
+For questions or contributions, open an issue or pull request!
