@@ -1,5 +1,3 @@
-// TopNav.tsx
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,20 +6,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Search, User, LogOut, LogIn, UserPlus, Globe } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/auth';
+import { Search, Globe } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const TopNav = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const logoutUser = useAuthStore.getState().logoutUser;
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logoutUser();
-    navigate('/login', { replace: true });
-  };
-
   return (
     <nav className="flex items-center justify-between px-6 py-6 bg-white shadow-md">
       {/* Logo on the Left */}
@@ -43,47 +31,7 @@ const TopNav = () => {
         </div>
       </div>
 
-      {/* Authentication and Language Icons on the Right */}
       <div className="flex items-center space-x-4 text-2xl">
-        {/* Authentication */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost">
-              <User size={35} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isLoggedIn ? (
-              <>
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsLoggedIn(false)}>
-                  Logout{' '}
-                  <LogOut size={16} className="ml-2" onClick={handleLogout} />
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuItem onClick={() => setIsLoggedIn(true)}>
-                  <Link to="/login" className="flex items-center">
-                    Login
-                    <LogIn
-                      size={16}
-                      className="ml-2"
-                      onClick={() => setIsLoggedIn(true)}
-                    />
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link to="/register" className="flex items-center">
-                    Register
-                    <UserPlus size={16} className="ml-2" />
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         {/* Language Selector */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

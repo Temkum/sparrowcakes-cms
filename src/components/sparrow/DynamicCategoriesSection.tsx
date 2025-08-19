@@ -148,7 +148,7 @@ const Categories = () => {
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={handleRetry}
-            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02]"
+            className="px-6 py-3 bg-green-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-[1.02]"
           >
             Try Again
           </button>
@@ -287,7 +287,7 @@ const Categories = () => {
                         <h2 className="text-3xl md:text-4xl font-bold mb-2">
                           {selectedCategory.name}
                         </h2>
-                        <p className="text-green-200 text-lg">
+                        <p className="text-white text-lg">
                           {selectedCategory.products.length} available products
                         </p>
                       </div>
