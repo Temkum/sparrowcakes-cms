@@ -95,7 +95,6 @@ const SlidingRow: React.FC<{
   );
 };
 
-// Main Component
 interface AnimatedReviewSectionProps {
   reviews: ReadonlyArray<Review>;
   loading: boolean;
