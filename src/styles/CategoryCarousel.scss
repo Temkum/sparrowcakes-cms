@@ -1,0 +1,20 @@
+.gi-cat-box {
+  width: 243px;
+
+  .icon {
+    margin-bottom: 10px;
+  }
+}
+
+/* Animation for fade-in effect */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,10 @@
+.pro-gl-content {
+
+    .gi-btn-group {
+        &:hover {
+            svg.lucide {
+                stroke: aliceblue;
+            }
+        }
+    }
+}

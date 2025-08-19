@@ -1,0 +1,10 @@
+.gi-single-qty {
+
+    .gi-btn-group {
+        &:hover {
+            svg.lucide {
+                stroke: aliceblue;
+            }
+        }
+    }
+}
