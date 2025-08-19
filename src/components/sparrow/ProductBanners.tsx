@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { BannerProps } from '@/types';
 import { banners } from '@/utilities/data';
 import { Link } from 'react-router-dom';
 
