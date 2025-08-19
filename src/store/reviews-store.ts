@@ -47,7 +47,6 @@ export const useReviewsStore = create<ReviewsState>((set) => ({
         isHelpful: false,
         isFeatured: false,
       }));
-      console.log('Fetched reviews for UI - store:', enhanced);
       set({ uiReviews: enhanced, loading: false });
     } catch (error) {
       console.error('Error fetching reviews for UI:', error);

@@ -88,7 +88,6 @@ const useOffersStore = create<OffersState>((set, get) => ({
     set({ submitting: true, error: undefined });
     try {
       const updatedOffer = await offerService.updateOffer(offer);
-      console.log('Update offer state:', updatedOffer);
 
       if (updatedOffer) {
         // Update the offer in the list
@@ -116,7 +115,6 @@ const useOffersStore = create<OffersState>((set, get) => ({
     set({ submitting: true, error: undefined });
     try {
       const createdOffer = await offerService.createOffer(offer);
-      console.log('Create offer state:', createdOffer);
 
       if (createdOffer) {
         set((state) => ({

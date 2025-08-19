@@ -104,8 +104,6 @@ const offerService = {
         is_active: offer.isActive ?? offer.is_active ?? true,
       };
 
-      console.log('Sending to backend:', backendOffer);
-
       const response = await axiosInstance.post('/offers', backendOffer);
 
       // Transform response to include compatibility fields
@@ -121,8 +119,6 @@ const offerService = {
         updatedAt: response.data.updated_at,
         image_url: response.data.product?.image_url,
       };
-
-      console.log('Create response transformed:', transformedOffer);
       return transformedOffer;
     } catch (error) {
       console.error('Error creating offer:', error);
@@ -143,8 +139,6 @@ const offerService = {
         is_active: offer.isActive ?? offer.is_active,
       };
 
-      console.log('Updating offer with backend format:', backendOffer);
-
       const response = await axiosInstance.put(
         `/offers/${offer.id}`,
         backendOffer
@@ -163,7 +157,6 @@ const offerService = {
         image_url: response.data.product?.image_url,
       };
 
-      console.log('Update response transformed:', transformedOffer);
       return transformedOffer;
     } catch (error) {
       console.error('Error updating offer:', error);

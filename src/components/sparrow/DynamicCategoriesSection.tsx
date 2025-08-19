@@ -38,9 +38,7 @@ const Categories = () => {
   useEffect(() => {
     const initializeCategories = async () => {
       try {
-        console.log('Initializing categories...');
         const result = await loadUICategories();
-        console.log('Categories loaded:', result);
 
         if (result && result.length > 0) {
           setSelectedCategory(result[0]);
@@ -65,7 +63,6 @@ const Categories = () => {
   // Set default category when data changes
   useEffect(() => {
     if (dynamicCategories.length > 0 && !selectedCategory && hasInitialized) {
-      console.log('Setting first category as selected');
       setSelectedCategory(dynamicCategories[0]);
     }
   }, [dynamicCategories, selectedCategory, hasInitialized]);

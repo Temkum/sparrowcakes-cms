@@ -108,14 +108,6 @@ const ProductDetailsUI = () => {
   useEffect(() => {
     if (id) {
       const productId = Number(id);
-      console.log(
-        'URL id parameter:',
-        id,
-        'converted to:',
-        productId,
-        'isValid:',
-        !isNaN(productId) && productId > 0
-      );
 
       if (isNaN(productId) || productId <= 0) {
         console.error('Invalid product ID from URL:', id);
@@ -123,10 +115,6 @@ const ProductDetailsUI = () => {
       }
 
       loadProductDetails(productId).then((product) => {
-        console.log('Product loaded:', {
-          productId: product?.id,
-          categories: product?.categories?.length || 0,
-        });
         if (
           product &&
           product.categories?.length &&
@@ -134,17 +122,7 @@ const ProductDetailsUI = () => {
           !isNaN(product.id) &&
           product.id > 0
         ) {
-          console.log('Loading similar products for product:', product.id);
           loadSimilarProducts(product.categories, product.id);
-        } else {
-          console.log(
-            'Skipping similar products load - invalid product or no categories:',
-            {
-              hasProduct: !!product,
-              productId: product?.id,
-              categoriesCount: product?.categories?.length || 0,
-            }
-          );
         }
       });
       fetchReviewsForUI(); // Fetch reviews for UI

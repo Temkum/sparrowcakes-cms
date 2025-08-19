@@ -24,7 +24,9 @@ const transformApiResponseToProduct = (
   quantity: Number(response.quantity || 0),
   imageUrls: response.image_urls || [],
   isActive: response.is_active,
-  availableFrom: response.available_from ? new Date(response.available_from) : null,
+  availableFrom: response.available_from
+    ? new Date(response.available_from)
+    : null,
   availableTo: response.available_to ? new Date(response.available_to) : null,
   categories: response.categories?.map((cat) => cat.id) || [],
   reviews:
@@ -160,31 +162,14 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   loadAllProductsForAdmin: async () => {
-    console.log('Store loadAllProductsForAdmin called');
     set({ loadingProducts: true, error: null });
     try {
-      console.log('Calling productService.getAllProductsForAdmin...');
       const response = await productService.getAllProductsForAdmin();
-      console.log('Admin products API response:', {
-        responseLength: response?.length || 0,
-        responseType: typeof response,
-        isArray: Array.isArray(response),
-      });
 
       if (response && Array.isArray(response)) {
         const transformedProducts: Product[] = response.map(
           transformApiResponseToProduct
         );
-        console.log('Transformed products:', {
-          transformedLength: transformedProducts.length,
-          products: transformedProducts.map((p) => ({
-            id: p.id,
-            name: p.name,
-            isActive: p.isActive,
-            categories: p.categories?.length || 0,
-            imageUrls: p.imageUrls?.length || 0,
-          })),
-        });
 
         set({
           products: transformedProducts,
@@ -193,7 +178,6 @@ const useProductStore = create<ProductState>((set, get) => ({
           pageSize: response.length,
           totalPages: 1,
         });
-        console.log('Admin products loaded:', transformedProducts.length);
         return response;
       } else {
         console.error('Invalid response format:', response);
@@ -350,11 +334,6 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
 
   loadSimilarProducts: async (_categoryIds: number[], excludeId: number) => {
-    console.log('Store loadSimilarProducts called with:', {
-      _categoryIds,
-      excludeId,
-    });
-
     // Validate excludeId
     if (
       !excludeId ||
@@ -373,19 +352,10 @@ const useProductStore = create<ProductState>((set, get) => ({
       return;
     }
 
-    console.log('Calling productService.getSimilarProducts with:', {
-      excludeId,
-      limit: 6,
-    });
-
     set({ loadingSimilarProducts: true, error: null });
     try {
       const response = await productService.getSimilarProducts(excludeId, 6);
-      console.log(
-        'Similar products response:',
-        response?.length || 0,
-        'products'
-      );
+
       set({ similarProducts: response.map(transformApiResponseToProduct) });
     } catch (error) {
       console.error('Error loading similar products:', error);
